@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Schedule - Conference App</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#196ee6",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-10 flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-slate-800">
+<div class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-start">
+<span class="material-symbols-outlined cursor-pointer">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">My Schedule</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-slate-100">translate</span>
+</button>
+</div>
+</header>
+<!-- Date Navigation -->
+<nav class="sticky top-[68px] z-10 bg-background-light dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
+<div class="flex overflow-x-auto hide-scrollbar px-4 gap-6">
+<a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3 pt-4 shrink-0 min-w-[60px]" href="#">
+<p class="text-xs font-medium uppercase tracking-wider">Mon</p>
+<p class="text-base font-bold">Oct 12</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-2 border-primary text-primary pb-3 pt-4 shrink-0 min-w-[60px]" href="#">
+<p class="text-xs font-medium uppercase tracking-wider">Tue</p>
+<p class="text-base font-bold">Oct 13</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3 pt-4 shrink-0 min-w-[60px]" href="#">
+<p class="text-xs font-medium uppercase tracking-wider">Wed</p>
+<p class="text-base font-bold">Oct 14</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3 pt-4 shrink-0 min-w-[60px]" href="#">
+<p class="text-xs font-medium uppercase tracking-wider">Thu</p>
+<p class="text-base font-bold">Oct 15</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3 pt-4 shrink-0 min-w-[60px]" href="#">
+<p class="text-xs font-medium uppercase tracking-wider">Fri</p>
+<p class="text-base font-bold">Oct 16</p>
+</a>
+</div>
+</nav>
+<!-- Timeline Content -->
+<main class="flex-1 p-4 pb-24">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-slate-900 dark:text-slate-100 text-xl font-bold tracking-tight">Tuesday, October 13</h3>
+<span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary uppercase">3 Favorites</span>
+</div>
+<!-- Timeline Item 1 -->
+<div class="grid grid-cols-[48px_1fr] gap-x-4 mb-2">
+<div class="flex flex-col items-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
+<span class="material-symbols-outlined text-[20px] fill-1">schedule</span>
+</div>
+<div class="w-[2px] bg-slate-200 dark:bg-slate-800 h-full mt-2"></div>
+</div>
+<div class="flex flex-1 flex-col pb-8">
+<div class="flex items-center justify-between">
+<p class="text-slate-900 dark:text-slate-100 text-lg font-bold">Keynote: The Future of AI</p>
+<span class="material-symbols-outlined text-primary fill-1">bookmark</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm font-medium">Grand Ballroom • 09:00 AM - 10:30 AM</p>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-background-light dark:ring-background-dark">
+<img class="h-full w-full object-cover" data-alt="Professional portrait of a male speaker" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsB8ZWxEZLh5YbRhT4532cOBkvWNeISlMxvlqPob-6uhW9LVDa6gU3hE4CizU6rslJHkrw1836sDVfsQk9XKkzeozH8W5rdQ1MQ-xave7_3UmkxThPdiiLiVPBAUt6MHc9LdvArsIvKc310q0j4IspccZUFyO63FPcf-ci9WzgfY0mzTFKOoDr11f-z_l262M-ND1eskkDzguWoNnhVQtjFyj4JVqYQpYC5RrtDjlvSsIpWVa3aY18-fZxmUNEwsS9TYsDx8i6xA"/>
+</div>
+<p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Dr. Aris Thorne</p>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="grid grid-cols-[48px_1fr] gap-x-4 mb-2">
+<div class="flex flex-col items-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">brush</span>
+</div>
+<div class="w-[2px] bg-slate-200 dark:bg-slate-800 h-full mt-2"></div>
+</div>
+<div class="flex flex-1 flex-col pb-8">
+<div class="flex items-center justify-between">
+<p class="text-slate-900 dark:text-slate-100 text-lg font-bold">Design Workshop: UI Best Practices</p>
+<span class="material-symbols-outlined text-primary fill-1">bookmark</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm font-medium">Studio 2 • 11:00 AM - 12:30 PM</p>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-background-light dark:ring-background-dark">
+<img class="h-full w-full object-cover" data-alt="Professional portrait of a female designer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-BkussphsAcagRW06EHfOttNo72UhmH2xgCd1CnVvMrMlvvIZoA_1NBo1Wjzay12f_czPi2tHxtRzD5d5NZ-7lTKUzmwFvXb3IEsN6-2dO6cX2mWzRoI5m0wYl1zmbSKoDZJXia2HIeYKLYFaS6QQSH-JsD_ub6rJnwWoFp0ovSDn8_7lvBN6zCjspx3-mXMO9R4W1M0w--FlXfF7zCTzkfPwzyJRY1g7OMVEUzefLwJwsWFoVElR13kDsyVIUMRs-tWcnNuaFg"/>
+</div>
+<p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Elena Rodriguez</p>
+</div>
+</div>
+</div>
+<!-- Timeline Item 3 (Break/Neutral) -->
+<div class="grid grid-cols-[48px_1fr] gap-x-4 mb-2">
+<div class="flex flex-col items-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800">
+<span class="material-symbols-outlined text-[20px]">restaurant</span>
+</div>
+<div class="w-[2px] bg-slate-200 dark:bg-slate-800 h-full mt-2"></div>
+</div>
+<div class="flex flex-1 flex-col pb-8">
+<p class="text-slate-600 dark:text-slate-400 text-lg font-semibold">Networking Lunch</p>
+<div class="flex items-center gap-2 mt-1 text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm">Main Hall • 01:00 PM - 02:00 PM</p>
+</div>
+</div>
+</div>
+<!-- Timeline Item 4 -->
+<div class="grid grid-cols-[48px_1fr] gap-x-4 mb-2">
+<div class="flex flex-col items-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined text-[20px]">code</span>
+</div>
+<div class="w-[2px] border-l-2 border-dashed border-slate-200 dark:border-slate-800 h-full mt-2"></div>
+</div>
+<div class="flex flex-1 flex-col pb-8">
+<div class="flex items-center justify-between">
+<p class="text-slate-900 dark:text-slate-100 text-lg font-bold">Scaling Distributed Systems</p>
+<span class="material-symbols-outlined text-primary fill-1">bookmark</span>
+</div>
+<div class="flex items-center gap-2 mt-1 text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<p class="text-sm font-medium">Tech Lab 4 • 02:15 PM - 03:45 PM</p>
+</div>
+<div class="mt-3 flex items-center gap-2">
+<div class="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden ring-2 ring-background-light dark:ring-background-dark">
+<img class="h-full w-full object-cover" data-alt="Portrait of a software engineer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6QBwS8jDPkSWiaKQ7JlmPBJL3NenqwJQYAD4q3SGGJ00hVrCyxzbWKLsN98nAy4nCjmA3E4nYDgONUGGPgvqbdAqBSNfXKCmZYu49Nx61xiggeLPRywk0w-pHtI5KNCq_XJlx1X15r8ALYGv8TjyD4ECeWdMpZ7UYNsgnoWstpq4XAf86WF7zLfTee_R7ziEJXqt_APx5xuxqSyn0kxg0sA1oifBpUAnA1dRF84NMM430f5UAdtj4urM2yBlc_F5LPq5J7o8WUA"/>
+</div>
+<p class="text-xs font-semibold text-slate-700 dark:text-slate-300">Marcus Chen</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<footer class="fixed bottom-0 w-full z-20 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-4 pb-6 pt-2">
+<div class="flex gap-2 max-w-md mx-auto">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-bold uppercase">Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">calendar_today</span>
+<p class="text-[10px] font-bold uppercase">Schedule</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">groups</span>
+<p class="text-[10px] font-bold uppercase">Speakers</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-[10px] font-bold uppercase">Profile</p>
+</a>
+</div>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Atlas Medical Summit</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "surface-container": "#dbf1fe",
+                "on-secondary": "#ffffff",
+                "on-surface": "#071e27",
+                "on-tertiary-container": "#b6924c",
+                "inverse-surface": "#1e333c",
+                "surface-tint": "#4c56af",
+                "on-primary-container": "#8690ee",
+                "surface-container-low": "#e6f6ff",
+                "inverse-on-surface": "#dff4ff",
+                "tertiary": "#251800",
+                "tertiary-fixed-dim": "#e9c176",
+                "tertiary-fixed": "#ffdea5",
+                "secondary-container": "#cfe6f2",
+                "on-error": "#ffffff",
+                "on-background": "#071e27",
+                "on-secondary-container": "#526772",
+                "on-tertiary-fixed-variant": "#5d4201",
+                "primary-fixed-dim": "#bdc2ff",
+                "on-primary": "#ffffff",
+                "secondary-fixed-dim": "#b4cad6",
+                "on-secondary-fixed-variant": "#354a53",
+                "on-primary-fixed": "#000767",
+                "outline": "#767683",
+                "surface-variant": "#cfe6f2",
+                "inverse-primary": "#bdc2ff",
+                "outline-variant": "#c6c5d4",
+                "surface-bright": "#f3faff",
+                "error": "#ba1a1a",
+                "error-container": "#ffdad6",
+                "secondary": "#4c616c",
+                "surface": "#f3faff",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary": "#ffffff",
+                "primary": "#000666",
+                "on-tertiary-fixed": "#261900",
+                "background": "#f3faff",
+                "primary-container": "#1a237e",
+                "surface-container-highest": "#cfe6f2",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#e0e0ff",
+                "surface-container-high": "#d5ecf8",
+                "on-primary-fixed-variant": "#343d96",
+                "secondary-fixed": "#cfe6f2",
+                "on-surface-variant": "#454652",
+                "on-secondary-fixed": "#071e27",
+                "surface-dim": "#c7dde9",
+                "tertiary-container": "#402c00"
+              },
+              fontFamily: {
+                "headline": ["Noto Serif"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bilingual-label {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+        .chinese-text {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+        .caduceus-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40rem;
+            color: #000666;
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: -1;
+            user-select: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col">
+<!-- Watermark Background -->
+<span aria-hidden="true" class="material-symbols-outlined caduceus-watermark">genetics</span>
+<!-- Top Navigation (Shell Suprressed for Login Focus) -->
+<header class="flex justify-between items-center w-full px-8 py-8">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="clinical_notes">clinical_notes</span>
+<h1 class="font-headline font-black text-xl tracking-tight text-primary">ATLAS MEDICAL SUMMIT</h1>
+</div>
+<div class="hidden md:block">
+<span class="text-on-surface-variant font-medium text-sm">EN / <span class="chinese-text">中文</span></span>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center px-4">
+<!-- Login Container -->
+<div class="w-full max-w-[440px] bg-surface-container-lowest p-10 lg:p-14 rounded-xl shadow-sm">
+<!-- Form Header -->
+<div class="mb-12">
+<h2 class="font-headline text-3xl font-bold text-primary mb-2">Welcome Back</h2>
+<p class="text-on-surface-variant font-medium flex items-center gap-2">
+<span>Sign in to your account</span>
+<span class="text-xs opacity-60">|</span>
+<span class="chinese-text">登录您的账户</span>
+</p>
+</div>
+<!-- Login Form -->
+<form action="#" class="space-y-8">
+<!-- Username/Email Field -->
+<div class="space-y-2">
+<label class="bilingual-label text-sm font-semibold text-primary">
+<span>Email Address</span>
+<span class="chinese-text">电子邮箱</span>
+</label>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-none border-b border-outline-variant/20 focus:ring-0 focus:border-primary transition-all py-3 px-0 text-on-surface placeholder:text-on-surface-variant/40" placeholder="dr.smith@hospital.org" required="" type="email"/>
+<div class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-focus-within:w-full transition-all duration-300"></div>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-2">
+<div class="flex justify-between items-baseline">
+<label class="bilingual-label text-sm font-semibold text-primary">
+<span>Password</span>
+<span class="chinese-text">密码</span>
+</label>
+<a class="text-xs font-medium text-secondary hover:text-primary transition-colors" href="#">
+                            Forgot Password? <span class="chinese-text">忘记密码？</span>
+</a>
+</div>
+<div class="relative group">
+<input class="w-full bg-surface-container-low border-none border-b border-outline-variant/20 focus:ring-0 focus:border-primary transition-all py-3 px-0 text-on-surface placeholder:text-on-surface-variant/40" placeholder="••••••••" required="" type="password"/>
+<div class="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-focus-within:w-full transition-all duration-300"></div>
+</div>
+</div>
+<!-- Remember Me -->
+<div class="flex items-center gap-3">
+<input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20" id="remember" type="checkbox"/>
+<label class="text-sm text-on-surface-variant font-medium" for="remember">
+                        Remember this device <span class="chinese-text ml-1">记住此设备</span>
+</label>
+</div>
+<!-- Submit Button -->
+<div class="pt-4">
+<button class="w-full bg-primary-container hover:bg-primary text-on-primary py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all transform active:scale-[0.98]" type="submit">
+<span>Sign In</span>
+<span class="chinese-text text-tertiary-fixed font-medium">进入峰会</span>
+<span class="material-symbols-outlined text-tertiary-fixed text-lg" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Footer Links -->
+<div class="mt-12 text-center">
+<p class="text-on-surface-variant text-sm font-medium">
+                    Don't have an account? 
+                    <a class="text-primary font-bold hover:underline decoration-tertiary-fixed underline-offset-4 ml-1" href="#">
+                        Sign Up <span class="chinese-text font-normal">注册</span>
+</a>
+</p>
+</div>
+</div>
+</main>
+<!-- Page Footer -->
+<footer class="w-full px-8 py-10 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex items-center gap-8">
+<div class="h-10 w-px bg-outline-variant/20 hidden md:block"></div>
+<div class="text-on-surface-variant text-[11px] leading-relaxed max-w-xs opacity-70">
+                © 2024 Atlas Medical Summit. All academic proceedings are protected under international copyright law.
+            </div>
+</div>
+<div class="flex gap-6 text-[11px] font-bold tracking-widest text-secondary uppercase">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</footer>
+<!-- Decorative Corner Element -->
+<div class="fixed bottom-0 right-0 p-12 opacity-10 pointer-events-none hidden lg:block">
+<img class="w-64 h-64 object-contain" data-alt="Abstract medical molecule structure pattern" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe2MmOCS_74CdtBE0QSGNATcGMHGiFjeKVdHg9T789gvq6rrPHcGTSIeTSfELqwy27WGlDza99u9Ahw4MBqzK2RmYJmeprKzh6k1XewTKUVF9k2WheJtlnTtvGSEM1vJxNT4_mkKxXKzSgdrWjN4xY8xaLhcGaeFPzrNCwNuC7mebxbn_Luow9JymCJVTAi9EqCMmaq0dRvhEqTLqNakVtW_XdH4y1o0R3q7MH2P3_HDTt684yCnD5UvJ1r0SK97h_TTZYawDDSQ"/>
+</div>
+</body></html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#196ee6",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111821",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Digital Ticket - E-Check-in</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header Section -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800">
+<div class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<div class="flex flex-col items-center flex-1">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">电子门票</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Digital Ticket</p>
+</div>
+<div class="flex w-12 items-center justify-end">
+<button class="flex items-center justify-center rounded-lg h-12 bg-transparent text-slate-900 dark:text-slate-100 p-0">
+<span class="material-symbols-outlined">share</span>
+</button>
+</div>
+</div>
+<!-- User & Event Info -->
+<div class="flex p-6 @container">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full border-4 border-white dark:border-slate-800 shadow-lg min-h-24 w-24" data-alt="Professional portrait of a male attendee" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB-tSbxwpPmOOyDJUqzsOhIAJwQxDjOMyKo8bEOW9UmHbb0kLiFVs8MM0xftfGwPh13JH2YEcQvATymji7xXz-WcfuYmiXAzZJtc2Vo-x5fwPcWJl6B_RrVMyg5Ot6hwmtgDBp8WoRZH0gbVftl7mRDBJUKBnWsF3OAEHlonAdmovwTjzZ2gXKF-ySm3VjbpSCIwWQHRUdb86NZ0dnJmaAEgrcOeh6nm5kvCJMj3fAbtD3yGVdAmIQIkslesOvawXp3Wi5QPCvbng");'></div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight text-center">张伟 / Zhang Wei</p>
+<p class="text-primary text-base font-semibold leading-normal text-center mt-1">2024 全球科技大会</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal text-center">Global Tech Conference 2024</p>
+</div>
+</div>
+</div>
+</div>
+<!-- QR Code Main Card -->
+<div class="px-6 flex flex-col items-center">
+<div class="w-full max-w-sm bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800">
+<div class="p-8 flex flex-col items-center">
+<!-- Dynamic QR Code -->
+<div class="relative group">
+<div class="w-64 h-64 bg-slate-100 dark:bg-slate-800 rounded-lg p-4 border-2 border-primary/20">
+<img alt="Check-in QR Code" class="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal filter dark:invert-0" data-alt="Dynamic QR code for event check-in" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf6T_0Az3xiXArhybo-8EN_J03jDsBffzLF6hqLJXLADHBLY149Y2z2H0OWDeTJI89Roh48Q44K45utkY6TEf6PaAm3NU-di1GucRJ74BxJ37vWOdE7moHpHS3pLR5CFMcFfmfvUZik_471REwXDm0UG1TJu7yonlAvs1Dyo41dwLs4lIXDIn1DOhWfig2jEWeqjegBqhhhy9Vi3f45pCexZFgIEN2HyPBQa-3efIZtEE8Zjk8H02v-fSn5Hezh5jy4qrsu0Woeg"/>
+</div>
+<div class="mt-4 flex items-center justify-center gap-2 text-primary">
+<span class="material-symbols-outlined animate-spin-slow">sync</span>
+<span class="text-xs font-medium uppercase tracking-wider">自动刷新中 / Auto Refreshing</span>
+</div>
+</div>
+<div class="w-full mt-6 pt-6 border-t border-dashed border-slate-200 dark:border-slate-700">
+<div class="flex justify-between items-center mb-4">
+<div>
+<p class="text-slate-400 text-[10px] uppercase font-bold">席位类别 / Category</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold">VIP 贵宾</p>
+</div>
+<div class="text-right">
+<p class="text-slate-400 text-[10px] uppercase font-bold">入场编号 / Entry ID</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold">#GTC-8829</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Ticket Perforation Effect -->
+<div class="relative h-4 bg-background-light dark:bg-background-dark">
+<div class="absolute -left-3 top-0 w-6 h-6 rounded-full bg-background-light dark:bg-background-dark"></div>
+<div class="absolute -right-3 top-0 w-6 h-6 rounded-full bg-background-light dark:bg-background-dark"></div>
+</div>
+<div class="p-4 bg-primary/5 dark:bg-primary/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">info</span>
+<div>
+<p class="text-xs text-slate-700 dark:text-slate-300">请在入口处出示此二维码</p>
+<p class="text-[10px] text-slate-500 dark:text-slate-400">Please present this QR code at the entrance</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Refresh Timer -->
+<div class="flex gap-4 py-8 px-6 justify-center">
+<div class="flex flex-col items-center gap-2">
+<div class="flex h-12 w-16 items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+<p class="text-primary text-xl font-bold leading-tight">00</p>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">分 Min</p>
+</div>
+<div class="text-2xl font-bold text-slate-300 self-center mb-6">:</div>
+<div class="flex flex-col items-center gap-2">
+<div class="flex h-12 w-16 items-center justify-center rounded-lg bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+<p class="text-primary text-xl font-bold leading-tight">42</p>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest">秒 Sec</p>
+</div>
+</div>
+<!-- Navigation Placeholder / Spacer -->
+<div class="mt-auto">
+<div class="flex gap-2 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pb-6 pt-3">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-bold uppercase tracking-tighter">首页 Home</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">confirmation_number</span>
+<p class="text-[10px] font-bold uppercase tracking-tighter">票务 Ticket</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-bold uppercase tracking-tighter">我的 Profile</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-[10px] font-bold uppercase tracking-tighter">设置 Gear</p>
+</a>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#e5e2e1",
+              "on-secondary": "#263238",
+              "surface-container": "#201f1f",
+              "on-tertiary-container": "#b6924c",
+              "inverse-surface": "#e5e2e1",
+              "surface-tint": "#bdc2ff",
+              "tertiary": "#e9c176",
+              "inverse-on-surface": "#313030",
+              "on-primary-container": "#8690ee",
+              "surface-container-low": "#1c1b1b",
+              "tertiary-fixed-dim": "#e9c176",
+              "tertiary-fixed": "#ffdea5",
+              "secondary-container": "#3c494f",
+              "on-error": "#690005",
+              "on-background": "#e5e2e1",
+              "on-secondary-container": "#aab7bf",
+              "secondary-fixed-dim": "#bbc8d0",
+              "on-tertiary-fixed-variant": "#5d4201",
+              "primary-fixed-dim": "#bdc2ff",
+              "on-primary": "#1b247f",
+              "surface-variant": "#353534",
+              "on-secondary-fixed-variant": "#3c494f",
+              "on-primary-fixed": "#000767",
+              "outline": "#908f9d",
+              "surface-bright": "#393939",
+              "error": "#ffb4ab",
+              "error-container": "#93000a",
+              "inverse-primary": "#4c56af",
+              "outline-variant": "#454652",
+              "secondary": "#bbc8d0",
+              "surface": "#131313",
+              "on-tertiary": "#412d00",
+              "primary": "#bdc2ff",
+              "on-tertiary-fixed": "#261900",
+              "surface-container-lowest": "#0e0e0e",
+              "primary-fixed": "#e0e0ff",
+              "surface-container-high": "#2a2a2a",
+              "background": "#131313",
+              "primary-container": "#1a237e",
+              "surface-container-highest": "#353534",
+              "on-error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#343d96",
+              "on-surface-variant": "#c6c5d4",
+              "on-secondary-fixed": "#111d23",
+              "secondary-fixed": "#d7e4ec",
+              "surface-dim": "#131313",
+              "tertiary-container": "#402c00"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .glass-effect {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-tertiary/30">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-6 h-16 w-full bg-[#131313]/60 backdrop-blur-md shadow-[0_16px_40px_rgba(229,226,225,0.06)] bg-gradient-to-b from-[#131313] to-transparent">
+<div class="flex items-center gap-4">
+<button class="text-[#E9C176] hover:bg-[#353534]/50 transition-colors p-2 rounded-lg active:scale-95 duration-200">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="text-lg font-bold tracking-[0.05em] text-[#E5E2E1] font-headline uppercase">EXECUTIVE PRESENCE</span>
+</div>
+<div class="hidden md:flex items-center space-x-8">
+<nav class="flex items-center space-x-6 font-headline tracking-[-0.02em] font-bold uppercase text-xs">
+<a class="text-[#E9C176]" href="#">Home / 首页</a>
+<a class="text-[#E5E2E1] hover:bg-[#353534]/50 transition-colors px-2 py-1 rounded" href="#">Events / 活动</a>
+<a class="text-[#E5E2E1] hover:bg-[#353534]/50 transition-colors px-2 py-1 rounded" href="#">Schedule / 日程</a>
+</nav>
+</div>
+<div class="flex items-center gap-3">
+<div class="hidden sm:flex flex-col items-end mr-2">
+<span class="text-[10px] font-bold text-tertiary tracking-widest uppercase">VIP Delegate</span>
+<span class="text-xs text-on-surface/60 font-medium">J. Montgomery</span>
+</div>
+<div class="w-10 h-10 rounded-full border border-outline-variant/30 overflow-hidden shadow-lg shadow-black/20">
+<img class="w-full h-full object-cover" data-alt="Executive User Portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDchXNT_sabSKZXGX9IGbeIg3RpflTlj_naKREHOQSwQB08NUBX-exkzIc99tddh7vRB6WMmWlVQKMU0j2nnx4OM1gu5h_2uwkiUNVx5Sn30fXBqRIic5CtL1iKydpGAABBQzrg2UW0XMrBu81AtvOSg3htk8otUEHcT8vjLY4FmRRnswVu8fBJAbyUsH79uDjxB3a22UBZ1gL_rqoN8tUXUuQ-QLPPvz62lptownNeGNUIjJUjDoOoO9uMBWZgfa-7l6MBODDs_A"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto">
+<!-- Search & Filter Section -->
+<section class="mb-12">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div class="space-y-2">
+<span class="text-tertiary font-label text-sm font-bold uppercase tracking-[0.2em]">Global Discovery / 全球发现</span>
+<h1 class="text-4xl md:text-6xl font-headline font-extrabold tracking-tighter text-on-surface">Curated Events.</h1>
+</div>
+<div class="relative w-full md:w-96 group">
+<div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-on-surface/40 group-focus-within:text-tertiary transition-colors">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="w-full bg-surface-container-lowest border border-outline-variant/15 rounded-lg py-4 pl-12 pr-4 text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-primary/100 focus:ring-2 focus:ring-primary/10 transition-all font-body text-sm" placeholder="Search summits, venues, or dates..." type="text"/>
+</div>
+</div>
+</section>
+<!-- Tabs Navigation -->
+<section class="mb-10 flex border-b border-outline-variant/10">
+<button class="px-8 py-4 text-sm font-bold uppercase tracking-widest text-tertiary border-b-2 border-tertiary flex items-center gap-2">
+                All Events / 所有活动
+            </button>
+<button class="px-8 py-4 text-sm font-bold uppercase tracking-widest text-on-surface/40 hover:text-on-surface transition-colors">
+                My Events / 我的活动
+            </button>
+</section>
+<!-- Bento Grid Layout -->
+<section class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Featured Large Card -->
+<div class="md:col-span-8 group relative overflow-hidden rounded-xl bg-surface-container-low aspect-[16/10] md:aspect-auto md:h-[500px]">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="High-tech conference main stage with purple lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFEeQGqheAMH2pVenCJYzd5pIGaL0_CK7BDpoLCC1i-Dm8Cd3sfkEfs2QPof-h2GlfYunELJPaiRDxA43ae57DBuM_PI79BuyMFmnicfkK1NvA6aT2nOTC1euBIgyX0TOKb_hEJK9G6rPffT0MckCZvYth0qvHIMghYoC6oMPXyAy_unbTIcvizoeDF4zpJM-AlFwuAx4mJ5rhlUfxv5WgUDf4hSupZzfiQsx9ZTbhshOWwop9EXbb2uYR2tBrRwWQFOwqnQnkCQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8 w-full">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-tertiary text-on-tertiary text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter">Live / 现场</span>
+<span class="text-on-surface/80 text-xs font-bold font-label uppercase tracking-widest">Oct 24 - 26, 2024</span>
+</div>
+<h2 class="text-3xl md:text-5xl font-headline font-bold mb-3 tracking-tight leading-none text-[#E5E2E1]">Quantum Horizons Summit<br/><span class="text-2xl font-medium text-on-surface/60">量子地平线峰会</span></h2>
+<p class="text-on-surface/70 max-w-xl text-sm leading-relaxed mb-6 font-body">Exploring the convergence of post-quantum cryptography and institutional financial systems at the Grand Hyatt, Singapore.</p>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-md font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-opacity">
+                        View Details / 查看详情
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Side Card 1 -->
+<div class="md:col-span-4 group relative overflow-hidden rounded-xl bg-surface-container-low h-[240px] md:h-auto">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Minimalist modern glass meeting room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-s49YiwzeeMoNTZiyb91coshVLNe5wkDFb4G5-kp_7DI2yymtKz848vixXHJnIFRVpsO1D1Ff1SCHxTyX0mL1g-6I4v9fstvn0T-4QDQHcCMvG8c50Cj85rQwtSkDcznLS9WuCHhpQ-cIp7B-5u-kj0ruIICOZSeHCrvNIc1zPBsKfnaJQWLrwmpUENAJNdMsbMC0gaGE_DYaL60jGx3rG5KqLITXIhIUOPftlVuIQWtpo9cDE9npei3sFy4SjdozdtWeVS51tw"/>
+<div class="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors"></div>
+<div class="absolute top-6 left-6">
+<div class="w-1 h-8 bg-tertiary mb-4"></div>
+</div>
+<div class="absolute bottom-6 left-6 right-6">
+<span class="text-tertiary text-[10px] font-bold uppercase tracking-widest block mb-1">Executive Roundtable</span>
+<h3 class="text-xl font-headline font-bold text-on-surface leading-tight">Leadership in AI / AI 领导力</h3>
+<div class="mt-4 flex items-center justify-between">
+<span class="text-xs text-on-surface/60">Nov 12, 2024</span>
+<span class="material-symbols-outlined text-on-surface/40 group-hover:text-tertiary transition-colors">north_east</span>
+</div>
+</div>
+</div>
+<!-- Side Card 2 -->
+<div class="md:col-span-4 group relative overflow-hidden rounded-xl bg-surface-container-low h-[240px]">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Bilingual gala dinner setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzxbHGrQ9slYodCDTB_9LDdWZ9JYMCWJDxEAwVojTZTDq8GitxxBAcTutA5fiWLjhywGD32koFmg6G4dvq3V4cswsLFLrXi1n5jZ6xGIOBpJ7GCM3PEjLhkrc7jy0XCgburL2WJxyBcr0cHU4_1FAIqUuLeYz6GWOhijxHR_YZTabDx1qE3JjP7ZoHbW_9W2m8EU037uI4A8murUFpD8IcTZPSqsI5CvpEy4kjeh3lWA4a9t4TQMaZ1rkwoCoR-knckI-afBP0BA"/>
+<div class="absolute inset-0 bg-gradient-to-br from-background/80 to-transparent"></div>
+<div class="absolute inset-0 p-6 flex flex-col justify-end">
+<span class="text-on-surface/50 text-[10px] font-bold uppercase tracking-widest block mb-1">Networking / 社交</span>
+<h3 class="text-xl font-headline font-bold text-on-surface">VIP Gala Night / 贵宾晚宴</h3>
+<p class="text-xs text-on-surface/40 mt-1">St. Regis, Hong Kong</p>
+</div>
+</div>
+<!-- Side Card 3 -->
+<div class="md:col-span-8 group relative overflow-hidden rounded-xl bg-surface-container-low h-[240px]">
+<div class="absolute inset-0 bg-surface-container-high border-l-4 border-tertiary p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="max-w-md">
+<span class="text-tertiary text-[10px] font-bold uppercase tracking-[0.3em] block mb-2">Member Exclusive / 会员专享</span>
+<h3 class="text-2xl font-headline font-bold text-on-surface">Annual Tech Forum: Silicon Valley<br/><span class="text-lg font-medium text-on-surface/60">年度技术论坛：硅谷</span></h3>
+</div>
+<div class="flex items-center gap-6">
+<div class="text-right">
+<span class="block text-2xl font-headline font-black text-on-surface">DEC 05</span>
+<span class="block text-[10px] text-on-surface/40 uppercase tracking-widest">San Jose, CA</span>
+</div>
+<button class="w-12 h-12 rounded-full border border-outline-variant/30 flex items-center justify-center text-on-surface hover:bg-tertiary hover:text-on-tertiary hover:border-tertiary transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Secondary Listing Section -->
+<section class="mt-20">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-sm font-bold uppercase tracking-[0.4em] text-on-surface/40">Upcoming Venues / 即将到来的场馆</h3>
+<div class="h-px flex-1 mx-8 bg-outline-variant/20"></div>
+<button class="text-xs font-bold text-tertiary uppercase tracking-widest hover:underline">View All Map / 查看地图</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="space-y-3">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container grayscale hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="Futuristic architectural building in Paris" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrlReCPqqL_DZqFDp39Hlep_elTIuNM1WoWqMH2U8P-Fayi7ArfRPAO595t0bkMLD1ESVtV2kpgQvqvHy6Zzwhx33bm_mO1EMIgwRS4SwUcfHpW9hKK_8tD5RYCkwKgbCdm0FzvT34ESSkMUF3Zn0FeeJznWJKF0gd-ApdN2Zav5plECQGEZQf9fpaiCP-qVTVUJKl5Ue2J3G-1q8dy5L9Xtv1DHmMkp0zDtena4VBpHJdk9WjorjbRipOCspwMizDyFVTheDg2g"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface/80">Paris / 巴黎</p>
+<p class="text-[10px] text-on-surface/40 uppercase">La Défense Center</p>
+</div>
+<div class="space-y-3">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container grayscale hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="London skyline bridge view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyz5gPlbMc8HALP-fVFyNsqMtOYWCZd6j14tw13pexxv-1wgB_5kINiDVq4J-oz9lhCyF8Ry8BCSNKaeq2Z-9L7thq6L_ytluUCKmX0cZKfO7VNJs7vLivyM3XtKQaOQpTgknMlO9IP_8KI_aDR1s0pW5NHOV1KlL3hQM22kncn-f6OqtBjFgP98T-1Xfg-bXRdVGGCAN8xr6G_aHWLvANtBJXhSghTB9m4GW-VkQG920aaAhT0OC9QlNYEYafLjJj-1WiWHbPvw"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface/80">London / 伦敦</p>
+<p class="text-[10px] text-on-surface/40 uppercase">The Shard Executive</p>
+</div>
+<div class="space-y-3">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container grayscale hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="Chicago cityscape architecture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAG3KoflGP9bp4g8xe7BJpSw8l1xNsTst1Dog3oP1DK2OqboGV5_NK5Sy3c-c5L0j6WxYStlgt7p4_IUR2Yih9bSF5_uU3JFFROwfLmjWyiM9Lkcd8OcxH0lwY9BrJNV7Vm4VVV9bdDTgFrW4tDN1y8fq4mM8GWBPF-bx0CUDTuEyZ0181a7Pd-PqE_uKJWK2Uz4sLwVG8zTxXhn7WBzRC4zr5ALvZk4DZ8FhvxADP5cbnX044q6zeafxiRF13-P-MYNCtJePAXDw"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface/80">Chicago / 芝加哥</p>
+<p class="text-[10px] text-on-surface/40 uppercase">McCormick Place</p>
+</div>
+<div class="space-y-3">
+<div class="aspect-square rounded-lg overflow-hidden bg-surface-container grayscale hover:grayscale-0 transition-all duration-500">
+<img class="w-full h-full object-cover" data-alt="Dubai Burj Khalifa view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9wHmmFUGVc4QaBOALcj6gpaKqTuZk0nS_SqMLknWbwPnbbxWRg023wEgmmPKC2fGaxZJiC6eK_Y_bh4hEKpXsSu2FR27pYuts9htemDxCs9VutZI99HPFb-8E1yNMOIe-EvG0fZneS9dbRMwB0xM0xB6f_M4AwEDgiyMmMzgvWh9Lvno3NcHVmMDJAMy4Y3_u4XWPK-0proPuxWZim0Fz2dKZWIU8KRDdylV4Wt40VPCV3dGV_eaNUYF8yrf4QrsGAU5Y2Rflgg"/>
+</div>
+<p class="text-xs font-bold uppercase tracking-widest text-on-surface/80">Dubai / 迪拜</p>
+<p class="text-[10px] text-on-surface/40 uppercase">JW Marriott Marquis</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-4 bg-[#1C1B1B]/80 backdrop-blur-xl z-50 rounded-t-xl shadow-[0_-8px_32px_rgba(0,0,0,0.4)] md:hidden">
+<button class="flex flex-col items-center justify-center text-[#E5E2E1]/50 hover:text-[#E9C176] transition-all active:opacity-80">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#E9C176] scale-110 transition-transform active:opacity-80">
+<span class="material-symbols-outlined">language</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Events</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#E5E2E1]/50 hover:text-[#E9C176] transition-all active:opacity-80">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Schedule</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#E5E2E1]/50 hover:text-[#E9C176] transition-all active:opacity-80">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Profile</span>
+</button>
+</nav>
+<!-- Desktop Side Navigation Indicator (Floating Label) -->
+<div class="hidden md:flex fixed left-8 top-1/2 -translate-y-1/2 flex-col items-center gap-8 z-40">
+<div class="h-32 w-px bg-gradient-to-t from-tertiary to-transparent"></div>
+<span class="rotate-180 [writing-mode:vertical-lr] font-label text-[10px] font-bold tracking-[0.5em] text-tertiary uppercase">Curated Excellence</span>
+<div class="h-32 w-px bg-gradient-to-b from-tertiary to-transparent"></div>
+</div>
+</body></html>

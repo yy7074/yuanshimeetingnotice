@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Digital Pass | Academic Editorial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container": "#dbf1fe",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#071e27",
+                        "on-tertiary-container": "#b6924c",
+                        "inverse-surface": "#1e333c",
+                        "surface-tint": "#4c56af",
+                        "on-primary-container": "#8690ee",
+                        "surface-container-low": "#e6f6ff",
+                        "inverse-on-surface": "#dff4ff",
+                        "tertiary": "#251800",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "tertiary-fixed": "#ffdea5",
+                        "secondary-container": "#cfe6f2",
+                        "on-error": "#ffffff",
+                        "on-background": "#071e27",
+                        "on-secondary-container": "#526772",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#b4cad6",
+                        "on-secondary-fixed-variant": "#354a53",
+                        "on-primary-fixed": "#000767",
+                        "outline": "#767683",
+                        "surface-variant": "#cfe6f2",
+                        "inverse-primary": "#bdc2ff",
+                        "outline-variant": "#c6c5d4",
+                        "surface-bright": "#f3faff",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "secondary": "#4c616c",
+                        "surface": "#f3faff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "primary": "#000666",
+                        "on-tertiary-fixed": "#261900",
+                        "background": "#f3faff",
+                        "primary-container": "#1a237e",
+                        "surface-container-highest": "#cfe6f2",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#e0e0ff",
+                        "surface-container-high": "#d5ecf8",
+                        "on-primary-fixed-variant": "#343d96",
+                        "secondary-fixed": "#cfe6f2",
+                        "on-surface-variant": "#454652",
+                        "on-secondary-fixed": "#071e27",
+                        "surface-dim": "#c7dde9",
+                        "tertiary-container": "#402c00"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .bilingual-weight { font-size: 0.9em; }
+        .qr-gradient {
+            background: linear-gradient(135deg, #ffdea5 0%, #b6924c 100%);
+            padding: 2px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#f3faff] dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#000666] dark:text-blue-400">close</span>
+<h1 class="font-['Noto_Serif'] text-xl font-black tracking-tight text-[#000666] dark:text-blue-200">ACADEMIC EDITORIAL</h1>
+</div>
+<div class="text-[#000666] dark:text-blue-400 font-['Noto_Serif'] font-bold text-lg">EN/ZH</div>
+</header>
+<main class="flex-grow pt-24 pb-32 px-6 max-w-lg mx-auto w-full">
+<!-- Ticket Container -->
+<div class="relative bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<!-- VIP Badge Header -->
+<div class="bg-primary px-8 py-3 flex justify-between items-center">
+<span class="text-tertiary-fixed font-headline font-bold tracking-widest text-xs">VIP ACCESS</span>
+<span class="text-on-primary/60 text-[10px] font-medium tracking-tighter uppercase">Entry ID: AE-2024-8892</span>
+</div>
+<div class="p-8 flex flex-col items-center">
+<!-- Attendee Profile -->
+<div class="flex flex-col items-center mb-10 text-center">
+<div class="w-24 h-24 rounded-full border-2 border-surface-container overflow-hidden mb-4">
+<img alt="Professional Headshot" class="w-full h-full object-cover" data-alt="Close-up professional portrait of a doctor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4_JqyW0ovI5hPIQya26RrIsNwfDFailzkJIj7EBCcFiiIb0jvX32i-luB3amVYy9zvmbqFgiDy97q9k34p1NuYkW3-wr-u8lzHuOPuQcW3LGRm9lR7vjyCvvul1v6zsIEoWV03fO_4BLzbAUjjZHLTd7PSmWdlopXMy9UJcJ8uAmNjbZuDmBJ8vknEkBtWH88SEfj5Sh83IVCNAHGrX3w7mYac4YommnPF8u5KUaTYeVV95F1Dy2goJpJ5B6Tu7g7wO78I_bb1g"/>
+</div>
+<h2 class="font-headline text-2xl font-black text-primary leading-tight">Dr. Alistair Thorne</h2>
+<p class="font-headline text-on-surface-variant text-lg bilingual-weight">埃利斯泰尔·索恩 博士</p>
+<p class="text-secondary font-medium text-xs tracking-wider mt-2 uppercase">Senior Oncology Curator</p>
+</div>
+<!-- QR Code Section -->
+<div class="qr-gradient rounded-xl mb-8">
+<div class="bg-white p-4 rounded-[calc(0.5rem-1px)]">
+<div class="w-48 h-48 bg-white flex items-center justify-center border border-slate-100">
+<!-- Representing a complex QR code visually -->
+<img alt="Access QR Code" class="w-full h-full object-contain" data-alt="Professional high-definition secure QR code" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU7iiSTveNsE-L8_jKsKUQJcIpXsi4dWHfzygl9qYmLlkM31oLdlOtEBf-e8IlguILrCdCLKPON1y0tyKYQI-M6U_8yrv-dNSu4OixBQ4F3HlSf-W99_gn-3G1S5CoQ3qRwT2a0IPxaTJGtQoFjWP9l-bVV09th_gdRtVZhXmwfBDa6DZCgnQ36vw4uCBn4ho9kHjupSWWtUXL-8P6NBkL7kgZgGbrc2NCbMvqG6PizyNSBCkMcmoY9u8MddAd2rGQnmdHJuAkaQ"/>
+</div>
+</div>
+</div>
+<!-- Event Details -->
+<div class="w-full space-y-6 text-center">
+<div>
+<h3 class="text-primary font-headline font-bold text-lg">International Editorial Summit 2024</h3>
+<p class="text-on-surface-variant text-sm bilingual-weight">2024年国际编纂峰会</p>
+</div>
+<!-- Detail Grid -->
+<div class="grid grid-cols-2 gap-4 border-t border-b border-surface-container py-6">
+<div class="text-left">
+<p class="text-[10px] text-secondary font-bold uppercase tracking-widest mb-1">Date / 日期</p>
+<p class="font-semibold text-primary text-sm">Oct 24 - 26</p>
+</div>
+<div class="text-left">
+<p class="text-[10px] text-secondary font-bold uppercase tracking-widest mb-1">Hall / 会场</p>
+<p class="font-semibold text-primary text-sm">Grand Atrium</p>
+</div>
+</div>
+<!-- Security Refresh -->
+<div class="flex items-center justify-center gap-3 bg-surface-container-low py-3 px-6 rounded-full">
+<span class="material-symbols-outlined text-primary text-sm">sync</span>
+<div class="flex items-baseline gap-2">
+<span class="text-[10px] text-secondary font-bold uppercase tracking-widest">Code refreshes in:</span>
+<span class="text-primary font-mono font-bold">00:44</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Perforation Effect -->
+<div class="absolute bottom-20 -left-3 w-6 h-6 bg-surface rounded-full shadow-inner"></div>
+<div class="absolute bottom-20 -right-3 w-6 h-6 bg-surface rounded-full shadow-inner"></div>
+<div class="px-8 pb-8 pt-2">
+<p class="text-center text-[9px] text-on-surface-variant/50 leading-relaxed italic">
+                    This digital pass is exclusive to the named holder and non-transferable. 
+                    Please present valid government ID upon request at the VIP concourse.
+                </p>
+</div>
+</div>
+<!-- Secondary Action -->
+<button class="mt-8 w-full py-4 rounded-xl border-outline-variant border opacity-50 flex items-center justify-center gap-3 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary">file_download</span>
+<span class="text-secondary font-semibold text-sm">Save to Apple Wallet</span>
+</button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#f3faff]/80 dark:bg-slate-950/80 backdrop-blur-md border-t border-slate-200/10 dark:border-slate-800/10">
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 opacity-70 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 opacity-70 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined">event_available</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Events</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#000666] dark:text-blue-300 font-bold bg-[#dbf1fe] dark:bg-blue-900/30 rounded-xl px-3 py-1 scale-110 duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Schedule</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 opacity-70 hover:opacity-100 transition-opacity" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Profile</span>
+</a>
+</nav>
+</body></html>

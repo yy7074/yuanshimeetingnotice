@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#dbf1fe",
+              "on-secondary": "#ffffff",
+              "on-surface": "#071e27",
+              "on-tertiary-container": "#b6924c",
+              "inverse-surface": "#1e333c",
+              "surface-tint": "#4c56af",
+              "on-primary-container": "#8690ee",
+              "surface-container-low": "#e6f6ff",
+              "inverse-on-surface": "#dff4ff",
+              "tertiary": "#251800",
+              "tertiary-fixed-dim": "#e9c176",
+              "tertiary-fixed": "#ffdea5",
+              "secondary-container": "#cfe6f2",
+              "on-error": "#ffffff",
+              "on-background": "#071e27",
+              "on-secondary-container": "#526772",
+              "on-tertiary-fixed-variant": "#5d4201",
+              "primary-fixed-dim": "#bdc2ff",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#b4cad6",
+              "on-secondary-fixed-variant": "#354a53",
+              "on-primary-fixed": "#000767",
+              "outline": "#767683",
+              "surface-variant": "#cfe6f2",
+              "inverse-primary": "#bdc2ff",
+              "outline-variant": "#c6c5d4",
+              "surface-bright": "#f3faff",
+              "error": "#ba1a1a",
+              "error-container": "#ffdad6",
+              "secondary": "#4c616c",
+              "surface": "#f3faff",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary": "#ffffff",
+              "primary": "#000666",
+              "on-tertiary-fixed": "#261900",
+              "background": "#f3faff",
+              "primary-container": "#1a237e",
+              "surface-container-highest": "#cfe6f2",
+              "on-error-container": "#93000a",
+              "primary-fixed": "#e0e0ff",
+              "surface-container-high": "#d5ecf8",
+              "on-primary-fixed-variant": "#343d96",
+              "secondary-fixed": "#cfe6f2",
+              "on-surface-variant": "#454652",
+              "on-secondary-fixed": "#071e27",
+              "surface-dim": "#c7dde9",
+              "tertiary-container": "#402c00"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f3faff;
+            color: #071e27;
+            font-family: 'Inter', sans-serif;
+        }
+        .serif-text {
+            font-family: 'Noto Serif', serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface selection:bg-surface-container-highest">
+<!-- Shared TopAppBar -->
+<header class="bg-[#f3faff] dark:bg-slate-950 flex justify-between items-center w-full px-6 py-4 fixed top-0 z-50">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#000666] dark:text-blue-400 cursor-pointer">menu</span>
+<h1 class="font-['Noto_Serif'] text-xl font-black tracking-tight text-[#000666] dark:text-blue-200">ACADEMIC EDITORIAL</h1>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex gap-8 items-center">
+<span class="text-slate-500 dark:text-slate-400 font-medium hover:bg-[#dbf1fe] dark:hover:bg-slate-800 transition-colors px-3 py-1 rounded cursor-pointer">Home</span>
+<span class="text-slate-500 dark:text-slate-400 font-medium hover:bg-[#dbf1fe] dark:hover:bg-slate-800 transition-colors px-3 py-1 rounded cursor-pointer">Events</span>
+<span class="text-[#000666] dark:text-blue-300 font-semibold px-3 py-1 rounded cursor-pointer">Schedule</span>
+<span class="text-slate-500 dark:text-slate-400 font-medium hover:bg-[#dbf1fe] dark:hover:bg-slate-800 transition-colors px-3 py-1 rounded cursor-pointer">Profile</span>
+</nav>
+<button class="font-['Noto_Serif'] font-bold text-lg dark:text-slate-100 text-[#000666]">EN/ZH</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-4 md:px-12 max-w-7xl mx-auto min-h-screen">
+<!-- Header Section -->
+<section class="mb-12">
+<h2 class="serif-text text-4xl md:text-5xl font-black text-primary mb-2">Summit Agenda</h2>
+<p class="text-on-surface-variant font-medium tracking-wide">THE 12TH ANNUAL MEDICAL INNOVATION SUMMIT</p>
+</section>
+<!-- Horizontal Date Picker -->
+<nav class="flex overflow-x-auto pb-4 gap-4 sticky top-20 bg-surface/95 backdrop-blur-md z-40 mb-12 no-scrollbar">
+<div class="flex flex-col items-center justify-center min-w-[80px] h-24 rounded-xl bg-primary text-on-primary shadow-lg transition-transform duration-150 cursor-pointer">
+<span class="text-xs font-bold tracking-widest uppercase opacity-70">OCT</span>
+<span class="serif-text text-3xl font-black">14</span>
+<span class="text-[10px] font-semibold">MONDAY</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[80px] h-24 rounded-xl bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="text-xs font-bold tracking-widest uppercase opacity-60">OCT</span>
+<span class="serif-text text-3xl font-black">15</span>
+<span class="text-[10px] font-semibold">TUESDAY</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[80px] h-24 rounded-xl bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="text-xs font-bold tracking-widest uppercase opacity-60">OCT</span>
+<span class="serif-text text-3xl font-black">16</span>
+<span class="text-[10px] font-semibold">WEDNESDAY</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[80px] h-24 rounded-xl bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="text-xs font-bold tracking-widest uppercase opacity-60">OCT</span>
+<span class="serif-text text-3xl font-black">17</span>
+<span class="text-[10px] font-semibold">THURSDAY</span>
+</div>
+<div class="flex flex-col items-center justify-center min-w-[80px] h-24 rounded-xl bg-surface-container-low text-primary hover:bg-surface-container-high transition-colors cursor-pointer opacity-40">
+<span class="text-xs font-bold tracking-widest uppercase opacity-60">OCT</span>
+<span class="serif-text text-3xl font-black">18</span>
+<span class="text-[10px] font-semibold">FRIDAY</span>
+</div>
+</nav>
+<!-- Timeline Section -->
+<div class="space-y-16 relative">
+<!-- Timeline Vertical Line (Visual Anchor Only) -->
+<div class="absolute left-[3.4rem] top-4 bottom-4 w-px bg-outline-variant opacity-20 hidden md:block"></div>
+<!-- Morning Session Block -->
+<div class="relative">
+<h3 class="serif-text text-2xl font-bold text-primary mb-8 ml-0 md:ml-14 flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed"></span>
+                    Morning Plenary
+                </h3>
+<div class="space-y-8">
+<!-- Keynote Session Card -->
+<div class="md:grid md:grid-cols-[120px_1fr] items-start gap-8">
+<div class="hidden md:flex flex-col items-end pt-4">
+<span class="text-primary font-bold text-lg">08:30</span>
+<span class="text-on-surface-variant text-xs font-semibold">AM</span>
+</div>
+<div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-tertiary-fixed relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-5">
+<span class="material-symbols-outlined text-8xl" data-icon="star">star</span>
+</div>
+<div class="flex flex-wrap items-center gap-3 mb-4">
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Keynote</span>
+<span class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                                    Grand Ballroom A
+                                </span>
+</div>
+<h4 class="serif-text text-2xl md:text-3xl font-black text-primary mb-2 leading-tight">Future of AI in Genomic Research</h4>
+<p class="text-on-surface-variant font-medium mb-8 text-sm md:text-base">人工智能在基因组研究中的未来展望</p>
+<div class="flex items-center gap-4">
+<img class="w-12 h-12 rounded-full object-cover" data-alt="Professional headshot of a female doctor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVNFlSmUgvs5DvS_5uCeyf0XRZrx3_0zJIUxZi5nb4avUnYyUneUa6b_-Sr05bbx5OQ6qJptxd4ig3keSR421i5J6noisZlC7Vcr0YNUxrqUkU6yCs4Y4HvmJ1-JorXgCMM5qlrtaWf4K7E4Y6rrnXD78NDnNndIXx9oxXrkL7ZseWNhZqUliCjYXlx4FUL6WZVcYIYk1o37Vp4p_ArUSyqLam6YNisrXFJevLRijVGoVTP1draBW6HDEV5qW5I583MjfGzgPJEw"/>
+<div>
+<p class="font-bold text-on-surface">Dr. Sarah Chen, PhD</p>
+<p class="text-xs text-on-surface-variant">Director of Bio-Informatics, Stanford Medicine</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Regular Session Card -->
+<div class="md:grid md:grid-cols-[120px_1fr] items-start gap-8">
+<div class="hidden md:flex flex-col items-end pt-4">
+<span class="text-primary font-bold text-lg">10:15</span>
+<span class="text-on-surface-variant text-xs font-semibold">AM</span>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl border-l-4 border-primary">
+<div class="flex flex-wrap items-center gap-3 mb-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Research Paper</span>
+<span class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                                    Seminar Hall 2
+                                </span>
+</div>
+<h4 class="serif-text text-xl font-bold text-primary mb-1">Breakthroughs in CAR-T Cell Therapy</h4>
+<p class="text-on-surface-variant text-sm mb-6">CAR-T细胞疗法的重大突破</p>
+<div class="flex items-center gap-4">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Professional headshot of a male medical researcher" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWaNgZtzRHM8cTmHWXUH3eLCCfvHBgfebq1eFgcouyyRyRrhI6OqdhEUhf9nQESjC9bk4V9_iX8aj35Uss6Kbni_hJsMQRqkos9O5jQjYyH5nJe8hzcuw8x5iAP9sr9Of6z-6HF5OiielT-mvY5N1O1UCwO_DkVCqd9Y5sOKioIW2ecHHEpUD2Q31G_S4Pr6fQ3MjipQk23NLk2skHPwarBddX-jeDvMyTf3WW1F32L8UzJ6QpfVqxWbOifCG2v0x6FlGJXgircw"/>
+<div>
+<p class="font-bold text-on-surface text-sm">Prof. James Sterling</p>
+<p class="text-xs text-on-surface-variant">Oncology Lead, Mayo Clinic</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Midday Break -->
+<div class="relative">
+<div class="md:grid md:grid-cols-[120px_1fr] items-center gap-8">
+<div class="hidden md:flex flex-col items-end">
+<span class="text-on-surface-variant font-bold text-lg">12:00</span>
+<span class="text-on-surface-variant text-xs font-semibold">PM</span>
+</div>
+<div class="bg-surface-container flex items-center justify-between p-6 rounded-xl border border-dashed border-outline-variant/30">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="restaurant">restaurant</span>
+<div>
+<h4 class="serif-text text-lg font-bold text-primary">Networking Lunch &amp; Exhibition</h4>
+<p class="text-xs text-on-surface-variant uppercase tracking-widest font-semibold">Exhibition Wing • Level 1</p>
+</div>
+</div>
+<span class="hidden md:block text-[10px] font-black text-on-surface-variant bg-surface-container-high px-3 py-1 rounded">60 MIN</span>
+</div>
+</div>
+</div>
+<!-- Afternoon Workshops Block -->
+<div class="relative">
+<h3 class="serif-text text-2xl font-bold text-primary mb-8 ml-0 md:ml-14 flex items-center gap-3">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+                    Practical Workshops
+                </h3>
+<div class="space-y-8">
+<!-- Workshop Card -->
+<div class="md:grid md:grid-cols-[120px_1fr] items-start gap-8">
+<div class="hidden md:flex flex-col items-end pt-4">
+<span class="text-primary font-bold text-lg">01:30</span>
+<span class="text-on-surface-variant text-xs font-semibold">PM</span>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl border-l-4 border-secondary">
+<div class="flex flex-wrap items-center gap-3 mb-4">
+<span class="bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Workshop</span>
+<span class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                                    Innovation Lab 4
+                                </span>
+</div>
+<h4 class="serif-text text-xl font-bold text-primary mb-1">Precision Medicine: From Data to Dosage</h4>
+<p class="text-on-surface-variant text-sm mb-6">精准医学：从数据到剂量</p>
+<div class="flex items-center gap-4">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="Headshot of a professional female doctor in lab coat" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDER-Zh3aYojSQwjIYWwQ111-q2Qg1Ibyr5Pcxhjv_HUbriP7eTsbA-UPYUmjLmD0OycicZmVLJzpTLGnXj_fK0cYQrnY2zZPZR4LrXYUCaa7UK2-QvONEXcwp6B1qGDUqeXU8-1UKdVGgp90UoHXHD0kwzYY45UuNnp9Co_BtqsgKvMHRhTIpZHT-cZoyPm5PpZKGmtrVYwHlT9VJ9Zbw8lDUjKPHHUyMF7vZwAqVhEC6JETTziobt5jsRF9ZVik40fFFn3meAhA"/>
+<div>
+<p class="font-bold text-on-surface text-sm">Dr. Elena Rodriguez</p>
+<p class="text-xs text-on-surface-variant">Senior Pharmacologist, Novartis</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Workshop Card 2 -->
+<div class="md:grid md:grid-cols-[120px_1fr] items-start gap-8">
+<div class="hidden md:flex flex-col items-end pt-4">
+<span class="text-primary font-bold text-lg">03:00</span>
+<span class="text-on-surface-variant text-xs font-semibold">PM</span>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl border-l-4 border-secondary">
+<div class="flex flex-wrap items-center gap-3 mb-4">
+<span class="bg-primary text-on-primary px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">Workshop</span>
+<span class="text-on-surface-variant text-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+                                    Digital Suite A
+                                </span>
+</div>
+<h4 class="serif-text text-xl font-bold text-primary mb-1">Ethical Frameworks for Global Health Data</h4>
+<p class="text-on-surface-variant text-sm mb-6">全球健康数据的伦理框架</p>
+<div class="flex items-center gap-4">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-lowest" data-alt="Male speaker avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8a_ExS7GJce5LJ8YS48oBX0HW7uds4ssvQtsN6R_tAmw2DO4Rdtcz_rS5UiR2RqXH8RmKxJuf4y_dkFNEn-6vXBx4mE1QCgT1598383qEzYdBui5bKYqwlr5h8alaWmgQ5lJq_tn_9fHZAnH5Dlzd5AX1Nvd9ti6qTKiBg8RvwJjz1g2EJHf_7SIlSEbDxdcp5Epx9Q5Iz8CaVoz8yI1l8JvVnNmPoobQi23BTp2tEedj0XzTLbozKg0M4zNSlchkPFVZZSzoyg"/>
+<img class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-lowest" data-alt="Female speaker avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKQDyhmDu40PYHEC9OQ9WcnsFThmK-JnHVgEV-6bFioM5eWVC_jyIHQXUZnoUT_5U7YmqMO4hWK0LzkVR0LUctGBx0ZZkXJTZnuO1stdTWruPTcCaAM93Mj5hHFTXEzcKHpZUyDdxOZB8jIf8KKSf4v_7CisOYvFLCwJ_n_tQDPW1VuxtWi_UK7G1VUmL_X8C-ECbBTfAnTqLnaIRmMt5c6NouNBFxtyuC56AKBN-5LAYkLSBo4Moho5BUgAHYF2FvXZ8EPQU_JQ"/>
+</div>
+<div>
+<p class="font-bold text-on-surface text-sm">Panel: WHO Ethics Committee</p>
+<p class="text-xs text-on-surface-variant">Multi-speaker Session</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Shared BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-[#f3faff]/80 dark:bg-slate-950/80 backdrop-blur-md border-t border-slate-200/10 dark:border-slate-800/10 md:hidden">
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 opacity-70 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 opacity-70 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="event_available">event_available</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Events</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#000666] dark:text-blue-300 font-bold bg-[#dbf1fe] dark:bg-blue-900/30 rounded-xl px-3 py-1 scale-110 duration-200">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Schedule</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-500 opacity-70 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Inter'] text-[11px] font-medium tracking-wide">Profile</span>
+</div>
+</nav>
+<!-- Floating Action Button (FAB) - Contextual -->
+<button class="fixed right-6 bottom-24 md:bottom-8 bg-tertiary-fixed text-on-tertiary-fixed-variant p-4 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform z-40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span class="font-bold text-sm pr-2">My Schedule</span>
+</button>
+</body></html>

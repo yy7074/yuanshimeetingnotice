@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Delegate Profile | The Editorial</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400;1,700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "error": "#ba1a1a",
+                        "on-primary": "#ffffff",
+                        "surface-container-low": "#e6f6ff",
+                        "background": "#f3faff",
+                        "surface": "#f3faff",
+                        "on-primary-fixed": "#000767",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#1e333c",
+                        "primary": "#000666",
+                        "outline": "#767683",
+                        "surface-container-high": "#d5ecf8",
+                        "inverse-on-surface": "#dff4ff",
+                        "tertiary": "#251800",
+                        "on-surface-variant": "#454652",
+                        "on-tertiary-fixed": "#261900",
+                        "on-surface": "#071e27",
+                        "surface-dim": "#c7dde9",
+                        "on-tertiary": "#ffffff",
+                        "primary-container": "#1a237e",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#354a53",
+                        "surface-variant": "#cfe6f2",
+                        "surface-tint": "#4c56af",
+                        "on-tertiary-container": "#b6924c",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "secondary-fixed-dim": "#b4cad6",
+                        "secondary-container": "#cfe6f2",
+                        "on-secondary-container": "#526772",
+                        "on-primary-fixed-variant": "#343d96",
+                        "on-primary-container": "#8690ee",
+                        "surface-container-highest": "#cfe6f2",
+                        "tertiary-fixed": "#ffdea5",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#cfe6f2",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "on-secondary-fixed": "#071e27",
+                        "on-error-container": "#93000a",
+                        "primary-fixed": "#e0e0ff",
+                        "inverse-primary": "#bdc2ff",
+                        "on-background": "#071e27",
+                        "tertiary-container": "#402c00",
+                        "outline-variant": "#c6c5d4",
+                        "surface-container": "#dbf1fe",
+                        "secondary": "#4c616c",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#f3faff"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f3faff; }
+        h1, h2, h3, .serif-heading { font-family: 'Noto Serif', serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- TopAppBar Component -->
+<header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 max-w-screen-xl mx-auto">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-indigo-950">menu</span>
+<span class="font-serif font-bold text-indigo-950 text-xl">The Editorial</span>
+</div>
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-slate-500 font-medium hover:bg-indigo-50/50 transition-colors px-3 py-1 rounded" href="#">Home</a>
+<a class="text-slate-500 font-medium hover:bg-indigo-50/50 transition-colors px-3 py-1 rounded" href="#">Events</a>
+<a class="text-slate-500 font-medium hover:bg-indigo-50/50 transition-colors px-3 py-1 rounded" href="#">Schedule</a>
+<a class="text-indigo-900 font-semibold transition-colors px-3 py-1 rounded" href="#">Profile</a>
+</div>
+<div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden border border-outline-variant/20">
+<img alt="Dr. Alistair Thorne" class="w-full h-full object-cover" data-alt="Professional headshot of a senior medical doctor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2jUL72mkM9NtcEIKgUFQTAQFFv-MJp0xndL6TM2JA2-8zS4b5P-8ZbUFT3dEC_ynUcYlKOr7MzHQK0ElkctuVsQFfuowxSFha_bZDOottE3X6C6ouWNi9kVeNFsfZgvw9FQZsFEIRwDGAeuyfm673j2mEklEYOGoZQeT88qrrEiaIy51u5UVKyJ1M95bC-eSNRhcKDKQdNxuXdn-ZHI4UXR9tpCwz-tFQK-A6VeOe93f_T4jJU8_jCMYEfwNY7KA-PzubLdvyMg"/>
+</div>
+</header>
+<main class="max-w-screen-xl mx-auto px-6 py-12 pb-32">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Profile Section (Left Column) -->
+<section class="lg:col-span-5 flex flex-col gap-10">
+<div class="relative group">
+<!-- Asymmetric Image Layout -->
+<div class="w-full aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden relative z-10">
+<img alt="Dr. Alistair Thorne" class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" data-alt="Detailed professional portrait of Dr. Alistair Thorne" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDd63E9aQQseMIsl9LafvWA4uS9OeX-v-lEHyU5sjpJeSgwIgDPiRwgi1LVlzMSCtcEGdIBrVDfSM56vZSAjVFoO5PAlgwPbpDUmgWUXXF1RHAl7rb2w35cq61abBjJzkzWt5h294pMNqcldD03NO-_t45Yr_WrtUExLuo-p-tssBZCjRReNRs6ZkIJ4gZa6DkZSWRl_J-0x6PeylSGqmLmfnUZZGivuMC2_FgVb_2NNK3oygwrULhgOKSyhHA9ZTG2u-FjsyCzmA"/>
+</div>
+<!-- VIP Badge Overlay -->
+<div class="absolute -bottom-4 -right-4 z-20 bg-tertiary-fixed text-on-tertiary-fixed-variant px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<div class="flex flex-col">
+<span class="text-xs font-bold uppercase tracking-widest leading-none">VIP Delegate</span>
+<span class="text-[10px] opacity-70 leading-none">贵宾代表</span>
+</div>
+</div>
+</div>
+<div class="space-y-4 px-2">
+<h1 class="text-5xl font-bold text-primary tracking-tight italic">Dr. Alistair Thorne</h1>
+<h2 class="text-2xl text-on-surface-variant font-light font-headline tracking-wide">
+                        艾利斯泰尔·索恩博士 <br/>
+<span class="text-xl italic mt-1 block">Senior Oncology Curator</span>
+</h2>
+<p class="text-on-secondary-container font-medium uppercase text-xs tracking-[0.2em]">St. Jude's Medical Research Center</p>
+</div>
+<!-- Quick Actions: Bento-style -->
+<div class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-start justify-between p-6 bg-primary text-on-primary rounded-xl aspect-square hover:bg-primary-container transition-all active:scale-95 text-left">
+<span class="material-symbols-outlined text-4xl">contactless</span>
+<div class="mt-4">
+<p class="font-semibold text-lg">Digital Pass</p>
+<p class="text-xs opacity-70">数字通行证</p>
+</div>
+</button>
+<button class="flex flex-col items-start justify-between p-6 bg-surface-container-lowest border border-outline-variant/10 text-primary rounded-xl aspect-square hover:bg-surface-container-high transition-all active:scale-95 text-left">
+<span class="material-symbols-outlined text-4xl">qr_code_scanner</span>
+<div class="mt-4">
+<p class="font-semibold text-lg">Scan to Network</p>
+<p class="text-xs text-on-surface-variant">扫码建立联系</p>
+</div>
+</button>
+</div>
+</section>
+<!-- Registered Events & Settings (Right Column) -->
+<section class="lg:col-span-7 flex flex-col gap-16">
+<!-- Registered Events -->
+<div class="space-y-8">
+<div class="flex justify-between items-baseline border-b border-outline-variant/20 pb-4">
+<h3 class="text-3xl italic font-headline text-primary">Registered Events</h3>
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">已登记活动 (3)</span>
+</div>
+<div class="space-y-10">
+<!-- Session Item 1 -->
+<div class="flex flex-col md:flex-row gap-6 group">
+<div class="md:w-32 flex flex-col border-l-2 border-primary pl-4 py-1">
+<span class="text-xl font-bold font-headline">OCT 24</span>
+<span class="text-xs text-on-surface-variant uppercase tracking-tighter">Thursday</span>
+</div>
+<div class="flex-1 space-y-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Keynote</span>
+<h4 class="text-2xl font-semibold leading-snug group-hover:text-primary transition-colors">Innovations in Targeted Immunotherapy</h4>
+<p class="text-sm text-on-surface-variant italic">靶向免疫疗法的创新</p>
+<div class="flex items-center gap-4 pt-2 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-base">location_on</span>
+<span class="text-xs">Grand Ballroom A</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-base">schedule</span>
+<span class="text-xs">09:00 — 10:30</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Session Item 2 -->
+<div class="flex flex-col md:flex-row gap-6 group">
+<div class="md:w-32 flex flex-col border-l-2 border-outline-variant/30 pl-4 py-1">
+<span class="text-xl font-bold font-headline">OCT 25</span>
+<span class="text-xs text-on-surface-variant uppercase tracking-tighter">Friday</span>
+</div>
+<div class="flex-1 space-y-2">
+<span class="bg-surface-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Panel Discussion</span>
+<h4 class="text-2xl font-semibold leading-snug group-hover:text-primary transition-colors">Ethics of AI in Clinical Diagnosis</h4>
+<p class="text-sm text-on-surface-variant italic">人工智能在临床诊断中的伦理问题</p>
+<div class="flex items-center gap-4 pt-2 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-base">location_on</span>
+<span class="text-xs">Summit Hall 3</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-base">schedule</span>
+<span class="text-xs">14:00 — 15:30</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-surface-container-low text-primary font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-surface-container transition-colors">
+                        Explore Full Schedule • 探索完整日程
+                    </button>
+</div>
+<!-- Account Settings -->
+<div class="bg-surface-container-low rounded-3xl p-8 md:p-12 space-y-10">
+<div class="space-y-2">
+<h3 class="text-2xl font-headline italic text-primary">Preferences &amp; Security</h3>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-widest">偏好与安全设置</p>
+</div>
+<div class="space-y-8">
+<!-- Setting Row: Language -->
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-white group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">translate</span>
+</div>
+<div class="flex flex-col">
+<span class="font-semibold">Language Selection</span>
+<span class="text-xs text-on-surface-variant italic">语言选择: English / 中文</span>
+</div>
+</div>
+<div class="flex gap-2 bg-white/50 p-1 rounded-full border border-outline-variant/10">
+<button class="px-4 py-1.5 bg-primary text-on-primary text-xs font-bold rounded-full">EN</button>
+<button class="px-4 py-1.5 text-xs font-bold text-on-surface-variant hover:text-primary rounded-full transition-colors">CN</button>
+</div>
+</div>
+<!-- Setting Row: Notifications -->
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-white group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<div class="flex flex-col">
+<span class="font-semibold">Push Notifications</span>
+<span class="text-xs text-on-surface-variant italic">推送通知</span>
+</div>
+</div>
+<div class="w-12 h-6 bg-primary rounded-full relative p-1 flex items-center justify-end">
+<div class="w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+<!-- Setting Row: Privacy -->
+<div class="flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-white group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">privacy_tip</span>
+</div>
+<div class="flex flex-col">
+<span class="font-semibold">Networking Visibility</span>
+<span class="text-xs text-on-surface-variant italic">联网可见性</span>
+</div>
+</div>
+<button class="text-primary text-xs font-bold uppercase tracking-widest flex items-center gap-1 hover:underline">
+                                Edit 
+                                <span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar Component (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-8 pt-3 bg-[#f3faff] shadow-[0_-4px_24px_rgba(0,0,0,0.04)] rounded-t-3xl">
+<div class="flex flex-col items-center justify-center text-slate-500 px-5 py-2">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-sans text-[10px] font-semibold uppercase tracking-wider mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 px-5 py-2">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-sans text-[10px] font-semibold uppercase tracking-wider mt-1">Events</span>
+</div>
+<div class="flex flex-col items-center justify-center text-slate-500 px-5 py-2">
+<span class="material-symbols-outlined" data-icon="calendar_month">calendar_month</span>
+<span class="font-sans text-[10px] font-semibold uppercase tracking-wider mt-1">Schedule</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#dbf1fe] text-[#000666] rounded-2xl px-5 py-2">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-sans text-[10px] font-semibold uppercase tracking-wider mt-1">Profile</span>
+</div>
+</nav>
+</body></html>

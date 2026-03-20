@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface": "#e5e2e1",
+              "on-secondary": "#263238",
+              "surface-container": "#201f1f",
+              "on-tertiary-container": "#b6924c",
+              "inverse-surface": "#e5e2e1",
+              "surface-tint": "#bdc2ff",
+              "tertiary": "#e9c176",
+              "inverse-on-surface": "#313030",
+              "on-primary-container": "#8690ee",
+              "surface-container-low": "#1c1b1b",
+              "tertiary-fixed-dim": "#e9c176",
+              "tertiary-fixed": "#ffdea5",
+              "secondary-container": "#3c494f",
+              "on-error": "#690005",
+              "on-background": "#e5e2e1",
+              "on-secondary-container": "#aab7bf",
+              "secondary-fixed-dim": "#bbc8d0",
+              "on-tertiary-fixed-variant": "#5d4201",
+              "primary-fixed-dim": "#bdc2ff",
+              "on-primary": "#1b247f",
+              "surface-variant": "#353534",
+              "on-secondary-fixed-variant": "#3c494f",
+              "on-primary-fixed": "#000767",
+              "outline": "#908f9d",
+              "surface-bright": "#393939",
+              "error": "#ffb4ab",
+              "error-container": "#93000a",
+              "inverse-primary": "#4c56af",
+              "outline-variant": "#454652",
+              "secondary": "#bbc8d0",
+              "surface": "#131313",
+              "on-tertiary": "#412d00",
+              "primary": "#bdc2ff",
+              "on-tertiary-fixed": "#261900",
+              "surface-container-lowest": "#0e0e0e",
+              "primary-fixed": "#e0e0ff",
+              "surface-container-high": "#2a2a2a",
+              "background": "#131313",
+              "primary-container": "#1a237e",
+              "surface-container-highest": "#353534",
+              "on-error-container": "#ffdad6",
+              "on-primary-fixed-variant": "#343d96",
+              "on-surface-variant": "#c6c5d4",
+              "on-secondary-fixed": "#111d23",
+              "secondary-fixed": "#d7e4ec",
+              "surface-dim": "#131313",
+              "tertiary-container": "#402c00"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .glass-header {
+            background: rgba(19, 19, 19, 0.6);
+            backdrop-filter: blur(20px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body selection:bg-tertiary selection:text-on-tertiary">
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 w-full z-50 glass-header flex items-center justify-between px-6 h-16 w-full shadow-[0_16px_40px_rgba(229,226,225,0.06)]">
+<div class="flex items-center gap-4">
+<button class="text-[#E9C176] hover:bg-[#353534]/50 transition-colors p-2 rounded-md active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-lg font-bold tracking-[0.05em] text-[#E5E2E1] font-headline uppercase">EXECUTIVE PRESENCE</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-[#E9C176] font-headline tracking-[-0.02em] font-bold uppercase text-xs" href="#">Agenda</a>
+<a class="text-[#E5E2E1] hover:bg-[#353534]/50 transition-colors font-headline tracking-[-0.02em] font-bold uppercase text-xs" href="#">Network</a>
+<a class="text-[#E5E2E1] hover:bg-[#353534]/50 transition-colors font-headline tracking-[-0.02em] font-bold uppercase text-xs" href="#">Concierge</a>
+</div>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="Professional executive portrait avatar photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzdUZTz1UKy8fsMxkRd_0eg0TM9s3CNFkCfG2wyLRTQ-26MV2CyTkYkiMHDD1XSbtYR6sUXkb96GDY_txL6UL-3x0A7I27Ly55QIFVrBndw9C6USNSc5Ddz7Su2xfaYhu6Mx5OFjzNo8EURQJ2_N5izzwBx0p9yVdagA3qqsSOpx1NmZ1C-MJ0Z5lSIu853ps-XcdBpX5QTEjNHWj50PQnRSc6aIvVZ-WKn0UUjYNb0Mlybri1e6CxzcwjqngFFarFavWglSw_UA"/>
+</div>
+</div>
+</nav>
+<!-- Content Canvas -->
+<main class="pt-24 pb-32 px-4 md:px-12 lg:px-24 max-w-7xl mx-auto min-h-screen">
+<!-- Header Section -->
+<header class="mb-12">
+<div class="flex flex-col gap-1 mb-4">
+<span class="text-tertiary-fixed-dim font-label font-semibold text-[10px] tracking-[0.2em] uppercase">Global Summit 2024</span>
+<h2 class="text-4xl md:text-5xl font-headline font-extrabold tracking-tight text-on-surface">Event Agenda <span class="text-outline/40 ml-2 font-normal">会议日程</span></h2>
+</div>
+<!-- Premium Date Picker -->
+<div class="flex items-center gap-3 overflow-x-auto custom-scrollbar py-4 -mx-4 px-4">
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-20 h-24 rounded-xl border border-outline-variant/10 bg-surface-container-low text-on-surface/50 hover:bg-surface-container transition-all">
+<span class="text-[10px] uppercase tracking-widest font-bold mb-1">Oct</span>
+<span class="text-2xl font-headline font-bold">22</span>
+<span class="text-[8px] uppercase tracking-tighter opacity-60">Tue / 周二</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-24 h-28 rounded-xl bg-primary-container text-primary shadow-xl shadow-primary/10 ring-1 ring-primary/20 scale-105">
+<span class="text-[10px] uppercase tracking-widest font-bold mb-1">Oct</span>
+<span class="text-3xl font-headline font-bold">23</span>
+<span class="text-[8px] uppercase tracking-tighter text-primary/70">Wed / 周三</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-20 h-24 rounded-xl border border-outline-variant/10 bg-surface-container-low text-on-surface/50 hover:bg-surface-container transition-all">
+<span class="text-[10px] uppercase tracking-widest font-bold mb-1">Oct</span>
+<span class="text-2xl font-headline font-bold">24</span>
+<span class="text-[8px] uppercase tracking-tighter opacity-60">Thu / 周四</span>
+</button>
+<button class="flex-shrink-0 flex flex-col items-center justify-center w-20 h-24 rounded-xl border border-outline-variant/10 bg-surface-container-low text-on-surface/50 hover:bg-surface-container transition-all">
+<span class="text-[10px] uppercase tracking-widest font-bold mb-1">Oct</span>
+<span class="text-2xl font-headline font-bold">25</span>
+<span class="text-[8px] uppercase tracking-tighter opacity-60">Fri / 周五</span>
+</button>
+</div>
+</header>
+<!-- Timeline Section -->
+<section class="space-y-16">
+<!-- Morning Sessions -->
+<div class="relative">
+<div class="sticky top-20 z-10 py-2 mb-8 inline-block">
+<div class="flex items-center gap-4">
+<span class="text-tertiary font-headline font-bold text-xl">09:00</span>
+<div class="h-px w-12 bg-outline-variant/30"></div>
+<span class="text-on-surface/40 font-label text-xs uppercase tracking-widest">Morning Plenary / 上午全会</span>
+</div>
+</div>
+<!-- Session Card: Live Now -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start group">
+<div class="md:col-span-2 hidden md:block pt-1">
+<div class="flex flex-col items-end">
+<span class="text-on-surface font-headline font-bold text-lg">09:00</span>
+<span class="text-on-surface/40 text-[10px] font-medium tracking-tighter">60 MINS</span>
+</div>
+</div>
+<div class="md:col-span-10 relative pl-6 border-l-4 border-tertiary">
+<div class="bg-surface-container p-6 md:p-8 rounded-lg shadow-2xl transition-all hover:bg-surface-container-high relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4">
+<span class="bg-tertiary/10 text-tertiary px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary"></span>
+</span>
+                                    Live Now / 正在进行
+                                </span>
+</div>
+<div class="mb-6">
+<h3 class="text-2xl font-headline font-bold text-on-surface leading-tight mb-2">Sustainable Infrastructure: The Next Decade</h3>
+<p class="text-on-surface/60 text-sm font-body">可持续基础设施：下一个十年</p>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full border border-tertiary/30 p-0.5">
+<img alt="Speaker" class="w-full h-full rounded-full object-cover" data-alt="Close up professional headshot of a senior male executive" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCK4XhJLZR9PTwJ6SUZwDFwT3IAGHqSNIUgyTyfaN7RxQPkDsaodeabSFPDPUv2-JvJkw7tc0ZcRHj3-TNr8tq_IUXv7ZUsFVJOAJsDVaMW5Xi9dyqWnD_sapGmW6vmh4znDfg0g3HW34sIYwQvF8e6tdxsGs4WK960mPrTquOaIS1s75T24gWtnUOlmCCp-gTbelLbAdUeJ8NT3YwpfXkX4CMu_MrIA4UD58Gmd6pkAOX2CaSemK7np7clbyeVJf01AWGWGIzqZQ"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-on-surface">Dr. Alistair Vaughn</p>
+<p class="text-[10px] text-on-surface/40 uppercase tracking-widest">UN Green Initiative</p>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-on-surface/50">
+<span class="material-symbols-outlined text-sm" data-icon="location_on">location_on</span>
+<span class="text-xs font-medium">Grand Ballroom A</span>
+</div>
+<button class="bg-tertiary text-on-tertiary px-6 py-2 rounded-md text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity active:scale-95">Join Now / 进入会场</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Spacer -->
+<div class="h-16"></div>
+<!-- Session Card: Booked -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start group">
+<div class="md:col-span-2 hidden md:block pt-1">
+<div class="flex flex-col items-end">
+<span class="text-on-surface/40 font-headline font-bold text-lg">10:30</span>
+<span class="text-on-surface/20 text-[10px] font-medium tracking-tighter">45 MINS</span>
+</div>
+</div>
+<div class="md:col-span-10 relative pl-6 border-l-4 border-outline-variant/10">
+<div class="bg-surface-container-low p-6 md:p-8 rounded-lg hover:bg-surface-container transition-all">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="flex-1">
+<div class="mb-4">
+<h3 class="text-xl font-headline font-bold text-on-surface mb-1">AI in Global Asset Management</h3>
+<p class="text-on-surface/40 text-xs font-body">全球资产管理中的人工智能应用</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex -space-x-2">
+<img alt="Avatar" class="w-6 h-6 rounded-full border-2 border-surface-container-low object-cover" data-alt="Professional female executive avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgGrcwnBrMJ40GaUngDP2FWrAmsegun3-vrrezDA-rfR6_BKVkOaGFQAg-9FuVYaq0doUMqo6Ghtja2yyDesrohk8sEOLbScYjTuhTn7X-91az8oYeh6eBeIda7aO1sB8QWhS-cgsigV_dqyB3pd3IQKLjPELwyyK327lKugeXjiISA3yB7l8YKDLoyEJR8vzGd4bStfXg0rRQsRuqIVv9uc-AzUzxMyGWf2N3cT-opd8lkyXnv7puRV-HA_QDtKTYZ88zqsQryw"/>
+<img alt="Avatar" class="w-6 h-6 rounded-full border-2 border-surface-container-low object-cover" data-alt="Professional male speaker headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAY9fz4Rk9NiHvZ5rYo0X8IjTvFuoEoCESFtGaK777QL9ANLh4jvh-B4FvqEDWBIUVVE0o3WJeqxjq1xbbRONL2zHTuf5ldlT7EUkIWLn-T92eg0dVxdptZQoFwnXwlXCyXpXFD1r1H8yGMTJQeSPARtIXKhrWXME2pjW2EZA5fkmcC2IT-IvVBFqo3j0ITi9Dz6Z3zdJL0_m_Cs1-_GZ2n5ys1xOGUS9Uw19NmBr7jigvpQofzwXHCTi4o8L_iPf40WMocHuazzQ"/>
+</div>
+<p class="text-xs text-on-surface/60">Sarah Chen &amp; Marcus Thorne</p>
+</div>
+</div>
+<div class="flex flex-col items-end gap-3">
+<div class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary/20 bg-primary/5">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="check_circle" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] text-primary font-bold uppercase tracking-widest">Booked / 已预约</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface/30">
+<span class="material-symbols-outlined text-sm" data-icon="meeting_room">meeting_room</span>
+<span class="text-xs">Level 4, Salon 12</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Afternoon Sessions -->
+<div class="relative">
+<div class="sticky top-20 z-10 py-2 mb-8 inline-block">
+<div class="flex items-center gap-4">
+<span class="text-tertiary font-headline font-bold text-xl">14:00</span>
+<div class="h-px w-12 bg-outline-variant/30"></div>
+<span class="text-on-surface/40 font-label text-xs uppercase tracking-widest">Strategy Breakouts / 策略分会</span>
+</div>
+</div>
+<!-- Session Card: Multi-track -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start group">
+<div class="md:col-span-2 hidden md:block pt-1">
+<div class="flex flex-col items-end">
+<span class="text-on-surface/40 font-headline font-bold text-lg">14:00</span>
+<span class="text-on-surface/20 text-[10px] font-medium tracking-tighter">90 MINS</span>
+</div>
+</div>
+<div class="md:col-span-10 relative pl-6 border-l-4 border-outline-variant/10">
+<!-- Bento Style Breakout Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-lg border border-transparent hover:border-outline-variant/20 transition-all cursor-pointer">
+<span class="text-[8px] text-tertiary font-bold tracking-[0.2em] uppercase block mb-3">TRACK A / 路线 A</span>
+<h4 class="text-lg font-headline font-bold text-on-surface mb-2">Cross-Border Trade Compliance</h4>
+<p class="text-on-surface/40 text-[10px] uppercase tracking-widest mb-6">Room 204 • Dr. Wei Zhang</p>
+<button class="w-full py-2 border border-outline-variant/30 text-[10px] font-bold uppercase tracking-widest text-on-surface/60 hover:bg-surface-variant transition-colors rounded-md">Reserve Seat / 预约席位</button>
+</div>
+<div class="bg-surface-container-low p-6 rounded-lg border border-transparent hover:border-outline-variant/20 transition-all cursor-pointer">
+<span class="text-[8px] text-tertiary font-bold tracking-[0.2em] uppercase block mb-3">TRACK B / 路线 B</span>
+<h4 class="text-lg font-headline font-bold text-on-surface mb-2">The Future of Digital Currency</h4>
+<p class="text-on-surface/40 text-[10px] uppercase tracking-widest mb-6">Summit Hall • Elena Rossi</p>
+<button class="w-full py-2 border border-outline-variant/30 text-[10px] font-bold uppercase tracking-widest text-on-surface/60 hover:bg-surface-variant transition-colors rounded-md">Reserve Seat / 预约席位</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-4 bg-[#1C1B1B]/80 backdrop-blur-xl z-50 rounded-t-xl shadow-[0_-8px_32px_rgba(0,0,0,0.4)]">
+<div class="flex flex-col items-center justify-center text-[#E5E2E1]/50 hover:text-[#E9C176] transition-all">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#E9C176] scale-110 transition-transform">
+<span class="material-symbols-outlined" data-icon="event_note" style="font-variation-settings: 'FILL' 1;">event_note</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Agenda</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#E5E2E1]/50 hover:text-[#E9C176] transition-all">
+<span class="material-symbols-outlined" data-icon="language">language</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Events</span>
+</div>
+<div class="flex flex-col items-center justify-center text-[#E5E2E1]/50 hover:text-[#E9C176] transition-all">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+<span class="font-['Inter'] text-[10px] font-semibold tracking-wider uppercase mt-1">Profile</span>
+</div>
+</nav>
+<!-- Floating Action Button -->
+<div class="fixed bottom-24 right-6 md:bottom-12 md:right-12 z-40">
+<button class="w-16 h-16 rounded-full bg-tertiary text-on-tertiary shadow-2xl flex items-center justify-center active:scale-90 transition-transform group">
+<span class="material-symbols-outlined text-3xl group-hover:rotate-12 transition-transform" data-icon="chat_bubble_outline">chat_bubble_outline</span>
+<span class="absolute right-full mr-4 bg-surface-container-highest px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity hidden md:block border border-outline-variant/10">Concierge Help / 礼宾咨询</span>
+</button>
+</div>
+</body></html>
