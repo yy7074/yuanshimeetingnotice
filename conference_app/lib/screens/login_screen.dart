@@ -1,25 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  bool _obscureText = true;
-  bool _rememberMe = true;
-
-  @override
   Widget build(BuildContext context) {
+    final auth = Get.find<AuthController>();
+
     const Color primaryColor = Color(0xFF196EE6);
     const Color backgroundColor = Color(0xFFF6F7F8);
-    const Color textColor = Color(0xFF0F172A); // slate-900
-    const Color textLightColor = Color(0xFF64748B); // slate-500
-    const Color borderColor = Color(0xFFE2E8F0); // slate-200
-    const Color inputBgColor = Color(0xFFF8FAFC); // slate-50
+    const Color textColor = Color(0xFF0F172A);
+    const Color textLightColor = Color(0xFF64748B);
+    const Color borderColor = Color(0xFFE2E8F0);
+    const Color inputBgColor = Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -31,7 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-                  child: _buildLoginCard(primaryColor, textColor, textLightColor, borderColor, inputBgColor),
+                  child: _buildLoginCard(auth, primaryColor, textColor, textLightColor, borderColor, inputBgColor),
                 ),
               ),
             ),
@@ -57,11 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFF438AEE), // Lighter primary
-                      Color(0xFF196EE6), // Primary
-                      Color(0xFF0F52B2), // Darker primary
-                    ],
+                    colors: [Color(0xFF438AEE), Color(0xFF196EE6), Color(0xFF0F52B2)],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
@@ -72,36 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                child: const Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(Icons.monitor_heart_rounded, color: Colors.white, size: 28),
-                  ],
-                ),
+                child: const Icon(Icons.monitor_heart_rounded, color: Colors.white, size: 28),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'APSCVIR',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                      color: textColor,
-                    ),
-                  ),
-                  Text(
-                    'Conference App',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: primaryColor,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  Text('APSCVIR', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5, color: textColor)),
+                  Text('Conference App', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: primaryColor, letterSpacing: 0.5)),
                 ],
               ),
             ],
@@ -126,14 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Icon(Icons.language, size: 16, color: primaryColor),
                   const SizedBox(width: 4),
-                  const Text(
-                    'EN / CN',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF334155),
-                    ),
-                  ),
+                  const Text('EN / CN', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
                 ],
               ),
             ),
@@ -149,16 +111,12 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Text(
         '© 2026 APSCVIR Conference. All rights reserved.\n© 2026 APSCVIR 大会。保留所有权利。',
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 12,
-          color: textLightColor,
-          height: 1.5,
-        ),
+        style: TextStyle(fontSize: 12, color: textLightColor, height: 1.5),
       ),
     );
   }
 
-  Widget _buildLoginCard(Color primaryColor, Color textColor, Color textLightColor, Color borderColor, Color inputBgColor) {
+  Widget _buildLoginCard(AuthController auth, Color primaryColor, Color textColor, Color textLightColor, Color borderColor, Color inputBgColor) {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(maxWidth: 480),
@@ -168,21 +126,14 @@ class _LoginScreenState extends State<LoginScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: borderColor),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.05 * 255).round()),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
+          BoxShadow(color: Colors.black.withAlpha((0.05 * 255).round()), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
-      child: Column(
+      child: Obx(() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            'welcome_back'.tr,
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor),
-          ),
+          Text('welcome_back'.tr, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(height: 4),
           Text(
             Get.locale?.languageCode == 'zh' ? 'Welcome Back' : '欢迎回来',
@@ -203,6 +154,8 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(
             height: 56,
             child: TextField(
+              controller: auth.emailController,
+              keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 hintText: 'corporate@company.com',
                 hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -210,18 +163,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 filled: true,
                 fillColor: inputBgColor,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: primaryColor, width: 2),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: primaryColor, width: 2)),
               ),
             ),
           ),
@@ -235,40 +179,52 @@ class _LoginScreenState extends State<LoginScreen> {
           SizedBox(
             height: 56,
             child: TextField(
-              obscureText: _obscureText,
+              controller: auth.passwordController,
+              obscureText: auth.obscurePassword.value,
               decoration: InputDecoration(
                 hintText: '••••••••',
                 hintStyle: TextStyle(color: Colors.grey.shade400, letterSpacing: 2),
                 prefixIcon: Icon(Icons.lock_outline, color: Colors.grey.shade400),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    auth.obscurePassword.value ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     color: Colors.grey.shade400,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureText = !_obscureText;
-                    });
-                  },
+                  onPressed: auth.togglePasswordVisibility,
                 ),
                 filled: true,
                 fillColor: inputBgColor,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: borderColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: primaryColor, width: 2),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: borderColor)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: primaryColor, width: 2)),
               ),
             ),
           ),
+          // Error message
+          if (auth.errorMessage.value.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.error_outline, size: 18, color: Colors.red.shade600),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      auth.errorMessage.value,
+                      style: TextStyle(fontSize: 13, color: Colors.red.shade700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           // Remember Me & Forgot Password
           Row(
@@ -282,12 +238,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 24,
                     height: 24,
                     child: Checkbox(
-                      value: _rememberMe,
-                      onChanged: (val) {
-                        setState(() {
-                          _rememberMe = val ?? false;
-                        });
-                      },
+                      value: auth.rememberMe.value,
+                      onChanged: (val) => auth.rememberMe.value = val ?? false,
                       activeColor: primaryColor,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                       side: BorderSide(color: Colors.grey.shade300),
@@ -297,10 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'remember_me'.tr,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF334155)),
-                      ),
+                      Text('remember_me'.tr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF334155))),
                       Text(
                         Get.locale?.languageCode == 'zh' ? 'Remember Me' : '记住我',
                         style: TextStyle(fontSize: 12, color: textLightColor),
@@ -313,16 +262,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 0),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'forgot_password'.tr,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor),
-                    ),
+                    onPressed: () {
+                      _showForgotPasswordDialog(primaryColor);
+                    },
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    child: Text('forgot_password'.tr, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor)),
                   ),
                   Text(
                     Get.locale?.languageCode == 'zh' ? 'Forgot Password?' : '忘记密码？',
@@ -338,8 +282,11 @@ class _LoginScreenState extends State<LoginScreen> {
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: () {
-                Get.offAllNamed('/main');
+              onPressed: auth.isLoading.value ? null : () async {
+                final success = await auth.login();
+                if (success) {
+                  Get.offAllNamed('/main');
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
@@ -348,23 +295,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 elevation: 4,
                 shadowColor: primaryColor.withAlpha((0.4 * 255).round()),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '${'sign_in_btn'.tr} / ${Get.locale?.languageCode == 'zh' ? 'Sign In' : '登录'}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.login),
-                ],
-              ),
+              child: auth.isLoading.value
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${'sign_in_btn'.tr} / ${Get.locale?.languageCode == 'zh' ? 'Sign In' : '登录'}',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.login),
+                      ],
+                    ),
             ),
           ),
           const SizedBox(height: 32),
           const Divider(color: Color(0xFFF1F5F9)),
           const SizedBox(height: 24),
-          // Authorized Access Only
           Center(
             child: Column(
               children: [
@@ -378,21 +326,66 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Icon(Icons.shield_outlined, size: 16, color: Colors.grey.shade400),
                     const SizedBox(width: 4),
-                    Text(
-                      'secure'.tr,
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 0.5),
-                    ),
+                    Text('secure'.tr, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 0.5)),
                     const SizedBox(width: 24),
                     Icon(Icons.verified_user_outlined, size: 16, color: Colors.grey.shade400),
                     const SizedBox(width: 4),
-                    Text(
-                      'encrypted'.tr,
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 0.5),
-                    ),
+                    Text('encrypted'.tr, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade400, letterSpacing: 0.5)),
                   ],
                 ),
               ],
             ),
+          ),
+        ],
+      )),
+    );
+  }
+
+  void _showForgotPasswordDialog(Color primaryColor) {
+    final emailController = TextEditingController();
+    Get.dialog(
+      AlertDialog(
+        title: Text(Get.locale?.languageCode == 'zh' ? '找回密码' : 'Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              Get.locale?.languageCode == 'zh'
+                  ? '请输入您的注册邮箱，我们将发送验证码到您的邮箱。'
+                  : 'Enter your registered email and we will send you a verification code.',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                hintText: 'your@email.com',
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(Get.locale?.languageCode == 'zh' ? '取消' : 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              Get.snackbar(
+                Get.locale?.languageCode == 'zh' ? '已发送' : 'Sent',
+                Get.locale?.languageCode == 'zh' ? '验证码已发送到您的邮箱' : 'Verification code has been sent to your email',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: primaryColor,
+                colorText: Colors.white,
+                margin: const EdgeInsets.all(16),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
+            child: Text(Get.locale?.languageCode == 'zh' ? '发送验证码' : 'Send Code'),
           ),
         ],
       ),

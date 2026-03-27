@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
+import '../controllers/event_controller.dart';
+import '../services/storage_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -34,6 +37,8 @@ class ProfileScreen extends StatelessWidget {
                     _buildRegisteredEvents(primaryColor, textVariantColor, surfaceLowColor),
                     const SizedBox(height: 48),
                     _buildPreferences(primaryColor, textVariantColor, surfaceLowColor),
+                    const SizedBox(height: 32),
+                    _buildLogoutButton(primaryColor),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -51,137 +56,99 @@ class ProfileScreen extends StatelessWidget {
       child: Center(
         child: Text(
           Get.locale?.languageCode == 'zh' ? '个人中心' : 'Profile',
-          style: TextStyle(
-            fontFamily: 'Noto Serif',
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: primaryColor,
-          ),
+          style: TextStyle(fontFamily: 'Noto Serif', fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
         ),
       ),
     );
   }
 
   Widget _buildSimplifiedProfileInfo(Color primaryColor, Color textVariantColor, Color badgeColor, Color badgeTextColor) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.03 * 255).round()),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade200, width: 2),
-              image: const DecorationImage(
-                image: NetworkImage('https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop'),
-                fit: BoxFit.cover,
+    final auth = Get.find<AuthController>();
+    final isZh = Get.locale?.languageCode == 'zh';
+
+    return Obx(() {
+      final user = auth.currentUser.value;
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha((0.03 * 255).round()), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade200, width: 2),
+                image: DecorationImage(
+                  image: NetworkImage(user?.avatarUrl ?? 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop'),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        Get.locale?.languageCode == 'zh' ? '艾利斯泰尔·索恩博士' : 'Dr. Alistair Thorne',
-                        style: TextStyle(
-                          fontFamily: 'Noto Serif',
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: primaryColor,
-                          height: 1.1,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isZh ? (user?.nameZh ?? '') : (user?.nameEn ?? ''),
+                          style: TextStyle(fontFamily: 'Noto Serif', fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor, height: 1.1),
                         ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: badgeColor,
-                        borderRadius: BorderRadius.circular(8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(8)),
+                        child: Text('vip_delegate'.tr, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: badgeTextColor, letterSpacing: 1.0)),
                       ),
-                      child: Text(
-                        'vip_delegate'.tr,
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: badgeTextColor,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  Get.locale?.languageCode == 'zh' ? '高级肿瘤学研究员' : 'Senior Oncology Curator',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textVariantColor,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.business, size: 14, color: textVariantColor.withAlpha((0.7 * 255).round())),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        Get.locale?.languageCode == 'zh' ? '圣裘德医学研究中心' : 'ST. JUDE\'S MEDICAL RESEARCH CENTER',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: textVariantColor.withAlpha((0.8 * 255).round()),
-                          letterSpacing: 0.5,
+                  const SizedBox(height: 4),
+                  Text(
+                    isZh ? (user?.titleZh ?? '') : (user?.titleEn ?? ''),
+                    style: TextStyle(fontSize: 14, color: textVariantColor),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.business, size: 14, color: textVariantColor.withAlpha((0.7 * 255).round())),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          isZh ? (user?.organizationZh ?? '') : (user?.organizationEn ?? ''),
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textVariantColor.withAlpha((0.8 * 255).round()), letterSpacing: 0.5),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildQuickActions(Color primaryColor, Color surfaceContainerColor, Color textVariantColor) {
     return GestureDetector(
-      onTap: () {
-        Get.toNamed('/digital_check_in');
-      },
+      onTap: () => Get.toNamed('/digital_check_in'),
       child: Container(
         height: 100,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
           color: primaryColor,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: primaryColor.withAlpha((0.3 * 255).round()),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: primaryColor.withAlpha((0.3 * 255).round()), blurRadius: 12, offset: const Offset(0, 6))],
         ),
         child: Row(
           children: [
@@ -192,22 +159,11 @@ class ProfileScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'digital_pass'.tr,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+                  Text('digital_pass'.tr, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5)),
                   const SizedBox(height: 4),
                   Text(
                     Get.locale?.languageCode == 'zh' ? 'Digital Pass • 点击出示二维码' : 'Tap to show QR Code',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withAlpha((0.8 * 255).round()),
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.white.withAlpha((0.8 * 255).round())),
                   ),
                 ],
               ),
@@ -220,92 +176,92 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildRegisteredEvents(Color primaryColor, Color textVariantColor, Color surfaceLowColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Text(
-              'registered_events'.tr,
-              style: TextStyle(
-                fontFamily: 'Noto Serif',
-                fontSize: 24,
-                fontStyle: FontStyle.italic,
-                color: primaryColor,
+    final eventCtrl = Get.find<EventController>();
+    final isZh = Get.locale?.languageCode == 'zh';
+
+    return Obx(() {
+      final myEvents = eventCtrl.myEvents;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('registered_events'.tr, style: TextStyle(fontFamily: 'Noto Serif', fontSize: 24, fontStyle: FontStyle.italic, color: primaryColor)),
+              Text(
+                '${isZh ? '已登记' : 'REGISTERED'} (${myEvents.length})',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textVariantColor, letterSpacing: 1),
               ),
-            ),
-            Text(
-              'registered_events_count'.tr,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: textVariantColor,
-                letterSpacing: 1,
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(color: Colors.grey.shade300),
+          const SizedBox(height: 24),
+          if (myEvents.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  isZh ? '暂未订阅任何会议' : 'No subscribed events',
+                  style: TextStyle(color: Colors.grey.shade500),
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Divider(color: Colors.grey.shade300),
-        const SizedBox(height: 24),
-        _buildEventItem(
-          primaryColor: primaryColor,
-          textVariantColor: textVariantColor,
-          date: 'OCT 24',
-          day: 'THURSDAY',
-          tag: 'Keynote',
-          titleEn: 'Innovations in Targeted Immunotherapy',
-          titleZh: '靶向免疫疗法的创新',
-          location: 'Grand Ballroom A',
-          time: '09:00 — 10:30',
-          tagColor: const Color(0xFFCFE6F2),
-          tagTextColor: const Color(0xFF526772),
-          borderColor: primaryColor,
-        ),
-        const SizedBox(height: 32),
-        _buildEventItem(
-          primaryColor: primaryColor,
-          textVariantColor: textVariantColor,
-          date: 'OCT 25',
-          day: 'FRIDAY',
-          tag: 'Panel Discussion',
-          titleEn: 'Ethics of AI in Clinical Diagnosis',
-          titleZh: '人工智能在临床诊断中的伦理问题',
-          location: 'Summit Hall 3',
-          time: '14:00 — 15:30',
-          tagColor: const Color(0xFFDBF1FE),
-          tagTextColor: const Color(0xFF526772),
-          borderColor: Colors.grey.shade300,
-        ),
-        const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: surfaceLowColor,
-              foregroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            )
+          else
+            ...myEvents.asMap().entries.map((entry) {
+              final index = entry.key;
+              final event = entry.value;
+              return Padding(
+                padding: EdgeInsets.only(bottom: index < myEvents.length - 1 ? 32 : 0),
+                child: _buildEventItem(
+                  primaryColor: primaryColor,
+                  textVariantColor: textVariantColor,
+                  date: '${_monthNameShort(event.startDate.month)} ${event.startDate.day}',
+                  day: _weekDayName(event.startDate.weekday),
+                  tag: event.isFeatured ? 'Featured' : 'Conference',
+                  titleEn: event.titleEn,
+                  titleZh: event.titleZh,
+                  location: isZh ? event.locationZh : event.locationEn,
+                  time: event.dateRangeStr,
+                  tagColor: const Color(0xFFCFE6F2),
+                  tagTextColor: const Color(0xFF526772),
+                  borderColor: index == 0 ? primaryColor : Colors.grey.shade300,
+                ),
+              );
+            }),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                // Navigate back to events tab
+                Get.offAllNamed('/main');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: surfaceLowColor,
+                foregroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-            ),
-            child: Text(
-              'explore_schedule'.tr,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
-              ),
+              child: Text('explore_schedule'.tr, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
+  }
+
+  String _monthNameShort(int month) {
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return months[month - 1];
+  }
+
+  String _weekDayName(int weekday) {
+    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    return days[weekday - 1];
   }
 
   Widget _buildEventItem({
@@ -328,30 +284,12 @@ class ProfileScreen extends StatelessWidget {
         Container(
           width: 80,
           padding: const EdgeInsets.only(left: 12, top: 4),
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: borderColor, width: 2),
-            ),
-          ),
+          decoration: BoxDecoration(border: Border(left: BorderSide(color: borderColor, width: 2))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                date,
-                style: const TextStyle(
-                  fontFamily: 'Noto Serif',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                day,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: textVariantColor,
-                  letterSpacing: -0.5,
-                ),
-              ),
+              Text(date, style: const TextStyle(fontFamily: 'Noto Serif', fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(day, style: TextStyle(fontSize: 10, color: textVariantColor, letterSpacing: -0.5)),
             ],
           ),
         ),
@@ -362,54 +300,23 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: tagColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  tag.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: tagTextColor,
-                    letterSpacing: 1,
-                  ),
-                ),
+                decoration: BoxDecoration(color: tagColor, borderRadius: BorderRadius.circular(12)),
+                child: Text(tag.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: tagTextColor, letterSpacing: 1)),
               ),
               const SizedBox(height: 12),
-              Text(
-                titleEn,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  height: 1.3,
-                ),
-              ),
+              Text(titleEn, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, height: 1.3)),
               const SizedBox(height: 4),
-              Text(
-                titleZh,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textVariantColor,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+              Text(titleZh, style: TextStyle(fontSize: 13, color: textVariantColor, fontStyle: FontStyle.italic)),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Icon(Icons.location_on, size: 16, color: textVariantColor),
                   const SizedBox(width: 4),
-                  Text(
-                    location,
-                    style: TextStyle(fontSize: 12, color: textVariantColor),
-                  ),
+                  Expanded(child: Text(location, style: TextStyle(fontSize: 12, color: textVariantColor), maxLines: 1, overflow: TextOverflow.ellipsis)),
                   const SizedBox(width: 16),
                   Icon(Icons.schedule, size: 16, color: textVariantColor),
                   const SizedBox(width: 4),
-                  Text(
-                    time,
-                    style: TextStyle(fontSize: 12, color: textVariantColor),
-                  ),
+                  Text(time, style: TextStyle(fontSize: 12, color: textVariantColor)),
                 ],
               ),
             ],
@@ -420,33 +327,19 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildPreferences(Color primaryColor, Color textVariantColor, Color surfaceLowColor) {
+    final storage = Get.find<StorageService>();
+
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: surfaceLowColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
+      decoration: BoxDecoration(color: surfaceLowColor, borderRadius: BorderRadius.circular(24)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'preferences_security'.tr,
-            style: TextStyle(
-              fontFamily: 'Noto Serif',
-              fontSize: 22,
-              fontStyle: FontStyle.italic,
-              color: primaryColor,
-            ),
-          ),
+          Text('preferences_security'.tr, style: TextStyle(fontFamily: 'Noto Serif', fontSize: 22, fontStyle: FontStyle.italic, color: primaryColor)),
           const SizedBox(height: 4),
           Text(
             Get.locale?.languageCode == 'zh' ? 'Preferences & Security' : '偏好与安全设置',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: textVariantColor,
-              letterSpacing: 1,
-            ),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: textVariantColor, letterSpacing: 1),
           ),
           const SizedBox(height: 32),
           _buildPreferenceItem(
@@ -466,6 +359,7 @@ class ProfileScreen extends StatelessWidget {
                   GestureDetector(
                     onTap: () {
                       Get.updateLocale(const Locale('en', 'US'));
+                      storage.saveLanguage('en');
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -479,6 +373,7 @@ class ProfileScreen extends StatelessWidget {
                   GestureDetector(
                     onTap: () {
                       Get.updateLocale(const Locale('zh', 'CN'));
+                      storage.saveLanguage('zh');
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -498,28 +393,77 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.notifications,
             titleEn: 'push_notifications'.tr,
             titleZh: Get.locale?.languageCode == 'zh' ? 'Push Notifications' : '推送通知',
-            trailing: Container(
-              width: 48,
-              height: 24,
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+            trailing: StatefulBuilder(
+              builder: (context, setState) {
+                bool enabled = storage.pushEnabled;
+                return GestureDetector(
+                  onTap: () {
+                    storage.setPushEnabled(!enabled);
+                    setState(() {});
+                  },
+                  child: Container(
+                    width: 48,
+                    height: 24,
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: enabled ? primaryColor : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Align(
+                      alignment: enabled ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      ),
+                    ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(Color primaryColor) {
+    final auth = Get.find<AuthController>();
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          Get.dialog(
+            AlertDialog(
+              title: Text(Get.locale?.languageCode == 'zh' ? '退出登录' : 'Log Out'),
+              content: Text(Get.locale?.languageCode == 'zh' ? '确定要退出登录吗？' : 'Are you sure you want to log out?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text(Get.locale?.languageCode == 'zh' ? '取消' : 'Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    auth.logout();
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                  child: Text(Get.locale?.languageCode == 'zh' ? '退出' : 'Log Out'),
+                ),
+              ],
+            ),
+          );
+        },
+        icon: const Icon(Icons.logout, color: Colors.red),
+        label: Text(
+          Get.locale?.languageCode == 'zh' ? '退出登录' : 'Log Out',
+          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          side: const BorderSide(color: Colors.red),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
       ),
     );
   }
@@ -535,10 +479,7 @@ class ProfileScreen extends StatelessWidget {
         Container(
           width: 48,
           height: 48,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
+          decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
           child: Icon(icon, color: Colors.grey.shade700),
         ),
         const SizedBox(width: 16),
@@ -546,22 +487,9 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                titleEn,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(titleEn, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
               const SizedBox(height: 2),
-              Text(
-                titleZh,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
+              Text(titleZh, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontStyle: FontStyle.italic)),
             ],
           ),
         ),

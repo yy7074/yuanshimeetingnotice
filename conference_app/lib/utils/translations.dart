@@ -31,6 +31,7 @@ class AppTranslations extends Translations {
           'my_events': 'MY EVENTS',
           'view_details': 'View Details',
           'featured_event': 'Featured Event',
+          'join_event': 'Join',
 
           // Schedule
           'summit_agenda': 'Summit Agenda',
@@ -89,6 +90,7 @@ class AppTranslations extends Translations {
           'my_events': '我的会议',
           'view_details': '查看详情',
           'featured_event': '精选活动',
+          'join_event': '加入会议',
 
           // Schedule
           'summit_agenda': '峰会议程',

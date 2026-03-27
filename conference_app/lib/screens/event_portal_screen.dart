@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/event_controller.dart';
+import '../models/event_model.dart';
 
 class EventPortalScreen extends StatefulWidget {
   const EventPortalScreen({super.key});
@@ -10,6 +12,7 @@ class EventPortalScreen extends StatefulWidget {
 
 class _EventPortalScreenState extends State<EventPortalScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -20,6 +23,7 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -28,6 +32,7 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
     const Color primaryColor = Color(0xFF196EE6);
     const Color backgroundColor = Color(0xFFF6F7F8);
     const Color textColor = Color(0xFF0F172A);
+    final eventCtrl = Get.find<EventController>();
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -35,14 +40,37 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
         child: Column(
           children: [
             _buildHeader(textColor),
-            _buildSearchBar(),
+            _buildSearchBar(eventCtrl),
             _buildTabBar(primaryColor),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _buildAllEventsList(primaryColor),
-                  const Center(child: Text('MY EVENTS')),
+                  Obx(() => _buildEventsList(eventCtrl.filteredEvents, primaryColor, eventCtrl)),
+                  Obx(() {
+                    final myEvents = eventCtrl.myEvents;
+                    if (myEvents.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_busy, size: 64, color: Colors.grey.shade300),
+                            const SizedBox(height: 16),
+                            Text(
+                              Get.locale?.languageCode == 'zh' ? '暂未订阅任何会议' : 'No subscribed events yet',
+                              style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              Get.locale?.languageCode == 'zh' ? '在"所有会议"中点击"加入会议"即可订阅' : 'Tap "Join Event" in ALL EVENTS to subscribe',
+                              style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return _buildEventsList(myEvents, primaryColor, eventCtrl);
+                  }),
                 ],
               ),
             ),
@@ -59,18 +87,13 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
       child: Center(
         child: Text(
           'global_conferences'.tr,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-            letterSpacing: -0.5,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor, letterSpacing: -0.5),
         ),
       ),
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(EventController eventCtrl) {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
@@ -82,10 +105,21 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
           border: Border.all(color: Colors.grey.shade200),
         ),
         child: TextField(
+          controller: _searchController,
+          onChanged: (value) => eventCtrl.searchQuery.value = value,
           decoration: InputDecoration(
             hintText: 'search_hint'.tr,
             hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 16),
             prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+            suffixIcon: Obx(() => eventCtrl.searchQuery.value.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 20),
+                    onPressed: () {
+                      _searchController.clear();
+                      eventCtrl.searchQuery.value = '';
+                    },
+                  )
+                : const SizedBox.shrink()),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
           ),
@@ -113,72 +147,44 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
     );
   }
 
-  Widget _buildAllEventsList(Color primaryColor) {
-    return ListView(
+  Widget _buildEventsList(List<EventModel> events, Color primaryColor, EventController eventCtrl) {
+    if (events.isEmpty) {
+      return Center(
+        child: Text(
+          Get.locale?.languageCode == 'zh' ? '未找到匹配的会议' : 'No matching events found',
+          style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+        ),
+      );
+    }
+    return ListView.separated(
       padding: const EdgeInsets.all(16.0),
-      children: [
-        _buildEventCard(
-          title: Get.locale?.languageCode == 'zh' ? '2026 全球肿瘤学创新峰会' : 'Global Oncology Summit 2026',
-          date: 'Oct 15-17, 2026',
-          location: Get.locale?.languageCode == 'zh' ? '旧金山国际会议中心, CA' : 'Convention Center, San Francisco, CA',
-          imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070&auto=format&fit=crop',
-          primaryColor: primaryColor,
-          avatars: ['JD', 'AS', '+12'],
-        ),
-        const SizedBox(height: 24),
-        _buildEventCard(
-          title: Get.locale?.languageCode == 'zh' ? '未来数字医疗与AI论坛' : 'Future of Digital Healthcare & AI Forum',
-          date: 'Nov 02-04, 2026',
-          location: Get.locale?.languageCode == 'zh' ? '上海君悦大酒店, CN' : 'Grand Hyatt, Shanghai, CN',
-          imageUrl: 'https://images.unsplash.com/photo-1591115765373-5207764f72e7?q=80&w=2070&auto=format&fit=crop',
-          primaryColor: primaryColor,
-          isFeatured: true,
-        ),
-        const SizedBox(height: 24),
-        _buildEventCard(
-          title: Get.locale?.languageCode == 'zh' ? '国际心血管医学博览会' : 'International Cardiovascular Expo',
-          date: 'Dec 12, 2026',
-          location: Get.locale?.languageCode == 'zh' ? '柏林展览中心, DE' : 'Exhibition Hall, Berlin, DE',
-          imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2069&auto=format&fit=crop',
-          primaryColor: primaryColor,
-          footerText: Get.locale?.languageCode == 'zh' ? '仅剩 5 个参会名额' : 'Last 5 tickets left',
-        ),
-      ],
+      itemCount: events.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      itemBuilder: (context, index) => _buildEventCard(events[index], primaryColor, eventCtrl),
     );
   }
 
-  Widget _buildEventCard({
-    required String title,
-    required String date,
-    required String location,
-    required String imageUrl,
-    required Color primaryColor,
-    List<String>? avatars,
-    bool isFeatured = false,
-    String? footerText,
-  }) {
+  Widget _buildEventCard(EventModel event, Color primaryColor, EventController eventCtrl) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    final isSubscribed = eventCtrl.isSubscribed(event.id);
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((0.03 * 255).round()),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withAlpha((0.03 * 255).round()), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image
           AspectRatio(
             aspectRatio: 16 / 9,
             child: Image.network(
-              imageUrl,
+              event.imageUrl,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Container(
                 color: Colors.grey.shade200,
@@ -186,34 +192,21 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
               ),
             ),
           ),
-          // Content
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
-                    height: 1.2,
-                  ),
+                  isZh ? event.titleZh : event.titleEn,
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), height: 1.2),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade500),
                     const SizedBox(width: 8),
-                    Text(
-                      date,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
+                    Text(event.dateRangeStr, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey.shade500)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -223,11 +216,8 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        location,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade500,
-                        ),
+                        isZh ? event.locationZh : event.locationEn,
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -235,44 +225,10 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Footer Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (avatars != null)
-                      Row(
-                        children: avatars.asMap().entries.map((entry) {
-                          int idx = entry.key;
-                          String text = entry.value;
-                          return Transform.translate(
-                            offset: Offset(idx * -8.0, 0),
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: idx == 0
-                                    ? Colors.grey.shade200
-                                    : idx == 1
-                                        ? primaryColor.withAlpha((0.2 * 255).round())
-                                        : Colors.grey.shade300,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  text,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: idx == 1 ? primaryColor : Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      )
-                    else if (isFeatured)
+                    if (event.isFeatured)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
@@ -283,72 +239,69 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
                           children: [
                             Icon(Icons.bolt, size: 16, color: primaryColor),
                             const SizedBox(width: 4),
-                            Text(
-                              'featured_event'.tr,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: primaryColor,
-                              ),
-                            ),
+                            Text('featured_event'.tr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor)),
                           ],
                         ),
                       )
-                    else if (footerText != null)
+                    else if (event.remainingSpots >= 0 && event.remainingSpots <= 10)
                       Text(
-                        footerText,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
+                        isZh ? '仅剩 ${event.remainingSpots} 个参会名额' : 'Last ${event.remainingSpots} tickets left',
+                        style: TextStyle(fontSize: 12, color: Colors.orange.shade700, fontWeight: FontWeight.w600),
                       )
                     else
-                      const SizedBox(),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Implement join/subscribe logic
-                        Get.snackbar(
-                          Get.locale?.languageCode == 'zh' ? '成功' : 'Success',
-                          Get.locale?.languageCode == 'zh' ? '已成功订阅该会议' : 'Successfully subscribed to event',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: primaryColor,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(16),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: primaryColor),
+                      Text(
+                        '${event.currentAttendees} ${isZh ? '人参会' : 'attendees'}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                      ),
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            eventCtrl.toggleSubscription(event.id);
+                            if (!isSubscribed) {
+                              Get.snackbar(
+                                isZh ? '成功' : 'Success',
+                                isZh ? '已成功订阅该会议' : 'Successfully subscribed to event',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: primaryColor,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isSubscribed ? Colors.grey.shade100 : Colors.white,
+                            foregroundColor: isSubscribed ? Colors.grey.shade600 : primaryColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(color: isSubscribed ? Colors.grey.shade300 : primaryColor),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            isSubscribed
+                                ? (isZh ? '已加入' : 'Joined')
+                                : (isZh ? '加入会议' : 'Join'),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'join_event'.tr,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        Get.toNamed('/event_agenda');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            eventCtrl.selectEvent(event.id);
+                            Get.toNamed('/event_agenda');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            elevation: 0,
+                          ),
+                          child: Text('view_details'.tr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'view_details'.tr,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
+                      ],
                     ),
                   ],
                 ),
