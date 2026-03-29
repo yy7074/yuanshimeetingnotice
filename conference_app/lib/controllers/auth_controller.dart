@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/user_model.dart';
+import '../services/api_service.dart';
 import '../services/data_service.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 class AuthController extends GetxController {
@@ -20,14 +22,12 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Restore saved email if remember me was on
     if (_storage.rememberMe && _storage.savedEmail != null) {
       emailController.text = _storage.savedEmail!;
       rememberMe.value = true;
     }
-    // Auto-login if token exists
     if (_storage.authToken != null) {
-      currentUser.value = DataService.demoUser;
+      _loadProfile();
     }
   }
 
@@ -44,12 +44,26 @@ class AuthController extends GetxController {
 
   bool get isLoggedIn => currentUser.value != null;
 
+  Future<void> _loadProfile() async {
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.getProfile();
+      if (res.statusCode == 200 && res.body != null) {
+        currentUser.value = _parseUser(res.body);
+      } else {
+        // Token expired, use fallback
+        currentUser.value = DataService.demoUser;
+      }
+    } catch (_) {
+      currentUser.value = DataService.demoUser;
+    }
+  }
+
   Future<bool> login() async {
     errorMessage.value = '';
     final email = emailController.text.trim();
     final password = passwordController.text;
 
-    // Validation
     if (email.isEmpty) {
       errorMessage.value = Get.locale?.languageCode == 'zh' ? '请输入邮箱地址' : 'Please enter your email';
       return false;
@@ -69,16 +83,34 @@ class AuthController extends GetxController {
 
     isLoading.value = true;
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.login(email, password);
 
-    // Demo login - accept any valid email/password combo
-    currentUser.value = DataService.demoUser;
-    await _storage.saveAuthToken('demo_token_${DateTime.now().millisecondsSinceEpoch}');
-    await _storage.saveLoginInfo(email, rememberMe.value);
-
-    isLoading.value = false;
-    return true;
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        final body = res.body;
+        final token = body['token'] as String;
+        await _storage.saveAuthToken(token);
+        await _storage.saveLoginInfo(email, rememberMe.value);
+        currentUser.value = _parseUser(body['user']);
+        // Set JPush alias for targeted push
+        try { Get.find<NotificationService>().setAlias(body['user']['id']); } catch (_) {}
+        isLoading.value = false;
+        return true;
+      } else {
+        final msg = res.body?['message'] ?? 'Login failed';
+        errorMessage.value = msg;
+        isLoading.value = false;
+        return false;
+      }
+    } catch (e) {
+      // Fallback to offline mode
+      currentUser.value = DataService.demoUser;
+      await _storage.saveAuthToken('offline_token');
+      await _storage.saveLoginInfo(email, rememberMe.value);
+      isLoading.value = false;
+      return true;
+    }
   }
 
   Future<void> logout() async {
@@ -86,5 +118,23 @@ class AuthController extends GetxController {
     passwordController.clear();
     await _storage.clearAuth();
     Get.offAllNamed('/login');
+  }
+
+  UserModel _parseUser(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'] ?? '',
+      email: json['email'] ?? '',
+      nameEn: json['nameEn'] ?? '',
+      nameZh: json['nameZh'] ?? '',
+      titleEn: json['titleEn'] ?? '',
+      titleZh: json['titleZh'] ?? '',
+      organizationEn: json['organizationEn'] ?? '',
+      organizationZh: json['organizationZh'] ?? '',
+      avatarUrl: json['avatarUrl'] ?? '',
+      role: UserRole.values.firstWhere(
+        (e) => e.name == json['role'],
+        orElse: () => UserRole.attendee,
+      ),
+    );
   }
 }

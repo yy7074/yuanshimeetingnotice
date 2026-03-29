@@ -256,8 +256,8 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
                     Row(
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            eventCtrl.toggleSubscription(event.id);
+                          onPressed: () async {
+                            await eventCtrl.toggleSubscription(event.id);
                             if (!isSubscribed) {
                               Get.snackbar(
                                 isZh ? '成功' : 'Success',
@@ -288,8 +288,8 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
-                          onPressed: () {
-                            eventCtrl.selectEvent(event.id);
+                          onPressed: () async {
+                            await eventCtrl.selectEvent(event.id);
                             Get.toNamed('/event_agenda');
                           },
                           style: ElevatedButton.styleFrom(

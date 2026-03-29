@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
+import '../controllers/auth_controller.dart';
+import '../services/api_service.dart';
 
 class DigitalCheckInScreen extends StatefulWidget {
   const DigitalCheckInScreen({super.key});
@@ -12,11 +15,32 @@ class DigitalCheckInScreen extends StatefulWidget {
 class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
   int _secondsRemaining = 30;
   Timer? _timer;
+  String _qrData = '';
 
   @override
   void initState() {
     super.initState();
+    _generateQr();
     _startTimer();
+  }
+
+  Future<void> _generateQr() async {
+    try {
+      final auth = Get.find<AuthController>();
+      final userId = auth.currentUser.value?.id ?? 'unknown';
+      // Generate local QR data: userId:timestamp
+      _qrData = '$userId:checkin:${DateTime.now().millisecondsSinceEpoch}';
+
+      // Try to get from server
+      final api = Get.find<ApiService>();
+      final res = await api.generateQr('default');
+      if (res.statusCode == 201 && res.body?['qrCode'] != null) {
+        _qrData = res.body['qrCode'];
+      }
+    } catch (_) {
+      _qrData = 'apscvir:${DateTime.now().millisecondsSinceEpoch}';
+    }
+    if (mounted) setState(() {});
   }
 
   void _startTimer() {
@@ -25,8 +49,8 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
         if (_secondsRemaining > 0) {
           _secondsRemaining--;
         } else {
-          _secondsRemaining = 30; // Reset timer
-          // In a real app, you would also refresh the QR code data here
+          _secondsRemaining = 30;
+          _generateQr(); // Refresh QR code
         }
       });
     });
@@ -194,7 +218,9 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Icon(Icons.qr_code_2, size: 160, color: textColor),
+                                    child: _qrData.isEmpty
+                                        ? const SizedBox(width: 160, height: 160, child: Center(child: CircularProgressIndicator()))
+                                        : QrImageView(data: _qrData, version: QrVersions.auto, size: 160, gapless: true),
                                   ),
                                 ),
                                 

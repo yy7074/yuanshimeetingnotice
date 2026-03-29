@@ -310,7 +310,27 @@ class LoginScreen extends StatelessWidget {
                     ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          // Register link
+          Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  Get.locale?.languageCode == 'zh' ? '还没有账号？' : "Don't have an account? ",
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+                GestureDetector(
+                  onTap: () => Get.toNamed('/register'),
+                  child: Text(
+                    Get.locale?.languageCode == 'zh' ? '立即注册' : 'Register Now',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
           const Divider(color: Color(0xFFF1F5F9)),
           const SizedBox(height: 24),
           Center(

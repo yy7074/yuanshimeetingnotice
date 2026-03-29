@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'utils/translations.dart';
@@ -6,12 +7,16 @@ import 'controllers/auth_controller.dart';
 import 'controllers/event_controller.dart';
 import 'controllers/schedule_controller.dart';
 import 'controllers/speaker_controller.dart';
+import 'services/api_service.dart';
+import 'services/notification_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/event_portal_screen.dart';
 import 'screens/event_agenda_screen.dart';
 import 'screens/my_schedule_screen.dart';
 import 'screens/digital_check_in_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/notification_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +24,13 @@ void main() async {
   // Initialize storage service
   final storage = await StorageService().init();
   Get.put(storage);
+
+  // Initialize API service
+  Get.put(ApiService());
+
+  // Register notification service (init lazily, don't block app startup)
+  final notificationService = NotificationService();
+  Get.put(notificationService);
 
   // Initialize controllers
   Get.put(AuthController());
@@ -32,6 +44,11 @@ void main() async {
       : const Locale('zh', 'CN');
 
   runApp(ConferenceApp(initialLocale: locale));
+
+  // Initialize notification service after UI is running (non-blocking)
+  notificationService.init().catchError((e) {
+    debugPrint('NotificationService init failed: $e');
+  });
 }
 
 class ConferenceApp extends StatelessWidget {
@@ -58,6 +75,8 @@ class ConferenceApp extends StatelessWidget {
         GetPage(name: '/event_agenda', page: () => const EventAgendaScreen()),
         GetPage(name: '/my_schedule', page: () => const MyScheduleScreen()),
         GetPage(name: '/digital_check_in', page: () => const DigitalCheckInScreen()),
+        GetPage(name: '/register', page: () => const RegisterScreen()),
+        GetPage(name: '/notifications', page: () => const NotificationScreen()),
       ],
     );
   }

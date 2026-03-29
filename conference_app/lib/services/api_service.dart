@@ -1,0 +1,77 @@
+import 'package:get/get.dart';
+import 'storage_service.dart';
+
+class ApiService extends GetConnect {
+  static const String apiBaseUrl = 'http://localhost:3000/api/v1';
+  // For Android emulator use: 'http://10.0.2.2:3000/api/v1'
+  // For iOS simulator use: 'http://localhost:3000/api/v1'
+  // For real device use your machine's IP: 'http://192.168.x.x:3000/api/v1'
+
+  @override
+  void onInit() {
+    httpClient.baseUrl = apiBaseUrl;
+    httpClient.timeout = const Duration(seconds: 15);
+
+    // Add auth token to requests
+    httpClient.addRequestModifier<dynamic>((request) {
+      final storage = Get.find<StorageService>();
+      final token = storage.authToken;
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      request.headers['Content-Type'] = 'application/json';
+      return request;
+    });
+
+    super.onInit();
+  }
+
+  // Auth
+  Future<Response> login(String email, String password) =>
+      post('/auth/login', {'email': email, 'password': password});
+
+  Future<Response> register(String email, String password, {String? nameEn, String? nameZh}) =>
+      post('/auth/register', {'email': email, 'password': password, 'nameEn': nameEn, 'nameZh': nameZh});
+
+  Future<Response> forgotPassword(String email) =>
+      post('/auth/forgot-password', {'email': email});
+
+  Future<Response> resetPassword(String email, String code, String newPassword) =>
+      post('/auth/reset-password', {'email': email, 'code': code, 'newPassword': newPassword});
+
+  Future<Response> getProfile() => get('/auth/profile');
+
+  // Events
+  Future<Response> getEvents({String? search, String? status}) {
+    final params = <String, String>{};
+    if (search != null && search.isNotEmpty) params['search'] = search;
+    if (status != null) params['status'] = status;
+    final query = params.isNotEmpty ? '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}' : '';
+    return get('/events$query');
+  }
+
+  Future<Response> getEvent(String id) => get('/events/$id');
+  Future<Response> getMyEvents() => get('/events/my');
+  Future<Response> subscribeEvent(String eventId) => post('/events/$eventId/subscribe', {});
+  Future<Response> unsubscribeEvent(String eventId) => delete('/events/$eventId/subscribe');
+
+  // Sessions
+  Future<Response> getSessions(String eventId) => get('/events/$eventId/sessions');
+
+  // Speakers
+  Future<Response> getSpeakers({String? search}) {
+    final query = search != null && search.isNotEmpty ? '?search=$search' : '';
+    return get('/speakers$query');
+  }
+
+  // Materials
+  Future<Response> getMaterials(String eventId) => get('/events/$eventId/materials');
+  Future<Response> trackDownload(String eventId, String materialId) =>
+      post('/events/$eventId/materials/$materialId/download', {});
+
+  // Check-in
+  Future<Response> generateQr(String eventId) => post('/check-in/generate/$eventId', {});
+
+  // Profile
+  Future<Response> updateProfile(Map<String, dynamic> data) => put('/users/profile', data);
+}
