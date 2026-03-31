@@ -140,9 +140,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                 itemCount: totalDays,
                 itemBuilder: (context, index) {
                   final isSelected = _selectedDay == index;
-                  final dayDate = event != null
-                      ? event.startDate.add(Duration(days: index))
-                      : null;
+                  final dayDate = event?.startDate.add(Duration(days: index));
                   return GestureDetector(
                     onTap: () => setState(() => _selectedDay = index),
                     child: Container(

@@ -107,7 +107,7 @@ class NotificationService extends GetxService {
   Future<void> _registerPushToken(String token) async {
     try {
       final api = Get.find<ApiService>();
-      await api.put('/notifications/fcm-token', {'token': token});
+      await api.registerPushToken(token);
     } catch (_) {}
   }
 
@@ -241,7 +241,7 @@ class NotificationService extends GetxService {
   Future<void> refreshUnreadCount() async {
     try {
       final api = Get.find<ApiService>();
-      final res = await api.get('/notifications/unread-count');
+      final res = await api.getUnreadNotificationCount();
       if (res.statusCode == 200) {
         unreadCount.value = res.body['unreadCount'] ?? 0;
       }
@@ -253,7 +253,7 @@ class NotificationService extends GetxService {
     await storage.setPushEnabled(enabled);
     try {
       final api = Get.find<ApiService>();
-      await api.put('/notifications/push-settings', {'enabled': enabled});
+      await api.updatePushSettings(enabled);
     } catch (_) {}
   }
 }

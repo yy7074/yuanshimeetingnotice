@@ -28,7 +28,10 @@ let MaterialsService = class MaterialsService {
             order: { createdAt: 'DESC' },
         });
         if (userRole) {
-            return materials.filter((m) => m.visibleTo.includes(userRole));
+            return materials.filter((material) => {
+                const visibleTo = Array.isArray(material.visibleTo) ? material.visibleTo : [];
+                return visibleTo.length === 0 || visibleTo.includes(userRole);
+            });
         }
         return materials;
     }

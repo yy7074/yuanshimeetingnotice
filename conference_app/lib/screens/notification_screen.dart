@@ -25,8 +25,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
     setState(() => _isLoading = true);
     try {
       final api = Get.find<ApiService>();
-      final res = await api.get('/notifications');
-      final countRes = await api.get('/notifications/unread-count');
+      final res = await api.getNotifications();
+      final countRes = await api.getUnreadNotificationCount();
       if (res.statusCode == 200) {
         _notifications = List<Map<String, dynamic>>.from(res.body);
       }
@@ -40,7 +40,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> _markAsRead(String id) async {
     try {
       final api = Get.find<ApiService>();
-      await api.post('/notifications/$id/read', {});
+      await api.markNotificationAsRead(id);
       setState(() {
         final idx = _notifications.indexWhere((n) => n['id'] == id);
         if (idx >= 0) _notifications[idx]['isRead'] = true;
@@ -53,7 +53,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Future<void> _markAllAsRead() async {
     try {
       final api = Get.find<ApiService>();
-      await api.post('/notifications/read-all', {});
+      await api.markAllNotificationsAsRead();
       setState(() {
         for (var n in _notifications) { n['isRead'] = true; }
         _unreadCount = 0;
@@ -114,7 +114,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: _notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final n = _notifications[index];
                       final isRead = n['isRead'] == true;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Layout, Menu, Button, Dropdown, Space, Typography } from 'antd';
 import {
-  DashboardOutlined, CalendarOutlined, TeamOutlined,
+  DashboardOutlined, CalendarOutlined,
   UserOutlined, LogoutOutlined, GlobalOutlined,
   SoundOutlined, FileTextOutlined, ScheduleOutlined,
   CheckCircleOutlined, ImportOutlined, ExportOutlined, NotificationOutlined,

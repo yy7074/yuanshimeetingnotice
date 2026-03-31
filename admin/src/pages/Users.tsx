@@ -25,8 +25,6 @@ export default function Users() {
     } catch {}
   };
 
-  const roleColors: Record<string, string> = { admin: 'red', vip: 'gold', speaker: 'blue', attendee: 'default' };
-
   const columns = [
     { title: '', dataIndex: 'avatarUrl', key: 'avatar', width: 50, render: (url: string) => <Avatar src={url} /> },
     { title: 'Email', dataIndex: 'email', key: 'email' },

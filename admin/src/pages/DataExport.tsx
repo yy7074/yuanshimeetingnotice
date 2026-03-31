@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card, Button, Select, Table, Typography, Space, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import { usersApi, eventsApi, checkInApi } from '../services/api';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
 export default function DataExport() {
-  const { t } = useTranslation();
   const [events, setEvents] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');

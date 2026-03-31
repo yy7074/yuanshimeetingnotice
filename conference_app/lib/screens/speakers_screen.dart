@@ -133,6 +133,7 @@ class SpeakersScreen extends StatelessWidget {
     required Color tagColor,
   }) {
     final isZh = Get.locale?.languageCode == 'zh';
+    final hasAvatar = speaker.avatarUrl.trim().isNotEmpty;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -150,8 +151,17 @@ class SpeakersScreen extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: surfaceColor, width: 2),
-              image: DecorationImage(image: NetworkImage(speaker.avatarUrl), fit: BoxFit.cover),
+              color: surfaceColor,
             ),
+            clipBehavior: Clip.antiAlias,
+            child: hasAvatar
+                ? Image.network(
+                    speaker.avatarUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildAvatarFallback(primaryColor, isZh ? speaker.nameZh : speaker.nameEn),
+                  )
+                : _buildAvatarFallback(primaryColor, isZh ? speaker.nameZh : speaker.nameEn),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -200,6 +210,20 @@ class SpeakersScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarFallback(Color primaryColor, String name) {
+    final label = name.trim().isEmpty ? 'S' : name.trim().characters.first.toUpperCase();
+    return Center(
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: primaryColor,
+        ),
       ),
     );
   }

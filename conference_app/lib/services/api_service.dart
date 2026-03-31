@@ -72,6 +72,17 @@ class ApiService extends GetConnect {
   // Check-in
   Future<Response> generateQr(String eventId) => post('/check-in/generate/$eventId', {});
 
+  // Notifications
+  Future<Response> getNotifications() => get('/notifications');
+  Future<Response> getUnreadNotificationCount() => get('/notifications/unread-count');
+  Future<Response> markNotificationAsRead(String notificationId) =>
+      post('/notifications/$notificationId/read', {});
+  Future<Response> markAllNotificationsAsRead() => post('/notifications/read-all', {});
+  Future<Response> registerPushToken(String token) =>
+      put('/notifications/fcm-token', {'token': token});
+  Future<Response> updatePushSettings(bool enabled) =>
+      put('/notifications/push-settings', {'enabled': enabled});
+
   // Profile
   Future<Response> updateProfile(Map<String, dynamic> data) => put('/users/profile', data);
 }

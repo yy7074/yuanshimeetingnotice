@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000/api/v1',
   timeout: 10000,
 });
 
@@ -63,6 +63,8 @@ export const usersApi = {
   list: (params?: any) => api.get('/users', { params }),
   updateRole: (id: string, role: string) => api.put(`/users/${id}/role`, { role }),
   stats: () => api.get('/users/stats'),
+  importAttendees: (attendees: any[]) => api.post('/users/import', { attendees }),
+  exportUsers: () => api.post('/users/export'),
 };
 
 // Materials
@@ -78,6 +80,12 @@ export const checkInApi = {
   verify: (qrCode: string) => api.post('/check-in/verify', { qrCode }),
   records: (eventId: string) => api.get(`/check-in/event/${eventId}`),
   stats: (eventId: string) => api.get(`/check-in/stats/${eventId}`),
+};
+
+// Notifications
+export const notificationsApi = {
+  send: (data: any) => api.post('/notifications/send', data),
+  broadcast: (data: any) => api.post('/notifications/broadcast', data),
 };
 
 export default api;

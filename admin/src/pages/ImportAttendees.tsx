@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { Card, Button, Upload, Table, Tag, message, Typography, Space, Alert, Select } from 'antd';
+import { Card, Button, Upload, Table, Tag, message, Typography, Space, Alert } from 'antd';
 import { UploadOutlined, ImportOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import { usersApi } from '../services/api';
 import * as XLSX from 'xlsx';
 
 export default function ImportAttendees() {
-  const { t } = useTranslation();
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -45,9 +43,8 @@ export default function ImportAttendees() {
     if (parsedData.length === 0) return;
     setImporting(true);
     try {
-      const { data } = await usersApi.list(); // Just to check auth
-      // Use the import endpoint
-      const res = await (await import('../services/api')).default.post('/users/import', { attendees: parsedData });
+      await usersApi.list(); // Confirm auth before import to surface a clean 401 if needed.
+      const res = await usersApi.importAttendees(parsedData);
       setResult(res.data);
       message.success(`Import complete: ${res.data.created} created, ${res.data.skipped} skipped`);
     } catch (err: any) {

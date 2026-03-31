@@ -68,7 +68,6 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
     const Color backgroundColor = Color(0xFFF3FAFF);
     const Color accentColor = Color(0xFFFFDEA5);
     const Color surfaceContainerColor = Color(0xFFDBF1FE);
-    const Color textColor = Color(0xFF071E27);
 
     return Scaffold(
       backgroundColor: backgroundColor,

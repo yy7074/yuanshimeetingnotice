@@ -159,7 +159,7 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
     return ListView.separated(
       padding: const EdgeInsets.all(16.0),
       itemCount: events.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 24),
+      separatorBuilder: (_, index) => const SizedBox(height: 24),
       itemBuilder: (context, index) => _buildEventCard(events[index], primaryColor, eventCtrl),
     );
   }

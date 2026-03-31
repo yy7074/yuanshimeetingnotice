@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'utils/translations.dart';
@@ -46,9 +46,13 @@ void main() async {
   runApp(ConferenceApp(initialLocale: locale));
 
   // Initialize notification service after UI is running (non-blocking)
-  notificationService.init().catchError((e) {
-    debugPrint('NotificationService init failed: $e');
-  });
+  unawaited(Future<void>(() async {
+    try {
+      await notificationService.init();
+    } catch (e) {
+      debugPrint('NotificationService init failed: $e');
+    }
+  }));
 }
 
 class ConferenceApp extends StatelessWidget {

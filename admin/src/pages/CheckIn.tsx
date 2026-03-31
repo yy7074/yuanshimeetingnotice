@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Card, Button, Input, Select, Table, Tag, message, Typography, Space, Statistic, Row, Col } from 'antd';
 import { ScanOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import { eventsApi, checkInApi } from '../services/api';
 
 export default function CheckIn() {
-  const { t } = useTranslation();
   const [events, setEvents] = useState<any[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [qrInput, setQrInput] = useState('');

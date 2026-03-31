@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Card, Form, Input, Select, Button, Switch, message, Typography, Space, Divider } from 'antd';
 import { SendOutlined, NotificationOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { eventsApi, usersApi } from '../services/api';
-import api from '../services/api';
+import { eventsApi, notificationsApi, usersApi } from '../services/api';
 
 const { TextArea } = Input;
 
 export default function SendNotification() {
-  const { t } = useTranslation();
   const [events, setEvents] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [sending, setSending] = useState(false);
@@ -25,13 +22,15 @@ export default function SendNotification() {
       const values = await form.validateFields();
       setSending(true);
 
-      const endpoint = mode === 'single' ? '/notifications/send' : '/notifications/broadcast';
-      const { data } = await api.post(endpoint, {
+      const request = {
         ...values,
         type: values.type || 'system',
         sendPush: values.sendPush ?? true,
         sendEmail: values.sendEmail ?? false,
-      });
+      };
+      const { data } = mode === 'single'
+        ? await notificationsApi.send(request)
+        : await notificationsApi.broadcast(request);
 
       message.success(`Notification sent! ${data.sent ? `(${data.sent} recipients)` : ''}`);
       form.resetFields();

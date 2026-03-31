@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Card, Space, Tag, Modal, Form, Input, Select, InputNumber, message, Popconfirm, Typography } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { eventsApi, materialsApi } from '../services/api';
 
