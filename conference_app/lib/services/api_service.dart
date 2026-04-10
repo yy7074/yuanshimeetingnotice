@@ -24,6 +24,20 @@ class ApiService extends GetConnect {
       return request;
     });
 
+    httpClient.addResponseModifier<dynamic>((request, response) {
+      if (response.statusCode == 401) {
+        final storage = Get.find<StorageService>();
+        final currentRoute = Get.currentRoute;
+        Future<void>(() async {
+          await storage.clearAuth();
+          if (currentRoute != '/login' && currentRoute != '/startup') {
+            Get.offAllNamed('/login');
+          }
+        });
+      }
+      return response;
+    });
+
     super.onInit();
   }
 

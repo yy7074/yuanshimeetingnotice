@@ -17,6 +17,7 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
   int _secondsRemaining = 30;
   Timer? _timer;
   String _qrData = '';
+  String _qrError = '';
   String? _selectedEventId;
   List<Map<String, dynamic>> _checkInHistory = [];
 
@@ -36,26 +37,27 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
   Future<void> _generateQr() async {
     if (_selectedEventId == null) {
       _qrData = '';
+      _qrError = '';
       if (mounted) setState(() {});
       return;
     }
 
     try {
-      final auth = Get.find<AuthController>();
-      final userId = auth.currentUser.value?.id ?? 'unknown';
       final eventId = _selectedEventId!;
-      // Generate local QR data
-      _qrData = '$userId:$eventId:local:${DateTime.now().millisecondsSinceEpoch}';
 
-      // Try to get from server
       final api = Get.find<ApiService>();
       final res = await api.generateQr(eventId);
-      if (res.statusCode == 201 && res.body?['qrCode'] != null) {
+      if ((res.statusCode == 201 || res.statusCode == 200) &&
+          res.body?['qrCode'] != null) {
         _qrData = res.body['qrCode'];
+        _qrError = '';
+      } else {
+        _qrData = '';
+        _qrError = _isZh ? '暂时无法生成签到二维码' : 'Unable to generate QR code right now';
       }
     } catch (_) {
-      final auth = Get.find<AuthController>();
-      _qrData = '${auth.currentUser.value?.id ?? "guest"}:${_selectedEventId!}:local:${DateTime.now().millisecondsSinceEpoch}';
+      _qrData = '';
+      _qrError = _isZh ? '网络异常，无法获取签到二维码' : 'Network error. Unable to fetch QR code';
     }
     if (mounted) setState(() {});
   }
@@ -369,7 +371,9 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                               height: 160,
                                               child: Center(
                                                 child: Text(
-                                                  _isZh ? '暂无可用二维码' : 'No QR code available',
+                                                  _qrError.isNotEmpty
+                                                      ? _qrError
+                                                      : (_isZh ? '暂无可用二维码' : 'No QR code available'),
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                                                 ),
