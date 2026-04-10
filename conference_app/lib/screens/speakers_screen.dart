@@ -134,7 +134,9 @@ class SpeakersScreen extends StatelessWidget {
   }) {
     final isZh = Get.locale?.languageCode == 'zh';
     final hasAvatar = speaker.avatarUrl.trim().isNotEmpty;
-    return Container(
+    return GestureDetector(
+      onTap: () => Get.toNamed('/speaker_detail', arguments: speaker),
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -211,6 +213,7 @@ class SpeakersScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

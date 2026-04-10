@@ -1,7 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/session_model.dart';
 import '../services/api_service.dart';
-import '../services/data_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
@@ -30,36 +30,94 @@ class ScheduleController extends GetxController {
         final res = await api.getSessions(eventId);
         if (res.statusCode == 200 && res.body is List) {
           sessions.addAll((res.body as List).map((s) => _parseSession(s)));
-          continue;
         }
       } catch (_) {}
-      // Fallback
-      sessions.addAll(DataService.getSessions(eventId));
     }
     allSessions.value = sessions;
   }
 
   bool isSaved(String sessionId) => savedSessionIds.contains(sessionId);
 
+  /// Check if a session conflicts with any saved session
+  List<SessionModel> getConflicts(SessionModel session) {
+    return mySessions.where((s) =>
+      s.id != session.id &&
+      s.dayIndex == session.dayIndex &&
+      s.startTime.isBefore(session.endTime) &&
+      s.endTime.isAfter(session.startTime)
+    ).toList();
+  }
+
   Future<void> toggleSession(String sessionId) async {
     final notifService = Get.find<NotificationService>();
     if (isSaved(sessionId)) {
       await _storage.removeSession(sessionId);
       savedSessionIds.remove(sessionId);
-      // Cancel reminder
       await notifService.cancelNotification(sessionId.hashCode.abs() % 100000);
     } else {
+      final session = allSessions.firstWhereOrNull((s) => s.id == sessionId);
+      if (session != null) {
+        final conflicts = getConflicts(session);
+        if (conflicts.isNotEmpty) {
+          final confirmed = await _showConflictDialog(session, conflicts);
+          if (confirmed != true) return;
+        }
+      }
       await _storage.saveSession(sessionId);
       savedSessionIds.add(sessionId);
-      // Schedule reminder for this session
-      final session = allSessions.firstWhereOrNull((s) => s.id == sessionId);
       if (session != null) {
         await _scheduleReminder(session);
       }
     }
   }
 
-  Future<void> addAllSessionsFromEvent(String eventId) async {
+  Future<bool?> _showConflictDialog(SessionModel session, List<SessionModel> conflicts) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    final conflictNames = conflicts.map((c) => isZh ? c.titleZh : c.titleEn).join('\n• ');
+    return Get.dialog<bool>(
+      AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            const SizedBox(width: 8),
+            Text(isZh ? '日程冲突' : 'Schedule Conflict', style: const TextStyle(fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isZh
+                  ? '"${session.titleZh}" 与以下议程时间冲突：'
+                  : '"${session.titleEn}" conflicts with:',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            Text('• $conflictNames', style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+            const SizedBox(height: 12),
+            Text(
+              isZh ? '是否仍要添加？' : 'Add anyway?',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: Text(isZh ? '取消' : 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: Text(isZh ? '仍然添加' : 'Add Anyway', style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> addAllSessionsFromEvent(String eventId) async {
     List<SessionModel> sessions;
     try {
       final api = Get.find<ApiService>();
@@ -67,10 +125,10 @@ class ScheduleController extends GetxController {
       if (res.statusCode == 200 && res.body is List) {
         sessions = (res.body as List).map((s) => _parseSession(s)).toList();
       } else {
-        sessions = DataService.getSessions(eventId);
+        return false;
       }
     } catch (_) {
-      sessions = DataService.getSessions(eventId);
+      return false;
     }
 
     for (final session in sessions) {
@@ -82,11 +140,17 @@ class ScheduleController extends GetxController {
     }
     await refreshSessions();
     await _scheduleDailyReminders();
+    return true;
   }
 
   List<SessionModel> get mySessions {
     if (savedSessionIds.isEmpty) return [];
     return allSessions.where((s) => savedSessionIds.contains(s.id)).toList();
+  }
+
+  List<SessionModel> get allSavedSessions {
+    return allSessions.where((s) => savedSessionIds.contains(s.id)).toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
   List<SessionModel> get sessionsForSelectedDay {

@@ -27,13 +27,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final api = Get.find<ApiService>();
       final res = await api.getNotifications();
       final countRes = await api.getUnreadNotificationCount();
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200 && res.body is List) {
         _notifications = List<Map<String, dynamic>>.from(res.body);
+      } else {
+        _notifications = [];
       }
       if (countRes.statusCode == 200) {
         _unreadCount = countRes.body['unreadCount'] ?? 0;
       }
-    } catch (_) {}
+      Get.find<NotificationService>().unreadCount.value = _unreadCount;
+    } catch (_) {
+      if (mounted) {
+        Get.snackbar(
+          _isZh ? '加载失败' : 'Load Failed',
+          _isZh ? '无法获取消息列表' : 'Unable to load notifications',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+      }
+    }
     setState(() => _isLoading = false);
   }
 
@@ -47,7 +61,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
         _unreadCount = _notifications.where((n) => n['isRead'] == false).length;
       });
       Get.find<NotificationService>().refreshUnreadCount();
-    } catch (_) {}
+    } catch (_) {
+      Get.snackbar(
+        _isZh ? '操作失败' : 'Action Failed',
+        _isZh ? '无法更新已读状态' : 'Unable to update read status',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
   }
 
   Future<void> _markAllAsRead() async {
@@ -59,7 +82,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
         _unreadCount = 0;
       });
       Get.find<NotificationService>().refreshUnreadCount();
-    } catch (_) {}
+    } catch (_) {
+      Get.snackbar(
+        _isZh ? '操作失败' : 'Action Failed',
+        _isZh ? '无法全部标记为已读' : 'Unable to mark all as read',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
+  Future<void> _openNotification(Map<String, dynamic> notification) async {
+    if (notification['isRead'] != true) {
+      await _markAsRead(notification['id']);
+    }
+    if (!mounted) return;
+    Get.find<NotificationService>().openNotification(notification);
   }
 
   bool get _isZh => Get.locale?.languageCode == 'zh';
@@ -120,9 +160,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       final isRead = n['isRead'] == true;
                       final typeIcon = _getTypeIcon(n['type'] as String?);
                       return GestureDetector(
-                        onTap: () {
-                          if (!isRead) _markAsRead(n['id']);
-                        },
+                        onTap: () => _openNotification(n),
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -190,6 +228,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   ({IconData icon, Color color}) _getTypeIcon(String? type) {
     return switch (type) {
       'schedule_reminder' => (icon: Icons.schedule, color: Colors.blue),
+      'daily_reminder' => (icon: Icons.calendar_today, color: Colors.indigo),
       'event_update' => (icon: Icons.event, color: Colors.orange),
       'material_update' => (icon: Icons.file_copy, color: Colors.green),
       'check_in_success' => (icon: Icons.check_circle, color: Colors.teal),

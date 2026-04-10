@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 import '../models/event_model.dart';
 import '../models/session_model.dart';
 import '../services/api_service.dart';
-import '../services/data_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
@@ -15,6 +14,36 @@ class EventController extends GetxController {
   final selectedEventId = ''.obs;
   final sessions = <SessionModel>[].obs;
   final isLoading = false.obs;
+  final filterTimeRange = Rx<String?>(null); // 'upcoming', 'past', 'this_month', 'next_month'
+  final filterLocation = Rx<String?>(null);  // location string to match
+  final filterTag = Rx<String?>(null);       // tag to match
+  final sortMode = 'upcoming_first'.obs; // 'upcoming_first' or 'newest_first'
+
+  // Get unique locations from all events for filter options
+  List<String> get availableLocations {
+    final locations = <String>{};
+    for (final e in allEvents) {
+      if (e.locationEn.isNotEmpty) locations.add(e.locationEn);
+    }
+    return locations.toList()..sort();
+  }
+
+  // Get unique tags from all events for filter options
+  List<String> get availableTags {
+    final tags = <String>{};
+    for (final e in allEvents) {
+      tags.addAll(e.tags);
+    }
+    return tags.toList()..sort();
+  }
+
+  bool get hasActiveFilters => filterTimeRange.value != null || filterLocation.value != null || filterTag.value != null;
+
+  void clearFilters() {
+    filterTimeRange.value = null;
+    filterLocation.value = null;
+    filterTag.value = null;
+  }
 
   @override
   void onInit() {
@@ -34,9 +63,7 @@ class EventController extends GetxController {
         return;
       }
     } catch (_) {}
-    // Fallback to local data
-    allEvents.value = DataService.events;
-    subscribedEventIds.value = _storage.subscribedEventIds;
+    allEvents.clear();
     isLoading.value = false;
   }
 
@@ -53,15 +80,72 @@ class EventController extends GetxController {
   }
 
   List<EventModel> get filteredEvents {
-    if (searchQuery.value.isEmpty) return allEvents;
-    final q = searchQuery.value.toLowerCase();
-    return allEvents.where((e) =>
-      e.titleEn.toLowerCase().contains(q) ||
-      e.titleZh.contains(q) ||
-      e.locationEn.toLowerCase().contains(q) ||
-      e.locationZh.contains(q) ||
-      e.tags.any((t) => t.toLowerCase().contains(q))
-    ).toList();
+    var events = allEvents.toList();
+
+    // Search filter
+    if (searchQuery.value.isNotEmpty) {
+      final q = searchQuery.value.toLowerCase();
+      events = events.where((e) =>
+        e.titleEn.toLowerCase().contains(q) ||
+        e.titleZh.contains(q) ||
+        e.locationEn.toLowerCase().contains(q) ||
+        e.locationZh.contains(q) ||
+        e.tags.any((t) => t.toLowerCase().contains(q))
+      ).toList();
+    }
+
+    // Time range filter
+    if (filterTimeRange.value != null) {
+      final now = DateTime.now();
+      switch (filterTimeRange.value) {
+        case 'upcoming':
+          events = events.where((e) => e.startDate.isAfter(now)).toList();
+          break;
+        case 'past':
+          events = events.where((e) => e.endDate.isBefore(now)).toList();
+          break;
+        case 'this_month':
+          events = events.where((e) => e.startDate.month == now.month && e.startDate.year == now.year).toList();
+          break;
+        case 'next_month':
+          final nextMonth = now.month == 12 ? 1 : now.month + 1;
+          final nextYear = now.month == 12 ? now.year + 1 : now.year;
+          events = events.where((e) => e.startDate.month == nextMonth && e.startDate.year == nextYear).toList();
+          break;
+      }
+    }
+
+    // Location filter
+    if (filterLocation.value != null) {
+      final loc = filterLocation.value!.toLowerCase();
+      events = events.where((e) =>
+        e.locationEn.toLowerCase().contains(loc) ||
+        e.locationZh.contains(filterLocation.value!)
+      ).toList();
+    }
+
+    // Tag filter
+    if (filterTag.value != null) {
+      events = events.where((e) =>
+        e.tags.any((t) => t.toLowerCase() == filterTag.value!.toLowerCase())
+      ).toList();
+    }
+
+    // Sort
+    if (sortMode.value == 'upcoming_first') {
+      events.sort((a, b) {
+        final now = DateTime.now();
+        final aFuture = a.startDate.isAfter(now);
+        final bFuture = b.startDate.isAfter(now);
+        if (aFuture && !bFuture) return -1;
+        if (!aFuture && bFuture) return 1;
+        return a.startDate.compareTo(b.startDate);
+      });
+    } else {
+      events.sort((a, b) => b.startDate.compareTo(a.startDate));
+    }
+
+    return events;
   }
 
   List<EventModel> get myEvents {
@@ -70,7 +154,7 @@ class EventController extends GetxController {
 
   bool isSubscribed(String eventId) => subscribedEventIds.contains(eventId);
 
-  Future<void> toggleSubscription(String eventId) async {
+  Future<bool> toggleSubscription(String eventId) async {
     final notifService = Get.find<NotificationService>();
     try {
       final api = Get.find<ApiService>();
@@ -85,14 +169,9 @@ class EventController extends GetxController {
         await _storage.subscribeEvent(eventId);
         notifService.addEventTag(eventId);
       }
+      return true;
     } catch (_) {
-      if (isSubscribed(eventId)) {
-        subscribedEventIds.remove(eventId);
-        await _storage.unsubscribeEvent(eventId);
-      } else {
-        subscribedEventIds.add(eventId);
-        await _storage.subscribeEvent(eventId);
-      }
+      return false;
     }
   }
 
@@ -106,8 +185,7 @@ class EventController extends GetxController {
         return;
       }
     } catch (_) {}
-    // Fallback
-    sessions.value = DataService.getSessions(eventId);
+    sessions.clear();
   }
 
   EventModel? get selectedEvent {
@@ -143,6 +221,7 @@ class EventController extends GetxController {
       isFeatured: json['isFeatured'] ?? false,
       maxAttendees: json['maxAttendees'] ?? 0,
       currentAttendees: json['currentAttendees'] ?? 0,
+      status: json['status'] ?? 'published',
     );
   }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
+import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -77,10 +79,13 @@ class LoginScreen extends StatelessWidget {
           ),
           InkWell(
             onTap: () {
+              final storage = Get.find<StorageService>();
               if (Get.locale?.languageCode == 'zh') {
                 Get.updateLocale(const Locale('en', 'US'));
+                storage.saveLanguage('en');
               } else {
                 Get.updateLocale(const Locale('zh', 'CN'));
+                storage.saveLanguage('zh');
               }
             },
             borderRadius: BorderRadius.circular(20),
@@ -136,7 +141,7 @@ class LoginScreen extends StatelessWidget {
           Text('welcome_back'.tr, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: textColor)),
           const SizedBox(height: 4),
           Text(
-            Get.locale?.languageCode == 'zh' ? 'Welcome Back' : '欢迎回来',
+            Get.locale?.languageCode == 'zh' ? '欢迎回来' : 'Welcome Back',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: textLightColor),
           ),
           const SizedBox(height: 16),
@@ -147,7 +152,7 @@ class LoginScreen extends StatelessWidget {
           const SizedBox(height: 32),
           // Email Field
           Text(
-            '${'email'.tr} / ${Get.locale?.languageCode == 'zh' ? 'Email' : '邮箱'}',
+            '${'email'.tr} / ${Get.locale?.languageCode == 'zh' ? '邮箱' : 'Email'}',
             style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF334155)),
           ),
           const SizedBox(height: 8),
@@ -172,7 +177,7 @@ class LoginScreen extends StatelessWidget {
           const SizedBox(height: 24),
           // Password Field
           Text(
-            '${'password'.tr} / ${Get.locale?.languageCode == 'zh' ? 'Password' : '密码'}',
+            '${'password'.tr} / ${Get.locale?.languageCode == 'zh' ? '密码' : 'Password'}',
             style: const TextStyle(fontWeight: FontWeight.w500, color: Color(0xFF334155)),
           ),
           const SizedBox(height: 8),
@@ -251,7 +256,7 @@ class LoginScreen extends StatelessWidget {
                     children: [
                       Text('remember_me'.tr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF334155))),
                       Text(
-                        Get.locale?.languageCode == 'zh' ? 'Remember Me' : '记住我',
+                        Get.locale?.languageCode == 'zh' ? '记住我' : 'Remember Me',
                         style: TextStyle(fontSize: 12, color: textLightColor),
                       ),
                     ],
@@ -269,7 +274,7 @@ class LoginScreen extends StatelessWidget {
                     child: Text('forgot_password'.tr, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor)),
                   ),
                   Text(
-                    Get.locale?.languageCode == 'zh' ? 'Forgot Password?' : '忘记密码？',
+                    Get.locale?.languageCode == 'zh' ? '忘记密码？' : 'Forgot Password?',
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor),
                   ),
                 ],
@@ -362,53 +367,258 @@ class LoginScreen extends StatelessWidget {
   }
 
   void _showForgotPasswordDialog(Color primaryColor) {
-    final emailController = TextEditingController();
     Get.dialog(
-      AlertDialog(
-        title: Text(Get.locale?.languageCode == 'zh' ? '找回密码' : 'Reset Password'),
-        content: Column(
+      _ForgotPasswordDialog(primaryColor: primaryColor),
+      barrierDismissible: false,
+    );
+  }
+}
+
+class _ForgotPasswordDialog extends StatefulWidget {
+  final Color primaryColor;
+  const _ForgotPasswordDialog({required this.primaryColor});
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  final _emailController = TextEditingController();
+  final _codeController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  int _step = 0; // 0=email, 1=code, 2=new password
+  bool _isLoading = false;
+  String _error = '';
+  bool _obscure = true;
+  int _countdown = 0;
+  int _dailySendCount = 0;
+
+  bool get _isZh => Get.locale?.languageCode == 'zh';
+
+  void _startCountdown() {
+    _countdown = 60;
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _countdown--);
+      return _countdown > 0;
+    });
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _codeController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendCode() async {
+    if (_countdown > 0) {
+      setState(() => _error = _isZh ? '请等待 $_countdown 秒后再试' : 'Please wait $_countdown seconds');
+      return;
+    }
+    if (_dailySendCount >= 5) {
+      setState(() => _error = _isZh ? '今日发送次数已达上限(5次)' : 'Daily limit reached (5 requests)');
+      return;
+    }
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !GetUtils.isEmail(email)) {
+      setState(() => _error = _isZh ? '请输入有效的邮箱地址' : 'Please enter a valid email');
+      return;
+    }
+    setState(() { _isLoading = true; _error = ''; });
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.forgotPassword(email);
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        _dailySendCount++;
+        _startCountdown();
+        setState(() { _step = 1; _isLoading = false; });
+      } else {
+        setState(() { _error = res.body?['message'] ?? (_isZh ? '发送失败' : 'Failed to send'); _isLoading = false; });
+      }
+    } catch (_) {
+      setState(() {
+        _error = _isZh ? '网络错误，请稍后重试' : 'Network error, please try again';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _verifyAndProceed() async {
+    if (_codeController.text.trim().length != 6) {
+      setState(() => _error = _isZh ? '请输入6位验证码' : 'Please enter 6-digit code');
+      return;
+    }
+    setState(() { _step = 2; _error = ''; });
+  }
+
+  Future<void> _resetPassword() async {
+    final password = _newPasswordController.text;
+    final confirm = _confirmPasswordController.text;
+    if (password.length < 8) {
+      setState(() => _error = _isZh ? '密码长度至少为8位' : 'Password must be at least 8 characters');
+      return;
+    }
+    if (password != confirm) {
+      setState(() => _error = _isZh ? '两次密码输入不一致' : 'Passwords do not match');
+      return;
+    }
+    setState(() { _isLoading = true; _error = ''; });
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.resetPassword(
+        _emailController.text.trim(),
+        _codeController.text.trim(),
+        password,
+      );
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        Get.back();
+        Get.snackbar(
+          _isZh ? '密码已重置' : 'Password Reset',
+          _isZh ? '请使用新密码登录' : 'Please sign in with your new password',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: widget.primaryColor,
+          colorText: Colors.white,
+          margin: const EdgeInsets.all(16),
+        );
+      } else {
+        setState(() { _error = res.body?['message'] ?? (_isZh ? '重置失败' : 'Reset failed'); _isLoading = false; });
+      }
+    } catch (_) {
+      setState(() { _error = _isZh ? '网络错误，请稍后重试' : 'Network error, please try again'; _isLoading = false; });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(_isZh ? '找回密码' : 'Reset Password'),
+      content: SingleChildScrollView(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              Get.locale?.languageCode == 'zh'
-                  ? '请输入您的注册邮箱，我们将发送验证码到您的邮箱。'
-                  : 'Enter your registered email and we will send you a verification code.',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            // Step indicator
+            Row(
+              children: List.generate(3, (i) => Expanded(
+                child: Container(
+                  height: 3,
+                  margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
+                  decoration: BoxDecoration(
+                    color: i <= _step ? widget.primaryColor : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              )),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: InputDecoration(
-                hintText: 'your@email.com',
-                prefixIcon: const Icon(Icons.email_outlined),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            if (_error.isNotEmpty) ...[
+              Text(_error, style: TextStyle(fontSize: 13, color: Colors.red.shade600)),
+              const SizedBox(height: 12),
+            ],
+            if (_step == 0) ...[
+              Text(
+                _isZh ? '请输入您的注册邮箱' : 'Enter your registered email',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
-            ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'your@email.com',
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+            if (_step == 1) ...[
+              Text(
+                '${_isZh ? '验证码已发送至' : 'Code sent to'} ${_emailController.text.trim()}',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _codeController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                style: const TextStyle(fontSize: 20, letterSpacing: 6, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  hintText: '000000',
+                  counterText: '',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+            if (_step == 2) ...[
+              Text(
+                _isZh ? '设置新密码' : 'Set your new password',
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _newPasswordController,
+                obscureText: _obscure,
+                decoration: InputDecoration(
+                  labelText: _isZh ? '新密码（至少8位）' : 'New Password (min 8 chars)',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _confirmPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: _isZh ? '确认新密码' : 'Confirm New Password',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text(Get.locale?.languageCode == 'zh' ? '取消' : 'Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              Get.snackbar(
-                Get.locale?.languageCode == 'zh' ? '已发送' : 'Sent',
-                Get.locale?.languageCode == 'zh' ? '验证码已发送到您的邮箱' : 'Verification code has been sent to your email',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: primaryColor,
-                colorText: Colors.white,
-                margin: const EdgeInsets.all(16),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white),
-            child: Text(Get.locale?.languageCode == 'zh' ? '发送验证码' : 'Send Code'),
-          ),
-        ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: Text(_isZh ? '取消' : 'Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading || (_step == 0 && _countdown > 0)
+              ? null
+              : () {
+                  if (_step == 0) {
+                    _sendCode();
+                  } else if (_step == 1) {
+                    _verifyAndProceed();
+                  } else {
+                    _resetPassword();
+                  }
+                },
+          style: ElevatedButton.styleFrom(backgroundColor: widget.primaryColor, foregroundColor: Colors.white),
+          child: _isLoading
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : Text(
+                  _step == 0
+                    ? (_countdown > 0
+                        ? '${_isZh ? '等待' : 'Wait'} ${_countdown}s'
+                        : (_isZh ? '发送验证码' : 'Send Code'))
+                    : _step == 1 ? (_isZh ? '下一步' : 'Next')
+                    : (_isZh ? '重置密码' : 'Reset Password'),
+                ),
+        ),
+      ],
     );
   }
 }

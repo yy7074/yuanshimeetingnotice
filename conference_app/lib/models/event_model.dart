@@ -15,6 +15,7 @@ class EventModel {
   final bool isFeatured;
   final int maxAttendees;
   final int currentAttendees;
+  final String status; // 'draft', 'published', 'ended'
 
   const EventModel({
     required this.id,
@@ -33,6 +34,7 @@ class EventModel {
     this.isFeatured = false,
     this.maxAttendees = 0,
     this.currentAttendees = 0,
+    this.status = 'published',
   });
 
   String get dateRangeStr {

@@ -62,7 +62,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(textColor),
+            _buildHeader(textColor, primaryColor),
             Obx(() {
               final days = scheduleCtrl.availableDays;
               if (days.isEmpty) {
@@ -137,12 +137,29 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     );
   }
 
-  Widget _buildHeader(Color textColor) {
+  Widget _buildHeader(Color textColor, Color primaryColor) {
+    final scheduleCtrl = Get.find<ScheduleController>();
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Center(
-        child: Text('my_schedule_title'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor, letterSpacing: -0.5)),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const SizedBox(width: 48), // balance
+          Text('my_schedule_title'.tr, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor, letterSpacing: -0.5)),
+          Obx(() {
+            if (scheduleCtrl.savedSessionIds.isEmpty) return const SizedBox(width: 48);
+            return GestureDetector(
+              onTap: () => _exportAllToCalendar(scheduleCtrl, primaryColor),
+              child: Container(
+                width: 48,
+                height: 48,
+                alignment: Alignment.center,
+                child: Icon(Icons.ios_share, color: primaryColor, size: 22),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
@@ -312,6 +329,45 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                             },
                             child: Icon(Icons.notifications_active, color: primaryColor, size: 24),
                           ),
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: () {
+                              final scheduleCtrl = Get.find<ScheduleController>();
+                              Get.dialog(
+                                AlertDialog(
+                                  title: Text(isZh ? '移除议程' : 'Remove Session'),
+                                  content: Text(
+                                    isZh
+                                        ? '确定要从日程中移除 "${session.titleZh}" 吗？'
+                                        : 'Remove "${session.titleEn}" from your schedule?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Get.back(),
+                                      child: Text(isZh ? '取消' : 'Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Get.back();
+                                        scheduleCtrl.toggleSession(session.id);
+                                        Get.snackbar(
+                                          isZh ? '已移除' : 'Removed',
+                                          isZh ? '议程已从日程中移除' : 'Session removed from schedule',
+                                          snackPosition: SnackPosition.BOTTOM,
+                                          backgroundColor: primaryColor,
+                                          colorText: Colors.white,
+                                          margin: const EdgeInsets.all(16),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade400, foregroundColor: Colors.white),
+                                      child: Text(isZh ? '移除' : 'Remove'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: Icon(Icons.delete_outline, color: Colors.red.shade300, size: 22),
+                          ),
                         ],
                       ),
                     ],
@@ -349,6 +405,120 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _exportAllToCalendar(ScheduleController scheduleCtrl, Color primaryColor) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    final sessions = scheduleCtrl.allSavedSessions;
+
+    if (sessions.isEmpty) {
+      Get.snackbar(
+        isZh ? '暂无日程' : 'No Schedule',
+        isZh ? '请先添加议程到我的日程' : 'Please add sessions to your schedule first',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+      return;
+    }
+
+    Get.bottomSheet(
+      Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+            ),
+            Icon(Icons.calendar_month, size: 48, color: primaryColor),
+            const SizedBox(height: 16),
+            Text(
+              isZh ? '导出到系统日历' : 'Export to Calendar',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isZh ? '将 ${sessions.length} 个议程添加到系统日历' : 'Add ${sessions.length} sessions to your calendar',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  _doExportAll(sessions, primaryColor);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  isZh ? '导出全部 (${sessions.length})' : 'Export All (${sessions.length})',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () {
+                  Get.back();
+                  final daySessions = scheduleCtrl.sessionsForSelectedDay;
+                  _doExportAll(daySessions, primaryColor);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryColor,
+                  side: BorderSide(color: primaryColor),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  isZh ? '仅导出当天' : 'Export Current Day Only',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _doExportAll(List<SessionModel> sessions, Color primaryColor) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    int count = 0;
+    for (final session in sessions) {
+      final event = Event(
+        title: isZh ? session.titleZh : session.titleEn,
+        description: '${session.speakerName} - ${isZh ? session.speakerTitleZh : session.speakerTitleEn}',
+        location: isZh ? session.roomZh : session.roomEn,
+        startDate: session.startTime,
+        endDate: session.endTime,
+        iosParams: const IOSParams(reminder: Duration(minutes: 15)),
+      );
+      Add2Calendar.addEvent2Cal(event);
+      count++;
+    }
+    Get.snackbar(
+      isZh ? '导出成功' : 'Export Complete',
+      isZh ? '已将 $count 个议程添加到系统日历' : '$count sessions exported to calendar',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: primaryColor,
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
     );
   }
 }

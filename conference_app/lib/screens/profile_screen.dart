@@ -105,10 +105,27 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(fontFamily: 'Noto Serif', fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor, height: 1.1),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(8)),
-                        child: Text('vip_delegate'.tr, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: badgeTextColor, letterSpacing: 1.0)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(8)),
+                            child: Text(
+                              _getRoleBadgeText(user?.role.name ?? 'attendee'),
+                              style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: badgeTextColor, letterSpacing: 1.0),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () => Get.toNamed('/profile_edit'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: primaryColor.withAlpha(20), borderRadius: BorderRadius.circular(8)),
+                              child: Text('edit'.tr, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: primaryColor, letterSpacing: 1.0)),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -252,6 +269,16 @@ class ProfileScreen extends StatelessWidget {
         ],
       );
     });
+  }
+
+  String _getRoleBadgeText(String role) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    switch (role) {
+      case 'admin': return isZh ? '管理员' : 'ADMIN';
+      case 'vip': return isZh ? '贵宾代表' : 'VIP DELEGATE';
+      case 'speaker': return isZh ? '演讲嘉宾' : 'SPEAKER';
+      default: return isZh ? '参会者' : 'ATTENDEE';
+    }
   }
 
   String _monthNameShort(int month) {

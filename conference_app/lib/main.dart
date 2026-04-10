@@ -17,6 +17,9 @@ import 'screens/my_schedule_screen.dart';
 import 'screens/digital_check_in_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/notification_screen.dart';
+import 'screens/profile_edit_screen.dart';
+import 'screens/speaker_detail_screen.dart';
+import 'screens/startup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,8 +74,9 @@ class ConferenceApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),
-      initialRoute: '/login',
+      initialRoute: '/startup',
       getPages: [
+        GetPage(name: '/startup', page: () => const StartupScreen()),
         GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/main', page: () => const MainNavigationScreen()),
         GetPage(name: '/event_portal', page: () => const EventPortalScreen()),
@@ -81,6 +85,8 @@ class ConferenceApp extends StatelessWidget {
         GetPage(name: '/digital_check_in', page: () => const DigitalCheckInScreen()),
         GetPage(name: '/register', page: () => const RegisterScreen()),
         GetPage(name: '/notifications', page: () => const NotificationScreen()),
+        GetPage(name: '/profile_edit', page: () => const ProfileEditScreen()),
+        GetPage(name: '/speaker_detail', page: () => const SpeakerDetailScreen()),
       ],
     );
   }

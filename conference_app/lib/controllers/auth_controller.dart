@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
-import '../services/data_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
@@ -15,6 +14,7 @@ class AuthController extends GetxController {
   final obscurePassword = true.obs;
   final rememberMe = true.obs;
   final isLoading = false.obs;
+  final isReady = false.obs;
   final errorMessage = ''.obs;
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
@@ -27,7 +27,9 @@ class AuthController extends GetxController {
       rememberMe.value = true;
     }
     if (_storage.authToken != null) {
-      _loadProfile();
+      loadProfile();
+    } else {
+      isReady.value = true;
     }
   }
 
@@ -44,18 +46,20 @@ class AuthController extends GetxController {
 
   bool get isLoggedIn => currentUser.value != null;
 
-  Future<void> _loadProfile() async {
+  Future<void> loadProfile() async {
     try {
       final api = Get.find<ApiService>();
       final res = await api.getProfile();
       if (res.statusCode == 200 && res.body != null) {
         currentUser.value = _parseUser(res.body);
       } else {
-        // Token expired, use fallback
-        currentUser.value = DataService.demoUser;
+        currentUser.value = null;
+        await _storage.clearAuth();
       }
     } catch (_) {
-      currentUser.value = DataService.demoUser;
+      currentUser.value = null;
+    } finally {
+      isReady.value = true;
     }
   }
 
@@ -104,17 +108,17 @@ class AuthController extends GetxController {
         return false;
       }
     } catch (e) {
-      // Fallback to offline mode
-      currentUser.value = DataService.demoUser;
-      await _storage.saveAuthToken('offline_token');
-      await _storage.saveLoginInfo(email, rememberMe.value);
+      errorMessage.value = Get.locale?.languageCode == 'zh'
+          ? '网络错误，请检查连接后重试'
+          : 'Network error. Please check your connection and try again';
       isLoading.value = false;
-      return true;
+      return false;
     }
   }
 
   Future<void> logout() async {
     currentUser.value = null;
+    isReady.value = true;
     passwordController.clear();
     await _storage.clearAuth();
     Get.offAllNamed('/login');

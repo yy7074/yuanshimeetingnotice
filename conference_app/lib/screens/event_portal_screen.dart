@@ -41,6 +41,7 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
           children: [
             _buildHeader(textColor),
             _buildSearchBar(eventCtrl),
+            _buildFilterBar(eventCtrl, primaryColor),
             _buildTabBar(primaryColor),
             Expanded(
               child: TabBarView(
@@ -128,6 +129,266 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
     );
   }
 
+  Widget _buildFilterBar(EventController eventCtrl, Color primaryColor) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Obx(() => Row(
+        children: [
+          _buildFilterChip(
+            label: eventCtrl.filterTimeRange.value != null
+                ? _getTimeRangeLabel(eventCtrl.filterTimeRange.value!, isZh)
+                : (isZh ? '时间' : 'Time'),
+            isActive: eventCtrl.filterTimeRange.value != null,
+            onTap: () => _showTimeFilterSheet(eventCtrl, primaryColor),
+            primaryColor: primaryColor,
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            label: eventCtrl.filterLocation.value ?? (isZh ? '地区' : 'Region'),
+            isActive: eventCtrl.filterLocation.value != null,
+            onTap: () => _showLocationFilterSheet(eventCtrl, primaryColor),
+            primaryColor: primaryColor,
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            label: eventCtrl.filterTag.value ?? (isZh ? '领域' : 'Field'),
+            isActive: eventCtrl.filterTag.value != null,
+            onTap: () => _showTagFilterSheet(eventCtrl, primaryColor),
+            primaryColor: primaryColor,
+          ),
+          const Spacer(),
+          Obx(() => GestureDetector(
+            onTap: () {
+              eventCtrl.sortMode.value = eventCtrl.sortMode.value == 'upcoming_first'
+                  ? 'newest_first'
+                  : 'upcoming_first';
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    eventCtrl.sortMode.value == 'upcoming_first'
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    eventCtrl.sortMode.value == 'upcoming_first'
+                        ? (isZh ? '即将' : 'Soon')
+                        : (isZh ? '最新' : 'New'),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+          )),
+          if (eventCtrl.hasActiveFilters) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => eventCtrl.clearFilters(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(Icons.clear_all, size: 18, color: Colors.red.shade400),
+              ),
+            ),
+          ],
+        ],
+      )),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+    required Color primaryColor,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? primaryColor.withAlpha((0.1 * 255).round()) : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isActive ? primaryColor : Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? primaryColor : Colors.grey.shade600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: isActive ? primaryColor : Colors.grey.shade500,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getTimeRangeLabel(String value, bool isZh) {
+    switch (value) {
+      case 'upcoming': return isZh ? '即将举办' : 'Upcoming';
+      case 'past': return isZh ? '已结束' : 'Past';
+      case 'this_month': return isZh ? '本月' : 'This Month';
+      case 'next_month': return isZh ? '下月' : 'Next Month';
+      default: return value;
+    }
+  }
+
+  void _showTimeFilterSheet(EventController eventCtrl, Color primaryColor) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    final options = [
+      {'key': 'upcoming', 'en': 'Upcoming Events', 'zh': '即将举办'},
+      {'key': 'past', 'en': 'Past Events', 'zh': '已结束'},
+      {'key': 'this_month', 'en': 'This Month', 'zh': '本月'},
+      {'key': 'next_month', 'en': 'Next Month', 'zh': '下月'},
+    ];
+    _showFilterBottomSheet(
+      title: isZh ? '按时间筛选' : 'Filter by Time',
+      options: options.map((o) => o[isZh ? 'zh' : 'en']!).toList(),
+      selectedIndex: options.indexWhere((o) => o['key'] == eventCtrl.filterTimeRange.value),
+      onSelect: (index) {
+        if (index < 0) {
+          eventCtrl.filterTimeRange.value = null;
+        } else {
+          eventCtrl.filterTimeRange.value = options[index]['key'];
+        }
+        Get.back();
+      },
+      primaryColor: primaryColor,
+    );
+  }
+
+  void _showLocationFilterSheet(EventController eventCtrl, Color primaryColor) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    final locations = eventCtrl.availableLocations;
+    _showFilterBottomSheet(
+      title: isZh ? '按地区筛选' : 'Filter by Region',
+      options: locations,
+      selectedIndex: locations.indexOf(eventCtrl.filterLocation.value ?? ''),
+      onSelect: (index) {
+        if (index < 0) {
+          eventCtrl.filterLocation.value = null;
+        } else {
+          eventCtrl.filterLocation.value = locations[index];
+        }
+        Get.back();
+      },
+      primaryColor: primaryColor,
+    );
+  }
+
+  void _showTagFilterSheet(EventController eventCtrl, Color primaryColor) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    final tags = eventCtrl.availableTags;
+    _showFilterBottomSheet(
+      title: isZh ? '按领域筛选' : 'Filter by Field',
+      options: tags,
+      selectedIndex: tags.indexOf(eventCtrl.filterTag.value ?? ''),
+      onSelect: (index) {
+        if (index < 0) {
+          eventCtrl.filterTag.value = null;
+        } else {
+          eventCtrl.filterTag.value = tags[index];
+        }
+        Get.back();
+      },
+      primaryColor: primaryColor,
+    );
+  }
+
+  void _showFilterBottomSheet({
+    required String title,
+    required List<String> options,
+    required int selectedIndex,
+    required Function(int) onSelect,
+    required Color primaryColor,
+  }) {
+    final isZh = Get.locale?.languageCode == 'zh';
+    Get.bottomSheet(
+      Container(
+        constraints: BoxConstraints(maxHeight: Get.height * 0.5),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  if (selectedIndex >= 0)
+                    TextButton(
+                      onPressed: () => onSelect(-1),
+                      child: Text(isZh ? '清除' : 'Clear', style: TextStyle(color: Colors.red.shade400)),
+                    ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final isSelected = index == selectedIndex;
+                  return ListTile(
+                    title: Text(
+                      options[index],
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: isSelected ? primaryColor : Colors.black87,
+                      ),
+                    ),
+                    trailing: isSelected ? Icon(Icons.check_circle, color: primaryColor) : null,
+                    onTap: () => onSelect(index),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabBar(Color primaryColor) {
     return Container(
       color: Colors.white,
@@ -197,6 +458,20 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (event.status == 'ended') ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      isZh ? '已结束' : 'ENDED',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Text(
                   isZh ? event.titleZh : event.titleEn,
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0F172A), height: 1.2),
@@ -257,7 +532,18 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
                       children: [
                         ElevatedButton(
                           onPressed: () async {
-                            await eventCtrl.toggleSubscription(event.id);
+                            final success = await eventCtrl.toggleSubscription(event.id);
+                            if (!success) {
+                              Get.snackbar(
+                                isZh ? '操作失败' : 'Action Failed',
+                                isZh ? '无法更新会议状态，请稍后重试' : 'Unable to update event status. Please try again later.',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white,
+                                margin: const EdgeInsets.all(16),
+                              );
+                              return;
+                            }
                             if (!isSubscribed) {
                               Get.snackbar(
                                 isZh ? '成功' : 'Success',

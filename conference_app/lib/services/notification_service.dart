@@ -9,6 +9,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'api_service.dart';
 import 'storage_service.dart';
+import '../controllers/event_controller.dart';
 
 class NotificationService extends GetxService {
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
@@ -111,12 +112,27 @@ class NotificationService extends GetxService {
     } catch (_) {}
   }
 
+  void openNotification(Map<String, dynamic> notification) {
+    final type = notification['type'] as String? ?? '';
+    final eventId = notification['eventId'] as String? ?? '';
+    final targetUrl = notification['targetUrl'] as String? ?? '';
+    _navigateByNotification(type: type, eventId: eventId, targetUrl: targetUrl);
+  }
+
   void _handleNotificationTap(Map<String, dynamic> message) {
     final extras = message['extras'] as Map<String, dynamic>? ?? {};
-    final type = extras['type'] as String?;
-    if (type == 'schedule_reminder') {
-      Get.toNamed('/my_schedule');
-    } else {
+    final type = extras['type'] as String? ?? message['type'] as String? ?? '';
+    final eventId = extras['eventId'] as String? ?? message['eventId'] as String? ?? '';
+    final targetUrl = extras['targetUrl'] as String? ?? message['targetUrl'] as String? ?? '';
+    _navigateByNotification(type: type, eventId: eventId, targetUrl: targetUrl);
+  }
+
+  void _navigateToEvent(String eventId) {
+    try {
+      final eventCtrl = Get.find<EventController>();
+      eventCtrl.selectEvent(eventId);
+      Get.toNamed('/event_agenda');
+    } catch (_) {
       Get.toNamed('/notifications');
     }
   }
@@ -125,14 +141,50 @@ class NotificationService extends GetxService {
     if (response.payload != null) {
       try {
         final data = jsonDecode(response.payload!);
-        if (data['type'] == 'schedule_reminder') {
-          Get.toNamed('/my_schedule');
-        } else {
-          Get.toNamed('/notifications');
-        }
+        final type = data['type'] as String? ?? '';
+        final eventId = data['eventId'] as String? ?? '';
+        final targetUrl = data['targetUrl'] as String? ?? '';
+        _navigateByNotification(type: type, eventId: eventId, targetUrl: targetUrl);
       } catch (_) {
         Get.toNamed('/notifications');
       }
+    }
+  }
+
+  void _navigateByNotification({
+    required String type,
+    required String eventId,
+    String targetUrl = '',
+  }) {
+    if (targetUrl.isNotEmpty && Get.routeTree.matchRoute(targetUrl).route != null) {
+      Get.toNamed(targetUrl);
+      return;
+    }
+
+    switch (type) {
+      case 'schedule_reminder':
+      case 'daily_reminder':
+        Get.toNamed('/my_schedule');
+        break;
+      case 'event_update':
+        if (eventId.isNotEmpty) {
+          _navigateToEvent(eventId);
+        } else {
+          Get.toNamed('/event_portal');
+        }
+        break;
+      case 'material_update':
+        if (eventId.isNotEmpty) {
+          _navigateToEvent(eventId);
+        } else {
+          Get.toNamed('/notifications');
+        }
+        break;
+      case 'check_in_success':
+        Get.toNamed('/digital_check_in');
+        break;
+      default:
+        Get.toNamed('/notifications');
     }
   }
 

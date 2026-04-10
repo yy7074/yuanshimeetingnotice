@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import '../models/speaker_model.dart';
 import '../services/api_service.dart';
-import '../services/data_service.dart';
 
 class SpeakerController extends GetxController {
   final speakers = <SpeakerModel>[].obs;
@@ -22,8 +21,7 @@ class SpeakerController extends GetxController {
         return;
       }
     } catch (_) {}
-    // Fallback
-    speakers.value = DataService.speakers;
+    speakers.clear();
   }
 
   List<SpeakerModel> get filteredSpeakers {

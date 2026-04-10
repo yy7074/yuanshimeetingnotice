@@ -2,10 +2,11 @@ import 'package:get/get.dart';
 import 'storage_service.dart';
 
 class ApiService extends GetConnect {
-  static const String apiBaseUrl = 'http://localhost:3000/api/v1';
-  // For Android emulator use: 'http://10.0.2.2:3000/api/v1'
-  // For iOS simulator use: 'http://localhost:3000/api/v1'
-  // For real device use your machine's IP: 'http://192.168.x.x:3000/api/v1'
+  static const String apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:3000/api/v1',
+  );
+  // Override with --dart-define=API_BASE_URL=... for device/prod builds.
 
   @override
   void onInit() {
@@ -30,8 +31,19 @@ class ApiService extends GetConnect {
   Future<Response> login(String email, String password) =>
       post('/auth/login', {'email': email, 'password': password});
 
-  Future<Response> register(String email, String password, {String? nameEn, String? nameZh}) =>
-      post('/auth/register', {'email': email, 'password': password, 'nameEn': nameEn, 'nameZh': nameZh});
+  Future<Response> register(String email, String password, {String? code, String? nameEn, String? nameZh}) =>
+      () {
+        final body = <String, dynamic>{
+          'email': email,
+          'password': password,
+          'nameEn': nameEn,
+          'nameZh': nameZh,
+        };
+        if (code != null) {
+          body['code'] = code;
+        }
+        return post('/auth/register', body);
+      }();
 
   Future<Response> forgotPassword(String email) =>
       post('/auth/forgot-password', {'email': email});
@@ -71,6 +83,7 @@ class ApiService extends GetConnect {
 
   // Check-in
   Future<Response> generateQr(String eventId) => post('/check-in/generate/$eventId', {});
+  Future<Response> getMyCheckIn(String eventId) => get('/check-in/my/$eventId');
 
   // Notifications
   Future<Response> getNotifications() => get('/notifications');
