@@ -13,14 +13,18 @@ export default function SendNotification() {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    eventsApi.list().then(r => setEvents(r.data)).catch(() => {});
-    usersApi.list().then(r => setUsers(r.data)).catch(() => {});
+    eventsApi.list().then(r => setEvents(r.data)).catch(() => {
+      message.error('Failed to load events');
+    });
+    usersApi.list().then(r => setUsers(r.data)).catch(() => {
+      message.error('Failed to load users');
+    });
   }, []);
 
   const handleSend = async () => {
+    setSending(true);
     try {
       const values = await form.validateFields();
-      setSending(true);
 
       const request = {
         ...values,
@@ -35,6 +39,10 @@ export default function SendNotification() {
       message.success(`Notification sent! ${data.sent ? `(${data.sent} recipients)` : ''}`);
       form.resetFields();
     } catch (err: any) {
+      if (err?.errorFields) {
+        setSending(false);
+        return;
+      }
       message.error(err.response?.data?.message || 'Failed to send');
     }
     setSending(false);
@@ -64,17 +72,30 @@ export default function SendNotification() {
 
         <Form form={form} layout="vertical" initialValues={{ sendPush: true, sendEmail: false }}>
           {mode === 'single' && (
-            <Form.Item label="Target User / 目标用户" name="userId" rules={[{ required: true }]}>
-              <Select
-                showSearch
-                placeholder="Select user..."
-                optionFilterProp="label"
-                options={users.map(u => ({
-                  value: u.id,
-                  label: `${u.email} (${u.nameEn || u.nameZh || 'No name'})`,
-                }))}
-              />
-            </Form.Item>
+            <>
+              <Form.Item label="Target User / 目标用户" name="userId" rules={[{ required: true }]}>
+                <Select
+                  showSearch
+                  placeholder="Select user..."
+                  optionFilterProp="label"
+                  options={users.map(u => ({
+                    value: u.id,
+                    label: `${u.email} (${u.nameEn || u.nameZh || 'No name'})`,
+                  }))}
+                />
+              </Form.Item>
+              <Form.Item
+                label="Related Event / 关联会议"
+                name="eventId"
+                help="Optional. Recommended for event updates, material updates, and reminders."
+              >
+                <Select
+                  allowClear
+                  placeholder="Select event / 选择会议"
+                  options={events.map(e => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
+                />
+              </Form.Item>
+            </>
           )}
 
           {mode === 'broadcast' && (
