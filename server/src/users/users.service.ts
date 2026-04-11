@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { EmailService } from '../common/email.service';
 
 @Injectable()
@@ -37,6 +41,12 @@ export class UsersService {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
 
+    const nextLanguage =
+      typeof data.language === 'string' ? data.language.trim().toLowerCase() : '';
+    if (nextLanguage && nextLanguage !== 'zh' && nextLanguage !== 'en') {
+      throw new BadRequestException('Invalid language');
+    }
+
     const safeData = {
       nameEn: typeof data.nameEn === 'string' ? data.nameEn.trim() : user.nameEn,
       nameZh: typeof data.nameZh === 'string' ? data.nameZh.trim() : user.nameZh,
@@ -57,7 +67,7 @@ export class UsersService {
           ? data.avatarUrl.trim()
           : user.avatarUrl,
       language:
-        typeof data.language === 'string' ? data.language.trim() : user.language,
+        nextLanguage || user.language,
     };
 
     Object.assign(user, safeData);
@@ -68,7 +78,10 @@ export class UsersService {
   async updateRole(id: string, role: string) {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    user.role = role as any;
+    if (!Object.values(UserRole).includes(role as UserRole)) {
+      throw new BadRequestException('Invalid role');
+    }
+    user.role = role as UserRole;
     const updatedUser = await this.userRepo.save(user);
     return this.sanitizeUser(updatedUser);
   }

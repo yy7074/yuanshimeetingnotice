@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/event_controller.dart';
+import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -355,6 +357,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildPreferences(Color primaryColor, Color textVariantColor, Color surfaceLowColor) {
     final storage = Get.find<StorageService>();
+    final notifService = Get.find<NotificationService>();
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -365,14 +368,14 @@ class ProfileScreen extends StatelessWidget {
           Text('preferences_security'.tr, style: TextStyle(fontFamily: 'Noto Serif', fontSize: 22, fontStyle: FontStyle.italic, color: primaryColor)),
           const SizedBox(height: 4),
           Text(
-            Get.locale?.languageCode == 'zh' ? 'Preferences & Security' : '偏好与安全设置',
+            Get.locale?.languageCode == 'zh' ? '偏好与安全设置' : 'Preferences & Security',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: textVariantColor, letterSpacing: 1),
           ),
           const SizedBox(height: 32),
           _buildPreferenceItem(
             icon: Icons.translate,
             titleEn: 'language_selection'.tr,
-            titleZh: Get.locale?.languageCode == 'zh' ? 'Language Selection: English / 中文' : '语言选择: English / 中文',
+            titleZh: '语言选择: English / 中文',
             trailing: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
@@ -384,9 +387,12 @@ class ProfileScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       Get.updateLocale(const Locale('en', 'US'));
-                      storage.saveLanguage('en');
+                      await storage.saveLanguage('en');
+                      try {
+                        await Get.find<ApiService>().updateProfile({'language': 'en'});
+                      } catch (_) {}
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -398,9 +404,12 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       Get.updateLocale(const Locale('zh', 'CN'));
-                      storage.saveLanguage('zh');
+                      await storage.saveLanguage('zh');
+                      try {
+                        await Get.find<ApiService>().updateProfile({'language': 'zh'});
+                      } catch (_) {}
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -419,14 +428,17 @@ class ProfileScreen extends StatelessWidget {
           _buildPreferenceItem(
             icon: Icons.notifications,
             titleEn: 'push_notifications'.tr,
-            titleZh: Get.locale?.languageCode == 'zh' ? 'Push Notifications' : '推送通知',
+            titleZh: Get.locale?.languageCode == 'zh' ? '推送通知' : 'Push Notifications',
             trailing: StatefulBuilder(
               builder: (context, setState) {
                 bool enabled = storage.pushEnabled;
                 return GestureDetector(
-                  onTap: () {
-                    storage.setPushEnabled(!enabled);
-                    setState(() {});
+                  onTap: () async {
+                    final nextValue = !enabled;
+                    await notifService.updatePushSettings(nextValue);
+                    setState(() {
+                      enabled = nextValue;
+                    });
                   },
                   child: Container(
                     width: 48,

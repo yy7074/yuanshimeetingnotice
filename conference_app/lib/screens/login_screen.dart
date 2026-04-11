@@ -306,7 +306,7 @@ class LoginScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '${'sign_in_btn'.tr} / ${Get.locale?.languageCode == 'zh' ? 'Sign In' : '登录'}',
+                          '${'sign_in_btn'.tr} / ${Get.locale?.languageCode == 'zh' ? '登录' : 'Sign In'}',
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 8),
