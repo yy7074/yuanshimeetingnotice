@@ -1,30 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, Button, Card, Space, Tag, Modal, Form, Input, DatePicker, Select, Switch, message, Popconfirm, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { eventsApi } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { eventsApi, notificationsApi } from '../services/api';
+import { qk } from '../lib/queryKeys';
 import dayjs from 'dayjs';
 
 const { TextArea } = Input;
 
 export default function Events() {
   const { t } = useTranslation();
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [form] = Form.useForm();
 
-  const fetchEvents = async () => {
-    setLoading(true);
-    try {
-      const { data } = await eventsApi.list();
-      setEvents(data);
-    } catch {}
-    setLoading(false);
-  };
+  const {
+    data: events = [],
+    isFetching: loading,
+  } = useQuery({
+    queryKey: qk.events.list(),
+    queryFn: async () => (await eventsApi.list()).data,
+  });
 
-  useEffect(() => { fetchEvents(); }, []);
+  const invalidateEvents = () =>
+    queryClient.invalidateQueries({ queryKey: qk.events.all });
 
   const openCreate = () => {
     setEditingEvent(null);
@@ -37,6 +38,7 @@ export default function Events() {
     form.setFieldsValue({
       ...record,
       dateRange: [dayjs(record.startDate), dayjs(record.endDate)],
+      tags: Array.isArray(record.tags) ? record.tags.join(', ') : record.tags,
     });
     setModalOpen(true);
   };
@@ -52,15 +54,41 @@ export default function Events() {
         tags: values.tags ? values.tags.split(',').map((t: string) => t.trim()) : [],
       };
 
+      let res: any = null;
       if (editingEvent) {
         await eventsApi.update(editingEvent.id, payload);
         message.success('Event updated');
       } else {
-        await eventsApi.create(payload);
+        res = await eventsApi.create(payload);
         message.success('Event created');
       }
       setModalOpen(false);
-      fetchEvents();
+      invalidateEvents();
+
+      // After successful save, check if status is 'published'
+      if (values.status === 'published') {
+        Modal.confirm({
+          title: t('notifyOnPublish'),
+          content: t('notifyOnPublishDesc'),
+          okText: t('sendNotification'),
+          cancelText: t('skipNotification'),
+          onOk: async () => {
+            try {
+              await notificationsApi.broadcast({
+                titleEn: `New Event: ${values.titleEn}`,
+                titleZh: `新会议发布: ${values.titleZh}`,
+                bodyEn: `${values.titleEn} has been published. Check it out!`,
+                bodyZh: `${values.titleZh} 已发布，快来查看！`,
+                type: 'event_update',
+                eventId: editingEvent?.id || res?.data?.id,
+              });
+              message.success(t('notificationSent'));
+            } catch {
+              message.warning(t('notificationFailed'));
+            }
+          },
+        });
+      }
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Failed');
     }
@@ -70,8 +98,10 @@ export default function Events() {
     try {
       await eventsApi.delete(id);
       message.success('Event deleted');
-      fetchEvents();
-    } catch {}
+      invalidateEvents();
+    } catch {
+      message.error('Failed to delete event');
+    }
   };
 
   const columns = [
@@ -101,7 +131,14 @@ export default function Events() {
       title={<Typography.Title level={4} style={{ margin: 0 }}>{t('menu.events')}</Typography.Title>}
       extra={<Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>{t('common.create')}</Button>}
     >
-      <Table dataSource={events} columns={columns} rowKey="id" loading={loading} scroll={{ x: 900 }} />
+      <Table
+        dataSource={events}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        scroll={{ x: 900 }}
+        locale={{ emptyText: 'No events found' }}
+      />
 
       <Modal
         title={editingEvent ? 'Edit Event / 编辑会议' : 'Create Event / 创建会议'}

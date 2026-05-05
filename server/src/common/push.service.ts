@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 export class PushService implements OnModuleInit {
   private jpushClient: any = null;
   private fcmMessaging: any = null;
+  private jpushModule: any = null;
 
   constructor(private config: ConfigService) {}
 
@@ -24,14 +25,17 @@ export class PushService implements OnModuleInit {
     const masterSecret = this.config.get('JPUSH_MASTER_SECRET');
     if (appKey && masterSecret) {
       try {
-        const JPush = (await import('jpush-async')).default;
+        const JPush = this.loadJPushModule();
         this.jpushClient = JPush.buildClient(appKey, masterSecret);
+        this.jpushModule = JPush;
         console.log('JPush initialized (China push enabled)');
       } catch (e) {
         console.log('JPush init failed:', (e as Error).message);
       }
     } else {
-      console.log('JPush not configured (set JPUSH_APP_KEY and JPUSH_MASTER_SECRET in .env)');
+      console.log(
+        'JPush not configured (set JPUSH_APP_KEY and JPUSH_MASTER_SECRET in .env)',
+      );
     }
   }
 
@@ -41,7 +45,9 @@ export class PushService implements OnModuleInit {
       try {
         const firebaseAdmin = await import('firebase-admin');
         const serviceAccount = require(serviceAccountPath);
-        firebaseAdmin.initializeApp({ credential: firebaseAdmin.credential.cert(serviceAccount) });
+        firebaseAdmin.initializeApp({
+          credential: firebaseAdmin.credential.cert(serviceAccount),
+        });
         this.fcmMessaging = firebaseAdmin.messaging();
         console.log('FCM initialized (overseas push enabled)');
       } catch (e) {
@@ -50,13 +56,22 @@ export class PushService implements OnModuleInit {
     }
   }
 
-  get isJPushEnabled(): boolean { return this.jpushClient !== null; }
-  get isFCMEnabled(): boolean { return this.fcmMessaging !== null; }
+  get isJPushEnabled(): boolean {
+    return this.jpushClient !== null;
+  }
+  get isFCMEnabled(): boolean {
+    return this.fcmMessaging !== null;
+  }
 
   /**
    * Send push to a specific device via JPush Registration ID
    */
-  async sendToDevice(registrationId: string, title: string, body: string, extras?: Record<string, string>) {
+  async sendToDevice(
+    registrationId: string,
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     // Try JPush first (works in China)
     if (this.jpushClient) {
       return this._jpushToDevice(registrationId, title, body, extras);
@@ -73,7 +88,12 @@ export class PushService implements OnModuleInit {
   /**
    * Send push to multiple devices
    */
-  async sendToMultiple(registrationIds: string[], title: string, body: string, extras?: Record<string, string>) {
+  async sendToMultiple(
+    registrationIds: string[],
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     if (registrationIds.length === 0) return { success: true, count: 0 };
 
     if (this.jpushClient) {
@@ -82,14 +102,20 @@ export class PushService implements OnModuleInit {
     if (this.fcmMessaging) {
       return this._fcmToMultiple(registrationIds, title, body, extras);
     }
-    console.log(`[DEV PUSH] Broadcast to ${registrationIds.length} devices | ${title}`);
+    console.log(
+      `[DEV PUSH] Broadcast to ${registrationIds.length} devices | ${title}`,
+    );
     return { success: true, dev: true, count: registrationIds.length };
   }
 
   /**
    * Send push to all users (broadcast)
    */
-  async sendToAll(title: string, body: string, extras?: Record<string, string>) {
+  async sendToAll(
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     if (this.jpushClient) {
       return this._jpushBroadcast(title, body, extras);
     }
@@ -100,7 +126,12 @@ export class PushService implements OnModuleInit {
   /**
    * Send push by tag (e.g., event subscribers)
    */
-  async sendToTag(tag: string, title: string, body: string, extras?: Record<string, string>) {
+  async sendToTag(
+    tag: string,
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     if (this.jpushClient) {
       return this._jpushToTag(tag, title, body, extras);
     }
@@ -112,15 +143,26 @@ export class PushService implements OnModuleInit {
   }
 
   // === JPush Implementation ===
-  private async _jpushToDevice(regId: string, title: string, body: string, extras?: Record<string, string>) {
+  private async _jpushToDevice(
+    regId: string,
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     try {
-      const JPush = (await import('jpush-async')).default;
-      const result = await this.jpushClient.push()
+      const JPush = this.loadJPushModule();
+      const result = await this.jpushClient
+        .push()
         .setPlatform(JPush.ALL)
         .setAudience(JPush.registration_id(regId))
         .setNotification(
           JPush.android(body, title, null, extras),
-          JPush.ios({ alert: { title, body }, sound: 'default', badge: '+1', extras }),
+          JPush.ios({
+            alert: { title, body },
+            sound: 'default',
+            badge: '+1',
+            extras,
+          }),
         )
         .setOptions(null, null, null, true) // apns_production
         .send();
@@ -131,15 +173,26 @@ export class PushService implements OnModuleInit {
     }
   }
 
-  private async _jpushToMultiple(regIds: string[], title: string, body: string, extras?: Record<string, string>) {
+  private async _jpushToMultiple(
+    regIds: string[],
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     try {
-      const JPush = (await import('jpush-async')).default;
-      const result = await this.jpushClient.push()
+      const JPush = this.loadJPushModule();
+      const result = await this.jpushClient
+        .push()
         .setPlatform(JPush.ALL)
         .setAudience(JPush.registration_id(...regIds))
         .setNotification(
           JPush.android(body, title, null, extras),
-          JPush.ios({ alert: { title, body }, sound: 'default', badge: '+1', extras }),
+          JPush.ios({
+            alert: { title, body },
+            sound: 'default',
+            badge: '+1',
+            extras,
+          }),
         )
         .setOptions(null, null, null, true)
         .send();
@@ -149,15 +202,25 @@ export class PushService implements OnModuleInit {
     }
   }
 
-  private async _jpushBroadcast(title: string, body: string, extras?: Record<string, string>) {
+  private async _jpushBroadcast(
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     try {
-      const JPush = (await import('jpush-async')).default;
-      const result = await this.jpushClient.push()
+      const JPush = this.loadJPushModule();
+      const result = await this.jpushClient
+        .push()
         .setPlatform(JPush.ALL)
         .setAudience(JPush.ALL)
         .setNotification(
           JPush.android(body, title, null, extras),
-          JPush.ios({ alert: { title, body }, sound: 'default', badge: '+1', extras }),
+          JPush.ios({
+            alert: { title, body },
+            sound: 'default',
+            badge: '+1',
+            extras,
+          }),
         )
         .setOptions(null, null, null, true)
         .send();
@@ -167,15 +230,26 @@ export class PushService implements OnModuleInit {
     }
   }
 
-  private async _jpushToTag(tag: string, title: string, body: string, extras?: Record<string, string>) {
+  private async _jpushToTag(
+    tag: string,
+    title: string,
+    body: string,
+    extras?: Record<string, string>,
+  ) {
     try {
-      const JPush = (await import('jpush-async')).default;
-      const result = await this.jpushClient.push()
+      const JPush = this.loadJPushModule();
+      const result = await this.jpushClient
+        .push()
         .setPlatform(JPush.ALL)
         .setAudience(JPush.tag(tag))
         .setNotification(
           JPush.android(body, title, null, extras),
-          JPush.ios({ alert: { title, body }, sound: 'default', badge: '+1', extras }),
+          JPush.ios({
+            alert: { title, body },
+            sound: 'default',
+            badge: '+1',
+            extras,
+          }),
         )
         .setOptions(null, null, null, true)
         .send();
@@ -186,13 +260,21 @@ export class PushService implements OnModuleInit {
   }
 
   // === FCM Implementation (overseas fallback) ===
-  private async _fcmToDevice(token: string, title: string, body: string, data?: Record<string, string>) {
+  private async _fcmToDevice(
+    token: string,
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ) {
     try {
       const result = await this.fcmMessaging.send({
         token,
         notification: { title, body },
         data: data || {},
-        android: { priority: 'high' as const, notification: { sound: 'default' } },
+        android: {
+          priority: 'high' as const,
+          notification: { sound: 'default' },
+        },
         apns: { payload: { aps: { sound: 'default', badge: 1 } } },
       });
       return { success: true, messageId: result };
@@ -201,25 +283,70 @@ export class PushService implements OnModuleInit {
     }
   }
 
-  private async _fcmToMultiple(tokens: string[], title: string, body: string, data?: Record<string, string>) {
+  private async _fcmToMultiple(
+    tokens: string[],
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ) {
     try {
       const result = await this.fcmMessaging.sendEachForMulticast({
         tokens,
         notification: { title, body },
         data: data || {},
       });
-      return { success: true, successCount: result.successCount, failureCount: result.failureCount };
+      return {
+        success: true,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+      };
     } catch (e) {
       return { success: false, error: (e as Error).message };
     }
   }
 
-  private async _fcmToTopic(topic: string, title: string, body: string, data?: Record<string, string>) {
+  private async _fcmToTopic(
+    topic: string,
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+  ) {
     try {
-      const result = await this.fcmMessaging.send({ topic, notification: { title, body }, data: data || {} });
+      const result = await this.fcmMessaging.send({
+        topic,
+        notification: { title, body },
+        data: data || {},
+      });
       return { success: true, messageId: result };
     } catch (e) {
       return { success: false, error: (e as Error).message };
     }
+  }
+
+  private loadJPushModule() {
+    if (this.jpushModule) {
+      return this.jpushModule;
+    }
+
+    // `jpush-async` is a CommonJS package. In some runtime combinations it is
+    // exposed directly, and in others it is nested under `default`.
+    const loaded = require('jpush-async');
+    const normalized =
+      typeof loaded?.buildClient === 'function'
+        ? loaded
+        : typeof loaded?.default?.buildClient === 'function'
+          ? loaded.default
+          : typeof loaded?.JPushAsync?.buildClient === 'function'
+            ? loaded.JPushAsync
+            : typeof loaded?.JPush?.buildClient === 'function'
+              ? loaded.JPush
+          : null;
+
+    if (!normalized) {
+      throw new Error('Unsupported jpush-async export shape');
+    }
+
+    this.jpushModule = normalized;
+    return normalized;
   }
 }

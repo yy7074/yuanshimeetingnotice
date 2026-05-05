@@ -20,6 +20,7 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
   String _qrError = '';
   String? _selectedEventId;
   List<Map<String, dynamic>> _checkInHistory = [];
+  int _qrRequestVersion = 0;
 
   @override
   void initState() {
@@ -42,11 +43,15 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
       return;
     }
 
+    final requestVersion = ++_qrRequestVersion;
     try {
       final eventId = _selectedEventId!;
 
       final api = Get.find<ApiService>();
       final res = await api.generateQr(eventId);
+      if (!mounted || requestVersion != _qrRequestVersion || eventId != _selectedEventId) {
+        return;
+      }
       if ((res.statusCode == 201 || res.statusCode == 200) &&
           res.body?['qrCode'] != null) {
         _qrData = res.body['qrCode'];
@@ -56,6 +61,9 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
         _qrError = _isZh ? '暂时无法生成签到二维码' : 'Unable to generate QR code right now';
       }
     } catch (_) {
+      if (!mounted || requestVersion != _qrRequestVersion) {
+        return;
+      }
       _qrData = '';
       _qrError = _isZh ? '网络异常，无法获取签到二维码' : 'Network error. Unable to fetch QR code';
     }
@@ -241,12 +249,25 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                 child: Obx(() {
                   final user = auth.currentUser.value;
                   final myEvents = eventCtrl.myEvents;
+                  final hasSelectedEvent = _selectedEventId != null &&
+                      myEvents.any((event) => event.id == _selectedEventId);
+
                   if (_selectedEventId == null && myEvents.isNotEmpty) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (!mounted || _selectedEventId != null || myEvents.isEmpty) return;
                       setState(() {
                         _selectedEventId = myEvents.first.id;
                         _secondsRemaining = 30;
+                      });
+                      _generateQr();
+                      _loadCheckInHistory();
+                    });
+                  } else if (_selectedEventId != null && !hasSelectedEvent) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() {
+                        _selectedEventId = myEvents.isEmpty ? null : myEvents.first.id;
+                        _secondsRemaining = _selectedEventId == null ? 0 : 30;
                       });
                       _generateQr();
                       _loadCheckInHistory();
@@ -328,13 +349,17 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(color: surfaceContainerColor, width: 3),
-                                      image: user?.avatarUrl.isNotEmpty == true
-                                          ? DecorationImage(image: NetworkImage(user!.avatarUrl), fit: BoxFit.cover)
-                                          : null,
+                                      color: Colors.grey.shade100,
                                     ),
-                                    child: user?.avatarUrl.isNotEmpty != true
-                                        ? Icon(Icons.person, size: 48, color: Colors.grey.shade400)
-                                        : null,
+                                    clipBehavior: Clip.antiAlias,
+                                    child: user?.avatarUrl.isNotEmpty == true
+                                        ? Image.network(
+                                            user!.avatarUrl,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                                          )
+                                        : Icon(Icons.person, size: 48, color: Colors.grey.shade400),
                                   ),
                                   const SizedBox(height: 16),
                                   // User Name

@@ -1,6 +1,12 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToMany, JoinTable, OneToMany,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { Event } from '../../events/entities/event.entity';
 import { Exclude } from 'class-transformer';
@@ -59,6 +65,12 @@ export class User {
 
   @Column({ name: 'fcm_token', nullable: true })
   fcmToken: string;
+
+  @Column({ name: 'token_version', default: 0 })
+  tokenVersion: number;
+
+  @Column({ name: 'must_change_password', default: false })
+  mustChangePassword: boolean;
 
   @ManyToMany(() => Event, (event) => event.subscribers)
   @JoinTable({ name: 'user_subscriptions' })

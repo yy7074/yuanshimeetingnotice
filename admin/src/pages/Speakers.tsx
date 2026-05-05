@@ -1,26 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, Button, Card, Space, Tag, Modal, Form, Input, Select, message, Popconfirm, Avatar, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { speakersApi } from '../services/api';
+import { qk } from '../lib/queryKeys';
 
 const { TextArea } = Input;
 
 export default function Speakers() {
   const { t } = useTranslation();
-  const [speakers, setSpeakers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form] = Form.useForm();
 
-  const fetch = async () => {
-    setLoading(true);
-    try { const { data } = await speakersApi.list(); setSpeakers(data); } catch {}
-    setLoading(false);
-  };
-
-  useEffect(() => { fetch(); }, []);
+  const {
+    data: speakers = [],
+    isFetching: loading,
+  } = useQuery({
+    queryKey: qk.speakers.list(),
+    queryFn: async () => (await speakersApi.list()).data,
+  });
+  const invalidateSpeakers = () =>
+    queryClient.invalidateQueries({ queryKey: qk.speakers.all });
 
   const openCreate = () => { setEditing(null); form.resetFields(); setModalOpen(true); };
   const openEdit = (r: any) => { setEditing(r); form.setFieldsValue(r); setModalOpen(true); };
@@ -36,14 +39,20 @@ export default function Speakers() {
         message.success('Speaker created');
       }
       setModalOpen(false);
-      fetch();
+      invalidateSpeakers();
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Failed');
     }
   };
 
   const handleDelete = async (id: string) => {
-    try { await speakersApi.delete(id); message.success('Deleted'); fetch(); } catch {}
+    try {
+      await speakersApi.delete(id);
+      message.success('Deleted');
+      invalidateSpeakers();
+    } catch {
+      message.error('Failed to delete speaker');
+    }
   };
 
   const categoryColors: Record<string, string> = { keynote: 'gold', vip_guest: 'purple', research: 'blue', workshop: 'green' };
@@ -78,7 +87,13 @@ export default function Speakers() {
       title={<Typography.Title level={4} style={{ margin: 0 }}>{t('menu.speakers')}</Typography.Title>}
       extra={<Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>{t('common.create')}</Button>}
     >
-      <Table dataSource={speakers} columns={columns} rowKey="id" loading={loading} />
+      <Table
+        dataSource={speakers}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        locale={{ emptyText: 'No speakers found' }}
+      />
 
       <Modal
         title={editing ? 'Edit Speaker / 编辑嘉宾' : 'Create Speaker / 添加嘉宾'}

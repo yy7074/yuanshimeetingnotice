@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card, Button, Input, Select, Table, Tag, message, Typography, Space, Statistic, Row, Col, Modal, Alert } from 'antd';
 import { ScanOutlined, CheckCircleOutlined, CameraOutlined } from '@ant-design/icons';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventsApi, checkInApi } from '../services/api';
+import { qk } from '../lib/queryKeys';
 
 type SimpleBarcode = { rawValue?: string };
 type BarcodeDetectorInstance = { detect: (source: ImageBitmapSource) => Promise<SimpleBarcode[]> };
 type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => BarcodeDetectorInstance;
 
 export default function CheckIn() {
-  const [events, setEvents] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState('');
   const [qrInput, setQrInput] = useState('');
-  const [records, setRecords] = useState<any[]>([]);
-  const [stats, setStats] = useState({ checkedInCount: 0, totalSubscribers: 0, rate: 0 });
   const [verifyResult, setVerifyResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scannerSupported, setScannerSupported] = useState(true);
   const [scannerStatus, setScannerStatus] = useState('Camera is starting...');
@@ -24,36 +23,39 @@ export default function CheckIn() {
   const scanFrameRef = useRef<number | null>(null);
   const isScanningRef = useRef(false);
 
-  useEffect(() => {
-    eventsApi.list().then(r => setEvents(r.data)).catch(() => {});
-  }, []);
+  const { data: events = [] } = useQuery({
+    queryKey: qk.events.list(),
+    queryFn: async () => (await eventsApi.list()).data,
+  });
+  const {
+    data: records = [],
+    isFetching: loading,
+  } = useQuery({
+    queryKey: qk.checkin.records(selectedEventId),
+    queryFn: async () => (await checkInApi.records(selectedEventId)).data,
+    enabled: !!selectedEventId,
+  });
+  const { data: stats = { checkedInCount: 0, totalSubscribers: 0, rate: 0 } } =
+    useQuery({
+      queryKey: qk.checkin.stats(selectedEventId),
+      queryFn: async () => (await checkInApi.stats(selectedEventId)).data,
+      enabled: !!selectedEventId,
+    });
 
   useEffect(() => {
     if (scannerOpen) {
       void startScanner();
       return;
     }
-
     stopScanner();
   }, [scannerOpen]);
 
   useEffect(() => () => stopScanner(), []);
 
-  useEffect(() => {
-    if (selectedEventId) {
-      fetchRecords();
-      fetchStats();
-    }
-  }, [selectedEventId]);
-
-  const fetchRecords = async () => {
-    setLoading(true);
-    try { const { data } = await checkInApi.records(selectedEventId); setRecords(data); } catch { message.error('Failed to load check-in records'); }
-    setLoading(false);
-  };
-
-  const fetchStats = async () => {
-    try { const { data } = await checkInApi.stats(selectedEventId); setStats(data); } catch { message.error('Failed to load check-in stats'); }
+  const refreshCheckIn = () => {
+    if (!selectedEventId) return;
+    queryClient.invalidateQueries({ queryKey: qk.checkin.records(selectedEventId) });
+    queryClient.invalidateQueries({ queryKey: qk.checkin.stats(selectedEventId) });
   };
 
   const handleVerify = async () => {
@@ -66,10 +68,7 @@ export default function CheckIn() {
       setVerifyResult(data);
       message.success(data.message);
       setQrInput('');
-      if (selectedEventId) {
-        fetchRecords();
-        fetchStats();
-      }
+      refreshCheckIn();
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Verification failed');
       setVerifyResult({ message: 'Failed', error: true });
@@ -166,10 +165,7 @@ export default function CheckIn() {
       setVerifyResult(data);
       message.success(data.message);
       setQrInput('');
-      if (selectedEventId) {
-        fetchRecords();
-        fetchStats();
-      }
+      refreshCheckIn();
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Verification failed');
       setVerifyResult({ message: 'Failed', error: true });
@@ -234,7 +230,7 @@ export default function CheckIn() {
               style={{ width: '100%', marginBottom: 16 }}
               value={selectedEventId || undefined}
               onChange={setSelectedEventId}
-              options={events.map(e => ({ value: e.id, label: `${e.titleZh}` }))}
+              options={events.map((e: any) => ({ value: e.id, label: `${e.titleZh}` }))}
             />
             <Row gutter={[16, 16]}>
               <Col xs={24} md={8}>

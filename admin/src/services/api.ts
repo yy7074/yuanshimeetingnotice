@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   timeout: 10000,
 });
 
@@ -19,7 +19,17 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
+    } else if (
+      err.response?.status === 403 &&
+      (err.response?.data?.message?.code === 'PASSWORD_CHANGE_REQUIRED' ||
+        err.response?.data?.error === 'PASSWORD_CHANGE_REQUIRED')
+    ) {
+      if (!window.location.pathname.startsWith('/change-password')) {
+        window.location.href = '/change-password';
+      }
     }
     return Promise.reject(err);
   },
@@ -28,7 +38,12 @@ api.interceptors.response.use(
 // Auth
 export const authApi = {
   login: (data: { email: string; password: string }) => api.post('/auth/login', data),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (data: { email: string; code: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
   profile: () => api.get('/auth/profile'),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/users/change-password', data),
 };
 
 // Events
@@ -60,11 +75,25 @@ export const speakersApi = {
 
 // Users
 export const usersApi = {
+  create: (data: any) => api.post('/users', data),
   list: (params?: any) => api.get('/users', { params }),
+  get: (id: string) => api.get(`/users/${id}`),
+  overview: (id: string) => api.get(`/users/${id}/overview`),
+  update: (id: string, data: any) => api.put(`/users/${id}`, data),
+  resetPassword: (id: string, newPassword: string) =>
+    api.post(`/users/${id}/reset-password`, { newPassword }),
+  updateRoleBatch: (userIds: string[], role: string) =>
+    api.put('/users/batch/role', { userIds, role }),
+  updateActiveBatch: (userIds: string[], isActive: boolean) =>
+    api.put('/users/batch/active', { userIds, isActive }),
   updateRole: (id: string, role: string) => api.put(`/users/${id}/role`, { role }),
+  updateActive: (id: string, isActive: boolean) =>
+    api.put(`/users/${id}/active`, { isActive }),
   stats: () => api.get('/users/stats'),
   importAttendees: (attendees: any[]) => api.post('/users/import', { attendees }),
   exportUsers: () => api.post('/users/export'),
+  sendInvitations: (data: { userIds?: string[]; eventId?: string; subject?: string; content?: string }) =>
+    api.post('/users/send-invitations', data),
 };
 
 // Materials

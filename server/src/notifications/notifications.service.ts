@@ -9,16 +9,22 @@ export class NotificationsService {
     @InjectRepository(Notification) private notifRepo: Repository<Notification>,
   ) {}
 
-  async findByUser(userId: string) {
-    return this.notifRepo.find({
+  async findByUser(userId: string, options?: { page?: number; pageSize?: number }) {
+    const page = Math.max(1, Math.floor(options?.page ?? 1));
+    const pageSize = Math.min(200, Math.max(1, Math.floor(options?.pageSize ?? 50)));
+    const [items, total] = await this.notifRepo.findAndCount({
       where: { userId },
       order: { createdAt: 'DESC' },
-      take: 50,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     });
+    return { items, total, page, pageSize };
   }
 
   async getUnreadCount(userId: string) {
-    const count = await this.notifRepo.count({ where: { userId, isRead: false } });
+    const count = await this.notifRepo.count({
+      where: { userId, isRead: false },
+    });
     return { unreadCount: count };
   }
 
@@ -46,19 +52,30 @@ export class NotificationsService {
     return this.notifRepo.save(notif);
   }
 
-  async broadcast(userIds: string[], data: {
-    titleEn: string; titleZh: string;
-    bodyEn: string; bodyZh: string;
-    type: NotificationType; eventId?: string;
-  }) {
-    const notifications = userIds.map(userId => this.notifRepo.create({ ...data, userId }));
+  async broadcast(
+    userIds: string[],
+    data: {
+      titleEn: string;
+      titleZh: string;
+      bodyEn: string;
+      bodyZh: string;
+      type: NotificationType;
+      eventId?: string;
+    },
+  ) {
+    const notifications = userIds.map((userId) =>
+      this.notifRepo.create({ ...data, userId }),
+    );
     return this.notifRepo.save(notifications);
   }
 
   async sendToAll(data: {
-    titleEn: string; titleZh: string;
-    bodyEn: string; bodyZh: string;
-    type: NotificationType; eventId?: string;
+    titleEn: string;
+    titleZh: string;
+    bodyEn: string;
+    bodyZh: string;
+    type: NotificationType;
+    eventId?: string;
   }) {
     // This would query all active users - simplified version
     const notif = this.notifRepo.create({ ...data, userId: 'broadcast' });

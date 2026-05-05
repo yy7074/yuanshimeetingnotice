@@ -7,10 +7,10 @@ class SpeakerDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final SpeakerModel speaker = Get.arguments as SpeakerModel;
     final isZh = Get.locale?.languageCode == 'zh';
     const Color primaryColor = Color(0xFF000666);
     const Color surfaceColor = Color(0xFFDBF1FE);
+    final speaker = Get.arguments is SpeakerModel ? Get.arguments as SpeakerModel : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3FAFF),
@@ -27,9 +27,23 @@ class SpeakerDetailScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      body: speaker == null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.person_off_outlined, size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text(
+                    isZh ? '未找到嘉宾信息' : 'Speaker information is unavailable',
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                children: [
             // Header card
             Container(
               width: double.infinity,
@@ -78,13 +92,17 @@ class SpeakerDetailScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: surfaceColor, width: 3),
-                        image: speaker.avatarUrl.isNotEmpty
-                            ? DecorationImage(image: NetworkImage(speaker.avatarUrl), fit: BoxFit.cover)
-                            : null,
+                        color: Colors.grey.shade100,
                       ),
-                      child: speaker.avatarUrl.isEmpty
-                          ? Icon(Icons.person, size: 48, color: Colors.grey.shade400)
-                          : null,
+                      clipBehavior: Clip.antiAlias,
+                      child: speaker.avatarUrl.isNotEmpty
+                          ? Image.network(
+                              speaker.avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                            )
+                          : Icon(Icons.person, size: 48, color: Colors.grey.shade400),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -199,9 +217,9 @@ class SpeakerDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-          ],
-        ),
-      ),
+                ],
+              ),
+            ),
     );
   }
 

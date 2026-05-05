@@ -16,6 +16,7 @@ import 'screens/event_agenda_screen.dart';
 import 'screens/my_schedule_screen.dart';
 import 'screens/digital_check_in_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/change_password_screen.dart';
 import 'screens/notification_screen.dart';
 import 'screens/profile_edit_screen.dart';
 import 'screens/speaker_detail_screen.dart';
@@ -84,6 +85,7 @@ class ConferenceApp extends StatelessWidget {
         GetPage(name: '/my_schedule', page: () => const MyScheduleScreen()),
         GetPage(name: '/digital_check_in', page: () => const DigitalCheckInScreen()),
         GetPage(name: '/register', page: () => const RegisterScreen()),
+        GetPage(name: '/change_password', page: () => const ChangePasswordScreen()),
         GetPage(name: '/notifications', page: () => const NotificationScreen()),
         GetPage(name: '/profile_edit', page: () => const ProfileEditScreen()),
         GetPage(name: '/speaker_detail', page: () => const SpeakerDetailScreen()),

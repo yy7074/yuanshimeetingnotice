@@ -5,6 +5,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val jpushAppKey =
+    (project.findProperty("JPUSH_APPKEY") as String?)
+        ?.takeIf { it.isNotBlank() }
+        ?: "000000000000000000000000"
+val jpushChannel =
+    (project.findProperty("JPUSH_CHANNEL") as String?)
+        ?.takeIf { it.isNotBlank() }
+        ?: "developer-default"
+
 android {
     namespace = "com.example.conference_app"
     compileSdk = flutter.compileSdkVersion
@@ -29,6 +38,10 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders += mapOf(
+            "JPUSH_APPKEY" to jpushAppKey,
+            "JPUSH_CHANNEL" to jpushChannel,
+        )
     }
 
     buildTypes {

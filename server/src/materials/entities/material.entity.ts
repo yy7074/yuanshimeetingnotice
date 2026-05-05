@@ -1,6 +1,11 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column, CreateDateColumn,
-  UpdateDateColumn, ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Event } from '../../events/entities/event.entity';
 import { UserRole } from '../../users/entities/user.entity';
@@ -32,7 +37,11 @@ export class Material {
   @Column({ type: 'varchar', default: MaterialType.PDF })
   type: MaterialType;
 
-  @Column({ name: 'visible_to', type: 'simple-array', default: 'attendee,speaker,vip,admin' })
+  @Column({
+    name: 'visible_to',
+    type: 'simple-array',
+    default: 'attendee,speaker,vip,admin',
+  })
   visibleTo: string[];
 
   @Column({ name: 'download_count', default: 0 })

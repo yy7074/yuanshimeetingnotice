@@ -9,6 +9,7 @@ class UserModel {
   final String organizationZh;
   final String avatarUrl;
   final UserRole role;
+  final bool mustChangePassword;
 
   const UserModel({
     required this.id,
@@ -21,6 +22,7 @@ class UserModel {
     required this.organizationZh,
     required this.avatarUrl,
     this.role = UserRole.attendee,
+    this.mustChangePassword = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,6 +36,7 @@ class UserModel {
     'organizationZh': organizationZh,
     'avatarUrl': avatarUrl,
     'role': role.name,
+    'mustChangePassword': mustChangePassword,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -47,6 +50,7 @@ class UserModel {
     organizationZh: json['organizationZh'] as String,
     avatarUrl: json['avatarUrl'] as String,
     role: UserRole.values.firstWhere((e) => e.name == json['role'], orElse: () => UserRole.attendee),
+    mustChangePassword: json['mustChangePassword'] == true,
   );
 }
 

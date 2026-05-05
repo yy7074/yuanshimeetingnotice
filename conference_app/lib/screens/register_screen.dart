@@ -73,9 +73,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
   }
 
+  bool _isValidVerificationCode(String code) {
+    final trimmed = code.trim();
+    return trimmed.length == 4 || trimmed.length == 6;
+  }
+
   Future<void> _verifyCode() async {
-    if (_codeController.text.trim().length != 6) {
-      setState(() => _error = _isZh ? '请输入6位验证码' : 'Please enter 6-digit code');
+    if (!_isValidVerificationCode(_codeController.text)) {
+      setState(() => _error = _isZh ? '请输入4位或6位验证码' : 'Please enter a 4-digit or 6-digit code');
       return;
     }
     setState(() { _step = 2; _error = ''; });
@@ -217,7 +222,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _step == 0 ? (_isZh ? '我们将发送验证码到您的邮箱' : 'We will send a verification code')
-                    : _step == 1 ? (_isZh ? '请输入邮箱收到的6位验证码' : 'Enter the 6-digit code from your email')
+                    : _step == 1 ? (_isZh ? '请输入邮箱收到的4位或6位验证码' : 'Enter the 4-digit or 6-digit code from your email')
                     : (_isZh ? '设置密码并完善个人信息' : 'Set your password and profile info'),
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                 ),

@@ -22,13 +22,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _loadNotifications() async {
-    setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
     try {
       final api = Get.find<ApiService>();
       final res = await api.getNotifications();
       final countRes = await api.getUnreadNotificationCount();
-      if (res.statusCode == 200 && res.body is List) {
-        _notifications = List<Map<String, dynamic>>.from(res.body);
+      if (res.statusCode == 200) {
+        final body = res.body;
+        // Backend returns {items,total,page,pageSize} (new) or a raw list (legacy).
+        if (body is List) {
+          _notifications = List<Map<String, dynamic>>.from(body);
+        } else if (body is Map && body['items'] is List) {
+          _notifications = List<Map<String, dynamic>>.from(body['items']);
+        } else {
+          _notifications = [];
+        }
       } else {
         _notifications = [];
       }
@@ -48,18 +58,28 @@ class _NotificationScreenState extends State<NotificationScreen> {
         );
       }
     }
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    } else {
+      _isLoading = false;
+    }
   }
 
   Future<void> _markAsRead(String id) async {
     try {
       final api = Get.find<ApiService>();
       await api.markNotificationAsRead(id);
-      setState(() {
+      if (mounted) {
+        setState(() {
+          final idx = _notifications.indexWhere((n) => n['id'] == id);
+          if (idx >= 0) _notifications[idx]['isRead'] = true;
+          _unreadCount = _notifications.where((n) => n['isRead'] == false).length;
+        });
+      } else {
         final idx = _notifications.indexWhere((n) => n['id'] == id);
         if (idx >= 0) _notifications[idx]['isRead'] = true;
         _unreadCount = _notifications.where((n) => n['isRead'] == false).length;
-      });
+      }
       Get.find<NotificationService>().refreshUnreadCount();
     } catch (_) {
       Get.snackbar(
@@ -77,10 +97,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
     try {
       final api = Get.find<ApiService>();
       await api.markAllNotificationsAsRead();
-      setState(() {
-        for (var n in _notifications) { n['isRead'] = true; }
+      if (mounted) {
+        setState(() {
+          for (var n in _notifications) {
+            n['isRead'] = true;
+          }
+          _unreadCount = 0;
+        });
+      } else {
+        for (var n in _notifications) {
+          n['isRead'] = true;
+        }
         _unreadCount = 0;
-      });
+      }
       Get.find<NotificationService>().refreshUnreadCount();
     } catch (_) {
       Get.snackbar(

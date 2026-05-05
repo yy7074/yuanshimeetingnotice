@@ -2,9 +2,12 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider, Flex, Spin } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import './locales/i18n';
 
 const Login = lazy(() => import('./pages/Login'));
+const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Events = lazy(() => import('./pages/Events'));
 const Speakers = lazy(() => import('./pages/Speakers'));
@@ -33,11 +36,20 @@ function AppLoader() {
 
 export default function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <ConfigProvider locale={zhCN} theme={{ token: { colorPrimary: '#000666' } }}>
       <BrowserRouter>
         <Suspense fallback={<AppLoader />}>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route
+              path="/change-password"
+              element={
+                <ProtectedRoute>
+                  <ChangePassword />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
               <Route path="events" element={<Events />} />
@@ -54,5 +66,6 @@ export default function App() {
         </Suspense>
       </BrowserRouter>
     </ConfigProvider>
+    </QueryClientProvider>
   );
 }

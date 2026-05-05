@@ -167,13 +167,17 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: _primaryColor.withAlpha(50), width: 3),
-                      image: _avatarUrlController.text.isNotEmpty
-                          ? DecorationImage(image: NetworkImage(_avatarUrlController.text), fit: BoxFit.cover)
-                          : null,
+                      color: Colors.grey.shade100,
                     ),
-                    child: _avatarUrlController.text.isEmpty
-                        ? Icon(Icons.person, size: 48, color: Colors.grey.shade400)
-                        : null,
+                    clipBehavior: Clip.antiAlias,
+                    child: _avatarUrlController.text.isNotEmpty
+                        ? Image.network(
+                            _avatarUrlController.text,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                          )
+                        : Icon(Icons.person, size: 48, color: Colors.grey.shade400),
                   ),
                   const SizedBox(height: 8),
                   Text(_isZh ? '头像' : 'Avatar', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),

@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart';
 import 'storage_service.dart';
 
 class ApiService extends GetConnect {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000/api/v1',
+    defaultValue: 'http://139.129.23.105:3201/api/v1',
   );
   // Override with --dart-define=API_BASE_URL=... for device/prod builds.
 
@@ -65,6 +67,12 @@ class ApiService extends GetConnect {
   Future<Response> resetPassword(String email, String code, String newPassword) =>
       post('/auth/reset-password', {'email': email, 'code': code, 'newPassword': newPassword});
 
+  Future<Response> changePassword(String currentPassword, String newPassword) =>
+      post('/users/change-password', {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
+
   Future<Response> getProfile() => get('/auth/profile');
 
   // Events
@@ -94,6 +102,55 @@ class ApiService extends GetConnect {
   Future<Response> getMaterials(String eventId) => get('/events/$eventId/materials');
   Future<Response> trackDownload(String eventId, String materialId) =>
       post('/events/$eventId/materials/$materialId/download', {});
+
+  /// Download a protected material file (role-gated on the server).
+  /// Returns the local path of the saved file.
+  Future<File> downloadMaterialFile(
+    String eventId,
+    String materialId,
+    String suggestedName,
+  ) async {
+    final storage = Get.find<StorageService>();
+    final token = storage.authToken;
+    if (token == null) {
+      throw StateError('Not authenticated');
+    }
+    final base = apiBaseUrl.endsWith('/')
+        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
+        : apiBaseUrl;
+    final uri = Uri.parse('$base/events/$eventId/materials/$materialId/file');
+    final httpClient = HttpClient()..connectionTimeout = const Duration(seconds: 30);
+    try {
+      final req = await httpClient.getUrl(uri);
+      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
+      req.followRedirects = true;
+      final res = await req.close();
+      if (res.statusCode >= 400) {
+        throw HttpException(
+          'Download failed: HTTP ${res.statusCode}',
+          uri: uri,
+        );
+      }
+      String name = suggestedName.trim();
+      final disposition = res.headers.value('content-disposition');
+      if (disposition != null) {
+        final match = RegExp(r'filename\*?=(?:UTF-8'')?"?([^;"\r\n]+)"?')
+            .firstMatch(disposition);
+        if (match != null) {
+          name = Uri.decodeFull(match.group(1) ?? name);
+        }
+      }
+      if (name.isEmpty) name = 'material-$materialId';
+      final safe = name.replaceAll(RegExp(r'[^\w\-. ]'), '_');
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$safe');
+      final sink = file.openWrite();
+      await res.pipe(sink);
+      return file;
+    } finally {
+      httpClient.close(force: false);
+    }
+  }
 
   // Check-in
   Future<Response> generateQr(String eventId) => post('/check-in/generate/$eventId', {});

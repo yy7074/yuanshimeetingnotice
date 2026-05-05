@@ -1,43 +1,62 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Table, Button, Card, Space, Tag, Modal, Form, Input, Select, InputNumber, DatePicker, message, Popconfirm, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { eventsApi, sessionsApi } from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { eventsApi, sessionsApi, speakersApi } from '../services/api';
+import { qk } from '../lib/queryKeys';
 import dayjs from 'dayjs';
 
 export default function Sessions() {
   const { t } = useTranslation();
-  const [events, setEvents] = useState<any[]>([]);
+  const queryClient = useQueryClient();
   const [selectedEventId, setSelectedEventId] = useState('');
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    eventsApi.list().then(r => setEvents(r.data)).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (selectedEventId) fetchSessions();
-  }, [selectedEventId]);
-
-  const fetchSessions = async () => {
-    if (!selectedEventId) return;
-    setLoading(true);
-    try { const { data } = await sessionsApi.list(selectedEventId); setSessions(data); } catch {}
-    setLoading(false);
-  };
+  const { data: events = [] } = useQuery({
+    queryKey: qk.events.list(),
+    queryFn: async () => (await eventsApi.list()).data,
+  });
+  const { data: speakers = [] } = useQuery({
+    queryKey: qk.speakers.list(),
+    queryFn: async () => (await speakersApi.list()).data,
+  });
+  const {
+    data: sessions = [],
+    isFetching: loading,
+  } = useQuery({
+    queryKey: qk.sessions.listByEvent(selectedEventId),
+    queryFn: async () => (await sessionsApi.list(selectedEventId)).data,
+    enabled: !!selectedEventId,
+  });
+  const invalidateSessions = () =>
+    queryClient.invalidateQueries({ queryKey: qk.sessions.listByEvent(selectedEventId) });
 
   const openCreate = () => { setEditing(null); form.resetFields(); setModalOpen(true); };
   const openEdit = (r: any) => {
     setEditing(r);
     form.setFieldsValue({
       ...r,
+      speakerId: r.speakerId || r.speaker?.id,
       timeRange: [dayjs(r.startTime), dayjs(r.endTime)],
     });
     setModalOpen(true);
+  };
+
+  const handleSpeakerSelect = (speakerId?: string) => {
+    if (!speakerId) return;
+    const speaker = speakers.find((item: any) => item.id === speakerId);
+    if (!speaker) return;
+
+    form.setFieldsValue({
+      speakerId: speaker.id,
+      speakerName: speaker.nameEn || speaker.nameZh || '',
+      speakerTitleEn: speaker.titleEn || '',
+      speakerTitleZh: speaker.titleZh || '',
+      speakerAvatarUrl: speaker.avatarUrl || '',
+    });
   };
 
   const handleSave = async () => {
@@ -57,7 +76,7 @@ export default function Sessions() {
         message.success('Session created');
       }
       setModalOpen(false);
-      fetchSessions();
+      invalidateSessions();
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Failed');
     }
@@ -67,8 +86,10 @@ export default function Sessions() {
     try {
       await sessionsApi.delete(selectedEventId, id);
       message.success('Deleted');
-      fetchSessions();
-    } catch {}
+      invalidateSessions();
+    } catch {
+      message.error('Failed to delete session');
+    }
   };
 
   const typeColors: Record<string, string> = {
@@ -112,7 +133,7 @@ export default function Sessions() {
             style={{ width: 300 }}
             value={selectedEventId || undefined}
             onChange={setSelectedEventId}
-            options={events.map(e => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
+            options={events.map((e: any) => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
           />
           <Button type="primary" icon={<PlusOutlined />} disabled={!selectedEventId} onClick={openCreate}>
             {t('common.create')}
@@ -125,7 +146,14 @@ export default function Sessions() {
           请先选择一个会议 / Please select an event first
         </div>
       ) : (
-        <Table dataSource={sessions} columns={columns} rowKey="id" loading={loading} scroll={{ x: 1200 }} />
+        <Table
+          dataSource={sessions}
+          columns={columns}
+          rowKey="id"
+          loading={loading}
+          scroll={{ x: 1200 }}
+          locale={{ emptyText: 'No sessions found' }}
+        />
       )}
 
       <Modal
@@ -157,6 +185,19 @@ export default function Sessions() {
               <InputNumber min={0} />
             </Form.Item>
           </Space>
+          <Form.Item label="Speaker / 嘉宾" name="speakerId">
+            <Select
+              allowClear
+              showSearch
+              placeholder="Select existing speaker / 选择已创建嘉宾"
+              optionFilterProp="label"
+              onChange={handleSpeakerSelect}
+              options={speakers.map((speaker: any) => ({
+                value: speaker.id,
+                label: `${speaker.nameEn || speaker.nameZh} (${speaker.organizationEn || speaker.organizationZh || 'No organization'})`,
+              }))}
+            />
+          </Form.Item>
           <Form.Item label="Speaker Name" name="speakerName"><Input /></Form.Item>
           <Space style={{ width: '100%' }} size="large">
             <Form.Item label="Speaker Title (EN)" name="speakerTitleEn" style={{ flex: 1 }}><Input /></Form.Item>

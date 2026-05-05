@@ -49,6 +49,10 @@ class StorageService extends GetxService {
     await _prefs.setString('subscribed_events', jsonEncode(ids));
   }
 
+  Future<void> setSubscribedEventIds(List<String> eventIds) async {
+    await _prefs.setString('subscribed_events', jsonEncode(eventIds));
+  }
+
   // My Schedule (saved session IDs)
   List<String> get savedSessionIds {
     final raw = _prefs.getString('saved_sessions');
@@ -68,6 +72,31 @@ class StorageService extends GetxService {
     final ids = savedSessionIds;
     ids.remove(sessionId);
     await _prefs.setString('saved_sessions', jsonEncode(ids));
+  }
+
+  Future<void> setSavedSessionIds(List<String> sessionIds) async {
+    await _prefs.setString('saved_sessions', jsonEncode(sessionIds));
+  }
+
+  // Schedule hydration state for joined events
+  List<String> get hydratedScheduleEventIds {
+    final raw = _prefs.getString('hydrated_schedule_events');
+    if (raw == null) return [];
+    return List<String>.from(jsonDecode(raw));
+  }
+
+  Future<void> markScheduleEventHydrated(String eventId) async {
+    final ids = hydratedScheduleEventIds;
+    if (!ids.contains(eventId)) {
+      ids.add(eventId);
+      await _prefs.setString('hydrated_schedule_events', jsonEncode(ids));
+    }
+  }
+
+  Future<void> unmarkScheduleEventHydrated(String eventId) async {
+    final ids = hydratedScheduleEventIds;
+    ids.remove(eventId);
+    await _prefs.setString('hydrated_schedule_events', jsonEncode(ids));
   }
 
   // Language

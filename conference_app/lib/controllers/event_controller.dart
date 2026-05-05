@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/event_model.dart';
 import '../models/session_model.dart';
+import 'schedule_controller.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
@@ -14,9 +15,11 @@ class EventController extends GetxController {
   final selectedEventId = ''.obs;
   final sessions = <SessionModel>[].obs;
   final isLoading = false.obs;
-  final filterTimeRange = Rx<String?>(null); // 'upcoming', 'past', 'this_month', 'next_month'
-  final filterLocation = Rx<String?>(null);  // location string to match
-  final filterTag = Rx<String?>(null);       // tag to match
+  final filterTimeRange = Rx<String?>(
+    null,
+  ); // 'upcoming', 'past', 'this_month', 'next_month'
+  final filterLocation = Rx<String?>(null); // location string to match
+  final filterTag = Rx<String?>(null); // tag to match
   final sortMode = 'upcoming_first'.obs; // 'upcoming_first' or 'newest_first'
 
   // Get unique locations from all events for filter options
@@ -37,7 +40,10 @@ class EventController extends GetxController {
     return tags.toList()..sort();
   }
 
-  bool get hasActiveFilters => filterTimeRange.value != null || filterLocation.value != null || filterTag.value != null;
+  bool get hasActiveFilters =>
+      filterTimeRange.value != null ||
+      filterLocation.value != null ||
+      filterTag.value != null;
 
   void clearFilters() {
     filterTimeRange.value = null;
@@ -58,7 +64,9 @@ class EventController extends GetxController {
       final api = Get.find<ApiService>();
       final res = await api.getEvents();
       if (res.statusCode == 200 && res.body is List) {
-        allEvents.value = (res.body as List).map((e) => _parseEvent(e)).toList();
+        allEvents.value = (res.body as List)
+            .map((e) => _parseEvent(e))
+            .toList();
         isLoading.value = false;
         return;
       }
@@ -72,7 +80,16 @@ class EventController extends GetxController {
       final api = Get.find<ApiService>();
       final res = await api.getMyEvents();
       if (res.statusCode == 200 && res.body is List) {
-        subscribedEventIds.value = (res.body as List).map((e) => e['id'] as String).toList();
+        final eventIds = (res.body as List)
+            .map((e) => e['id'] as String)
+            .toList();
+        subscribedEventIds.value = eventIds;
+        await _storage.setSubscribedEventIds(eventIds);
+        if (Get.isRegistered<ScheduleController>()) {
+          final scheduleCtrl = Get.find<ScheduleController>();
+          await scheduleCtrl.refreshSessions();
+          await scheduleCtrl.syncJoinedEventSchedules(eventIds: eventIds);
+        }
         return;
       }
     } catch (_) {}
@@ -85,13 +102,16 @@ class EventController extends GetxController {
     // Search filter
     if (searchQuery.value.isNotEmpty) {
       final q = searchQuery.value.toLowerCase();
-      events = events.where((e) =>
-        e.titleEn.toLowerCase().contains(q) ||
-        e.titleZh.contains(q) ||
-        e.locationEn.toLowerCase().contains(q) ||
-        e.locationZh.contains(q) ||
-        e.tags.any((t) => t.toLowerCase().contains(q))
-      ).toList();
+      events = events
+          .where(
+            (e) =>
+                e.titleEn.toLowerCase().contains(q) ||
+                e.titleZh.contains(q) ||
+                e.locationEn.toLowerCase().contains(q) ||
+                e.locationZh.contains(q) ||
+                e.tags.any((t) => t.toLowerCase().contains(q)),
+          )
+          .toList();
     }
 
     // Time range filter
@@ -105,12 +125,24 @@ class EventController extends GetxController {
           events = events.where((e) => e.endDate.isBefore(now)).toList();
           break;
         case 'this_month':
-          events = events.where((e) => e.startDate.month == now.month && e.startDate.year == now.year).toList();
+          events = events
+              .where(
+                (e) =>
+                    e.startDate.month == now.month &&
+                    e.startDate.year == now.year,
+              )
+              .toList();
           break;
         case 'next_month':
           final nextMonth = now.month == 12 ? 1 : now.month + 1;
           final nextYear = now.month == 12 ? now.year + 1 : now.year;
-          events = events.where((e) => e.startDate.month == nextMonth && e.startDate.year == nextYear).toList();
+          events = events
+              .where(
+                (e) =>
+                    e.startDate.month == nextMonth &&
+                    e.startDate.year == nextYear,
+              )
+              .toList();
           break;
       }
     }
@@ -118,17 +150,24 @@ class EventController extends GetxController {
     // Location filter
     if (filterLocation.value != null) {
       final loc = filterLocation.value!.toLowerCase();
-      events = events.where((e) =>
-        e.locationEn.toLowerCase().contains(loc) ||
-        e.locationZh.contains(filterLocation.value!)
-      ).toList();
+      events = events
+          .where(
+            (e) =>
+                e.locationEn.toLowerCase().contains(loc) ||
+                e.locationZh.contains(filterLocation.value!),
+          )
+          .toList();
     }
 
     // Tag filter
     if (filterTag.value != null) {
-      events = events.where((e) =>
-        e.tags.any((t) => t.toLowerCase() == filterTag.value!.toLowerCase())
-      ).toList();
+      events = events
+          .where(
+            (e) => e.tags.any(
+              (t) => t.toLowerCase() == filterTag.value!.toLowerCase(),
+            ),
+          )
+          .toList();
     }
 
     // Sort
@@ -156,17 +195,22 @@ class EventController extends GetxController {
 
   Future<bool> toggleSubscription(String eventId) async {
     final notifService = Get.find<NotificationService>();
+    final scheduleCtrl = Get.isRegistered<ScheduleController>()
+        ? Get.find<ScheduleController>()
+        : null;
     try {
       final api = Get.find<ApiService>();
       if (isSubscribed(eventId)) {
         await api.unsubscribeEvent(eventId);
         subscribedEventIds.remove(eventId);
         await _storage.unsubscribeEvent(eventId);
+        await scheduleCtrl?.removeSessionsFromEvent(eventId);
         notifService.removeEventTag(eventId);
       } else {
         await api.subscribeEvent(eventId);
         subscribedEventIds.add(eventId);
         await _storage.subscribeEvent(eventId);
+        await scheduleCtrl?.addAllSessionsFromEvent(eventId);
         notifService.addEventTag(eventId);
       }
       return true;
@@ -181,7 +225,9 @@ class EventController extends GetxController {
       final api = Get.find<ApiService>();
       final res = await api.getSessions(eventId);
       if (res.statusCode == 200 && res.body is List) {
-        sessions.value = (res.body as List).map((s) => _parseSession(s)).toList();
+        sessions.value = (res.body as List)
+            .map((s) => _parseSession(s))
+            .toList();
         return;
       }
     } catch (_) {}
@@ -239,7 +285,9 @@ class EventController extends GetxController {
       startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
       endTime: DateTime.tryParse(json['endTime'] ?? '') ?? DateTime.now(),
       type: SessionType.values.firstWhere(
-        (t) => t.name == json['type'] || t.name == (json['type'] as String?)?.replaceAll('_', ''),
+        (t) =>
+            t.name == json['type'] ||
+            t.name == (json['type'] as String?)?.replaceAll('_', ''),
         orElse: () => SessionType.keynote,
       ),
       dayIndex: json['dayIndex'] ?? 0,

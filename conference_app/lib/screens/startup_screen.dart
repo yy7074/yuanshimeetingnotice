@@ -32,7 +32,9 @@ class _StartupScreenState extends State<StartupScreen> {
     if (!mounted) return;
 
     if (auth.currentUser.value != null) {
-      Get.offAllNamed('/main');
+      Get.offAllNamed(
+        auth.mustChangePassword ? '/change_password' : '/main',
+      );
     } else {
       Get.offAllNamed('/login');
     }

@@ -13,7 +13,10 @@ export class SpeakersService {
     if (search) {
       return this.speakerRepo
         .createQueryBuilder('s')
-        .where('s.name_en LIKE :q OR s.name_zh LIKE :q OR s.organization_en LIKE :q', { q: `%${search}%` })
+        .where(
+          's.name_en LIKE :q OR s.name_zh LIKE :q OR s.organization_en LIKE :q',
+          { q: `%${search}%` },
+        )
         .orderBy('s.category', 'ASC')
         .getMany();
     }

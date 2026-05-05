@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:jpush_flutter/jpush_flutter.dart';
@@ -12,6 +13,13 @@ import 'storage_service.dart';
 import '../controllers/event_controller.dart';
 
 class NotificationService extends GetxService {
+  // Configure via: flutter run --dart-define=JPUSH_APP_KEY=xxxxx --dart-define=JPUSH_CHANNEL=developer-default
+  // (keep parity with android/app/build.gradle.kts manifest placeholders)
+  static const String _jpushAppKey =
+      String.fromEnvironment('JPUSH_APP_KEY', defaultValue: '');
+  static const String _jpushChannel =
+      String.fromEnvironment('JPUSH_CHANNEL', defaultValue: 'developer-default');
+
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   JPushFlutterInterface? _jpush;
   final unreadCount = 0.obs;
@@ -43,12 +51,16 @@ class NotificationService extends GetxService {
       debugPrint('Local notifications init failed: $e');
     }
 
-    // Initialize JPush (极光推送)
-    try {
-      _jpush = JPush.newJPush();
-      await _initJPush();
-    } catch (e) {
-      debugPrint('JPush init failed: $e');
+    // Initialize JPush (极光推送) only when an AppKey is provided at build time.
+    if (_jpushAppKey.isEmpty) {
+      debugPrint('JPush disabled: JPUSH_APP_KEY not set (pass via --dart-define).');
+    } else {
+      try {
+        _jpush = JPush.newJPush();
+        await _initJPush();
+      } catch (e) {
+        debugPrint('JPush init failed: $e');
+      }
     }
 
     await refreshUnreadCount();
@@ -80,8 +92,8 @@ class NotificationService extends GetxService {
       );
 
       jpush.setup(
-        appKey: 'YOUR_JPUSH_APP_KEY', // 替换为你的极光推送AppKey
-        channel: 'developer-default',
+        appKey: _jpushAppKey,
+        channel: _jpushChannel,
         production: !kDebugMode,
         debug: kDebugMode,
       );
@@ -112,79 +124,100 @@ class NotificationService extends GetxService {
     } catch (_) {}
   }
 
-  void openNotification(Map<String, dynamic> notification) {
+  Future<void> openNotification(Map<String, dynamic> notification) async {
     final type = notification['type'] as String? ?? '';
     final eventId = notification['eventId'] as String? ?? '';
     final targetUrl = notification['targetUrl'] as String? ?? '';
-    _navigateByNotification(type: type, eventId: eventId, targetUrl: targetUrl);
+    await _navigateByNotification(
+      type: type,
+      eventId: eventId,
+      targetUrl: targetUrl,
+    );
   }
 
-  void _handleNotificationTap(Map<String, dynamic> message) {
+  Future<void> _handleNotificationTap(Map<String, dynamic> message) async {
     final extras = message['extras'] as Map<String, dynamic>? ?? {};
     final type = extras['type'] as String? ?? message['type'] as String? ?? '';
     final eventId = extras['eventId'] as String? ?? message['eventId'] as String? ?? '';
     final targetUrl = extras['targetUrl'] as String? ?? message['targetUrl'] as String? ?? '';
-    _navigateByNotification(type: type, eventId: eventId, targetUrl: targetUrl);
+    await _navigateByNotification(
+      type: type,
+      eventId: eventId,
+      targetUrl: targetUrl,
+    );
   }
 
-  void _navigateToEvent(String eventId) {
+  Future<void> _navigateToEvent(
+    String eventId, {
+    int initialTab = 0,
+  }) async {
     try {
       final eventCtrl = Get.find<EventController>();
-      eventCtrl.selectEvent(eventId);
-      Get.toNamed('/event_agenda');
+      if (!eventCtrl.allEvents.any((event) => event.id == eventId)) {
+        await eventCtrl.loadEvents();
+      }
+      await eventCtrl.selectEvent(eventId);
+      await Get.toNamed(
+        '/event_agenda',
+        arguments: {'eventId': eventId, 'initialTab': initialTab},
+      );
     } catch (_) {
-      Get.toNamed('/notifications');
+      await Get.toNamed('/notifications');
     }
   }
 
-  void _onLocalNotificationTap(NotificationResponse response) {
+  Future<void> _onLocalNotificationTap(NotificationResponse response) async {
     if (response.payload != null) {
       try {
         final data = jsonDecode(response.payload!);
         final type = data['type'] as String? ?? '';
         final eventId = data['eventId'] as String? ?? '';
         final targetUrl = data['targetUrl'] as String? ?? '';
-        _navigateByNotification(type: type, eventId: eventId, targetUrl: targetUrl);
+        await _navigateByNotification(
+          type: type,
+          eventId: eventId,
+          targetUrl: targetUrl,
+        );
       } catch (_) {
-        Get.toNamed('/notifications');
+        await Get.toNamed('/notifications');
       }
     }
   }
 
-  void _navigateByNotification({
+  Future<void> _navigateByNotification({
     required String type,
     required String eventId,
     String targetUrl = '',
-  }) {
+  }) async {
     if (targetUrl.isNotEmpty && Get.routeTree.matchRoute(targetUrl).route != null) {
-      Get.toNamed(targetUrl);
+      await Get.toNamed(targetUrl);
       return;
     }
 
     switch (type) {
       case 'schedule_reminder':
       case 'daily_reminder':
-        Get.toNamed('/my_schedule');
+        await Get.toNamed('/my_schedule');
         break;
       case 'event_update':
         if (eventId.isNotEmpty) {
-          _navigateToEvent(eventId);
+          await _navigateToEvent(eventId, initialTab: 0);
         } else {
-          Get.toNamed('/event_portal');
+          await Get.toNamed('/event_portal');
         }
         break;
       case 'material_update':
         if (eventId.isNotEmpty) {
-          _navigateToEvent(eventId);
+          await _navigateToEvent(eventId, initialTab: 3);
         } else {
-          Get.toNamed('/notifications');
+          await Get.toNamed('/notifications');
         }
         break;
       case 'check_in_success':
-        Get.toNamed('/digital_check_in');
+        await Get.toNamed('/digital_check_in');
         break;
       default:
-        Get.toNamed('/notifications');
+        await Get.toNamed('/notifications');
     }
   }
 

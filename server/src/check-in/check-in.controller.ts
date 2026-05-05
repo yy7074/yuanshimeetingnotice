@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CheckInService } from './check-in.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -25,6 +33,14 @@ export class CheckInController {
   @ApiOperation({ summary: 'Verify QR code (admin/scanner)' })
   verify(@Body('qrCode') qrCode: string) {
     return this.checkInService.verify(qrCode);
+  }
+
+  @Get('my/:eventId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get my check-in status for an event' })
+  getMyCheckIn(@Param('eventId') eventId: string, @Request() req) {
+    return this.checkInService.getMyCheckIn(req.user.id, eventId);
   }
 
   @Get('event/:eventId')

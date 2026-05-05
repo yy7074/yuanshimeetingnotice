@@ -290,7 +290,9 @@ class LoginScreen extends StatelessWidget {
               onPressed: auth.isLoading.value ? null : () async {
                 final success = await auth.login();
                 if (success) {
-                  Get.offAllNamed('/main');
+                  Get.offAllNamed(
+                    auth.mustChangePassword ? '/change_password' : '/main',
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -407,6 +409,11 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     });
   }
 
+  bool _isValidVerificationCode(String code) {
+    final trimmed = code.trim();
+    return trimmed.length == 4 || trimmed.length == 6;
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -450,8 +457,8 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   }
 
   Future<void> _verifyAndProceed() async {
-    if (_codeController.text.trim().length != 6) {
-      setState(() => _error = _isZh ? '请输入6位验证码' : 'Please enter 6-digit code');
+    if (!_isValidVerificationCode(_codeController.text)) {
+      setState(() => _error = _isZh ? '请输入4位或6位验证码' : 'Please enter a 4-digit or 6-digit code');
       return;
     }
     setState(() { _step = 2; _error = ''; });

@@ -86,11 +86,17 @@ class ProfileScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.grey.shade200, width: 2),
-                image: DecorationImage(
-                  image: NetworkImage(user?.avatarUrl ?? 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop'),
-                  fit: BoxFit.cover,
-                ),
+                color: Colors.grey.shade100,
               ),
+              clipBehavior: Clip.antiAlias,
+              child: user?.avatarUrl.isNotEmpty == true
+                  ? Image.network(
+                      user!.avatarUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.person, size: 40, color: Colors.grey.shade400),
+                    )
+                  : Icon(Icons.person, size: 40, color: Colors.grey.shade400),
             ),
             const SizedBox(width: 16),
             Expanded(

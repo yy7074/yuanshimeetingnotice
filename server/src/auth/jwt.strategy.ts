@@ -17,10 +17,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
+  async validate(payload: {
+    sub: string;
+    email: string;
+    role: string;
+    tv?: number;
+  }) {
     const user = await this.authService.validateUser(payload.sub);
     if (!user) {
       throw new UnauthorizedException();
+    }
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is disabled');
+    }
+    const currentVersion = user.tokenVersion ?? 0;
+    const tokenVersion = payload.tv ?? 0;
+    if (tokenVersion !== currentVersion) {
+      throw new UnauthorizedException('Token has been revoked');
     }
     return user;
   }

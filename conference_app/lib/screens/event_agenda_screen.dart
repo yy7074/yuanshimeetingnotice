@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/event_controller.dart';
@@ -20,11 +21,18 @@ class EventAgendaScreen extends StatefulWidget {
 class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedDay = 0;
+  Future<List<Map<String, dynamic>>>? _materialsFuture;
+  String _materialsEventId = '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: _initialTabIndex,
+    );
+    _syncSelectedEventFromArguments();
   }
 
   @override
@@ -87,54 +95,89 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
           _buildMaterialsTab(primaryColor),
         ],
       ),
-      bottomNavigationBar: Obx(() {
-        if (_tabController.index != 1) return const SizedBox.shrink();
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black.withAlpha((0.05 * 255).round()), blurRadius: 10, offset: const Offset(0, -4))],
-          ),
-          child: SafeArea(
-            child: ElevatedButton(
-              onPressed: () async {
-                final eventId = eventCtrl.selectedEventId.value;
-                final success = await scheduleCtrl.addAllSessionsFromEvent(eventId);
-                if (success) {
-                  Get.snackbar(
-                    isZh ? '已添加' : 'Added',
-                    isZh ? '所有议程已添加到我的日程' : 'All sessions added to My Schedule',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: primaryColor,
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(16),
-                  );
-                } else {
-                  Get.snackbar(
-                    isZh ? '操作失败' : 'Action Failed',
-                    isZh ? '无法加载议程，请稍后重试' : 'Unable to load sessions. Please try again later.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.red,
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(16),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(
-                isZh ? '添加到我的日程' : 'Add to My Schedule',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      bottomNavigationBar: AnimatedBuilder(
+        animation: _tabController,
+        builder: (context, _) {
+          if (_tabController.index != 1) return const SizedBox.shrink();
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black.withAlpha((0.05 * 255).round()), blurRadius: 10, offset: const Offset(0, -4))],
+            ),
+            child: SafeArea(
+              child: ElevatedButton(
+                onPressed: () async {
+                  final eventId = eventCtrl.selectedEventId.value;
+                  final success = await scheduleCtrl.addAllSessionsFromEvent(eventId);
+                  if (success) {
+                    Get.snackbar(
+                      isZh ? '已添加' : 'Added',
+                      isZh ? '所有议程已添加到我的日程' : 'All sessions added to My Schedule',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: primaryColor,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                    );
+                  } else {
+                    Get.snackbar(
+                      isZh ? '操作失败' : 'Action Failed',
+                      isZh ? '无法加载议程，请稍后重试' : 'Unable to load sessions. Please try again later.',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  isZh ? '添加到我的日程' : 'Add to My Schedule',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
     );
+  }
+
+  int get _initialTabIndex {
+    final args = Get.arguments;
+    if (args is Map && args['initialTab'] is int) {
+      final value = args['initialTab'] as int;
+      if (value >= 0 && value < 4) {
+        return value;
+      }
+    }
+    return 0;
+  }
+
+  void _syncSelectedEventFromArguments() {
+    final args = Get.arguments;
+    if (args is! Map || args['eventId'] is! String) {
+      return;
+    }
+
+    final eventId = args['eventId'] as String;
+    if (eventId.isEmpty) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final eventCtrl = Get.find<EventController>();
+      if (eventCtrl.selectedEventId.value == eventId) {
+        return;
+      }
+      eventCtrl.selectEvent(eventId);
+    });
   }
 
   Widget _buildInfoTab(EventController eventCtrl, Color primaryColor, Color surfaceColor) {
@@ -414,11 +457,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     border: Border.all(color: Colors.grey.shade200),
-                                    image: session.speakerAvatarUrl.isNotEmpty
-                                        ? DecorationImage(image: NetworkImage(session.speakerAvatarUrl), fit: BoxFit.cover)
-                                        : null,
+                                    color: Colors.grey.shade100,
                                   ),
-                                  child: session.speakerAvatarUrl.isEmpty ? Icon(Icons.person, size: 20, color: Colors.grey.shade400) : null,
+                                  clipBehavior: Clip.antiAlias,
+                                  child: session.speakerAvatarUrl.isNotEmpty
+                                      ? Image.network(
+                                          session.speakerAvatarUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              Icon(Icons.person, size: 20, color: Colors.grey.shade400),
+                                        )
+                                      : Icon(Icons.person, size: 20, color: Colors.grey.shade400),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -449,11 +498,27 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
   }
 
   Widget _buildSpeakersTab(Color primaryColor, Color surfaceColor, Color accentColor) {
+    final eventCtrl = Get.find<EventController>();
     final speakerCtrl = Get.find<SpeakerController>();
     final isZh = Get.locale?.languageCode == 'zh';
 
     return Obx(() {
-      final speakers = speakerCtrl.speakers;
+      final speakers = _speakersForSelectedEvent(eventCtrl, speakerCtrl);
+      if (speakers.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.groups_2_outlined, size: 64, color: Colors.grey.shade300),
+              const SizedBox(height: 16),
+              Text(
+                isZh ? '该会议暂无嘉宾信息' : 'No speakers available for this event',
+                style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
+        );
+      }
       return ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: speakers.length,
@@ -484,7 +549,12 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                   child: InteractiveViewer(
                                     minScale: 0.5,
                                     maxScale: 4.0,
-                                    child: Image.network(speaker.avatarUrl, fit: BoxFit.contain),
+                                    child: Image.network(
+                                      speaker.avatarUrl,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          const Icon(Icons.person, size: 96, color: Colors.white),
+                                    ),
                                   ),
                                 ),
                                 Positioned(
@@ -508,8 +578,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: surfaceColor, width: 2),
-                        image: DecorationImage(image: NetworkImage(speaker.avatarUrl), fit: BoxFit.cover),
+                        color: Colors.grey.shade100,
                       ),
+                      clipBehavior: Clip.antiAlias,
+                      child: speaker.avatarUrl.isNotEmpty
+                          ? Image.network(
+                              speaker.avatarUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(Icons.person, size: 28, color: Colors.grey.shade400),
+                            )
+                          : Icon(Icons.person, size: 28, color: Colors.grey.shade400),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -541,16 +620,90 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     });
   }
 
+  List<SpeakerModel> _speakersForSelectedEvent(
+    EventController eventCtrl,
+    SpeakerController speakerCtrl,
+  ) {
+    final speakerIds = eventCtrl.sessions
+        .map((session) => session.speakerId)
+        .where((speakerId) => speakerId.isNotEmpty)
+        .toSet();
+
+    if (speakerIds.isNotEmpty) {
+      return speakerCtrl.speakers
+          .where((speaker) => speakerIds.contains(speaker.id))
+          .toList();
+    }
+
+    final speakerNames = eventCtrl.sessions
+        .map((session) => session.speakerName.trim().toLowerCase())
+        .where((speakerName) => speakerName.isNotEmpty)
+        .toSet();
+
+    return speakerCtrl.speakers
+        .where(
+          (speaker) =>
+              speakerNames.contains(speaker.nameEn.trim().toLowerCase()) ||
+              speakerNames.contains(speaker.nameZh.trim().toLowerCase()),
+        )
+        .toList();
+  }
+
   Widget _buildMaterialsTab(Color primaryColor) {
     final isZh = Get.locale?.languageCode == 'zh';
     final eventCtrl = Get.find<EventController>();
     final authCtrl = Get.find<AuthController>();
+    final eventId = eventCtrl.selectedEventId.value;
+
+    if (eventId.isEmpty) {
+      return Center(
+        child: Text(
+          isZh ? '请先选择会议' : 'Please select an event first',
+          style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+        ),
+      );
+    }
+
+    _ensureMaterialsFuture(eventId);
 
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _loadMaterials(eventCtrl.selectedEventId.value),
+      future: _materialsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.cloud_off, size: 64, color: Colors.grey.shade300),
+                  const SizedBox(height: 16),
+                  Text(
+                    isZh ? '资料加载失败' : 'Unable to load materials',
+                    style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => _refreshMaterials(eventId),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(isZh ? '重试' : 'Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
         }
         final materials = snapshot.data ?? [];
         if (materials.isEmpty) {
@@ -685,8 +838,16 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                             if (type == 'IMAGE' || type == 'PDF')
                               IconButton(
                                 icon: Icon(Icons.visibility, color: primaryColor, size: 22),
-                                onPressed: () {
-                                  if (type == 'IMAGE' && fileUrl.isNotEmpty) {
+                                onPressed: () async {
+                                  if (fileUrl.isEmpty) {
+                                    _showMaterialMessage(
+                                      isZh ? '资料链接不可用' : 'Material link is unavailable',
+                                      isError: true,
+                                    );
+                                    return;
+                                  }
+
+                                  if (type == 'IMAGE') {
                                     final resolvedUrl = _resolveMaterialUrl(fileUrl);
                                     // Show image in dialog with zoom
                                     Get.dialog(
@@ -699,7 +860,12 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                               child: InteractiveViewer(
                                                 minScale: 0.5,
                                                 maxScale: 4.0,
-                                                child: Image.network(resolvedUrl, fit: BoxFit.contain),
+                                                child: Image.network(
+                                                  resolvedUrl,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (context, error, stackTrace) =>
+                                                      const Icon(Icons.broken_image, size: 96, color: Colors.white),
+                                                ),
                                               ),
                                             ),
                                             Positioned(
@@ -715,11 +881,16 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                       ),
                                       barrierColor: Colors.black87,
                                     );
-                                  } else if (fileUrl.isNotEmpty) {
+                                  } else {
                                     // Open PDF in browser for preview
                                     final uri = Uri.tryParse(_resolveMaterialUrl(fileUrl));
-                                    if (uri != null) {
-                                      launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                                    if (uri != null && await canLaunchUrl(uri)) {
+                                      await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                                    } else {
+                                      _showMaterialMessage(
+                                        isZh ? '无法预览当前资料' : 'Unable to preview this material',
+                                        isError: true,
+                                      );
                                     }
                                   }
                                 },
@@ -728,25 +899,44 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                             IconButton(
                               icon: Icon(Icons.download, color: primaryColor),
                               onPressed: () async {
+                                if (fileUrl.isEmpty) {
+                                  _showMaterialMessage(
+                                    isZh ? '资料链接不可用' : 'Material link is unavailable',
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
                                 final eventId = eventCtrl.selectedEventId.value;
                                 final materialId = m['id'] as String? ?? '';
+
+                                if (_isProtectedMaterial(fileUrl)) {
+                                  await _downloadProtectedMaterial(
+                                    eventId: eventId,
+                                    materialId: materialId,
+                                    displayName: isZh ? nameZh : nameEn,
+                                    fallbackName: fileUrl.split('/').last,
+                                  );
+                                  return;
+                                }
+
+                                final uri = Uri.tryParse(_resolveMaterialUrl(fileUrl));
+                                if (uri == null || !await canLaunchUrl(uri)) {
+                                  _showMaterialMessage(
+                                    isZh ? '无法打开下载链接' : 'Unable to open download link',
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
                                 try {
                                   final api = Get.find<ApiService>();
                                   await api.trackDownload(eventId, materialId);
                                 } catch (_) {}
-                                if (fileUrl.isNotEmpty) {
-                                  final uri = Uri.tryParse(_resolveMaterialUrl(fileUrl));
-                                  if (uri != null && await canLaunchUrl(uri)) {
-                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                  }
-                                }
-                                Get.snackbar(
-                                  isZh ? '下载中' : 'Downloading',
+
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                _showMaterialMessage(
                                   isZh ? '$nameZh 正在下载...' : '$nameEn downloading...',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: primaryColor,
-                                  colorText: Colors.white,
-                                  margin: const EdgeInsets.all(16),
                                 );
                               },
                             ),
@@ -813,14 +1003,52 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
 
   Future<List<Map<String, dynamic>>> _loadMaterials(String eventId) async {
     if (eventId.isEmpty) return [];
+    final isZh = Get.locale?.languageCode == 'zh';
     try {
       final api = Get.find<ApiService>();
       final res = await api.getMaterials(eventId);
       if (res.statusCode == 200 && res.body is List) {
         return (res.body as List).map((e) => Map<String, dynamic>.from(e)).toList();
       }
-    } catch (_) {}
-    return [];
+      final message = res.body is Map<String, dynamic>
+          ? (res.body['message'] as String?)
+          : null;
+      throw Exception(message ?? (isZh ? '服务器未返回资料数据' : 'Server did not return materials data'));
+    } catch (error) {
+      if (error is Exception) {
+        rethrow;
+      }
+      throw Exception(isZh ? '网络异常，请稍后重试' : 'Network error. Please try again.');
+    }
+  }
+
+  void _ensureMaterialsFuture(String eventId) {
+    if (_materialsEventId == eventId && _materialsFuture != null) {
+      return;
+    }
+    _materialsEventId = eventId;
+    _materialsFuture = _loadMaterials(eventId);
+  }
+
+  void _refreshMaterials(String eventId) {
+    setState(() {
+      _materialsEventId = '';
+      _materialsFuture = null;
+      _ensureMaterialsFuture(eventId);
+    });
+  }
+
+  void _showMaterialMessage(String message, {bool isError = false}) {
+    Get.snackbar(
+      isError
+          ? (Get.locale?.languageCode == 'zh' ? '操作失败' : 'Action Failed')
+          : (Get.locale?.languageCode == 'zh' ? '处理中' : 'Processing'),
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: isError ? Colors.red : const Color(0xFF000666),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+    );
   }
 
   String _formatFileSize(int bytes) {
@@ -843,5 +1071,49 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     final normalizedPath = fileUrl.startsWith('/') ? fileUrl : '/$fileUrl';
     final origin = '${apiBaseUri.scheme}://${apiBaseUri.host}${apiBaseUri.hasPort ? ':${apiBaseUri.port}' : ''}';
     return '$origin$normalizedPath';
+  }
+
+  bool _isProtectedMaterial(String fileUrl) {
+    final trimmed = fileUrl.trim().replaceAll(RegExp(r'^/+'), '');
+    return trimmed.startsWith('uploads/materials/');
+  }
+
+  Future<void> _downloadProtectedMaterial({
+    required String eventId,
+    required String materialId,
+    required String displayName,
+    required String fallbackName,
+  }) async {
+    final isZh = Get.locale?.languageCode == 'zh';
+    if (eventId.isEmpty || materialId.isEmpty) {
+      _showMaterialMessage(
+        isZh ? '资料链接不可用' : 'Material link is unavailable',
+        isError: true,
+      );
+      return;
+    }
+    _showMaterialMessage(isZh ? '正在准备下载...' : 'Preparing download...');
+    try {
+      final api = Get.find<ApiService>();
+      final suggestedName =
+          displayName.isNotEmpty ? displayName : fallbackName;
+      final file = await api.downloadMaterialFile(
+        eventId,
+        materialId,
+        suggestedName,
+      );
+      try {
+        await api.trackDownload(eventId, materialId);
+      } catch (_) {}
+      await Share.shareXFiles(
+        [XFile(file.path, name: file.uri.pathSegments.last)],
+        subject: isZh ? '会议资料' : 'Conference Material',
+      );
+    } catch (e) {
+      _showMaterialMessage(
+        isZh ? '下载失败：$e' : 'Download failed: $e',
+        isError: true,
+      );
+    }
   }
 }

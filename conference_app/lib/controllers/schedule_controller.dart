@@ -16,7 +16,12 @@ class ScheduleController extends GetxController {
   void onInit() {
     super.onInit();
     savedSessionIds.value = _storage.savedSessionIds;
-    refreshSessions();
+    _initializeSchedule();
+  }
+
+  Future<void> _initializeSchedule() async {
+    await refreshSessions();
+    await syncJoinedEventSchedules();
   }
 
   Future<void> refreshSessions() async {
@@ -25,13 +30,7 @@ class ScheduleController extends GetxController {
     final sessions = <SessionModel>[];
 
     for (final eventId in eventIds) {
-      try {
-        final api = Get.find<ApiService>();
-        final res = await api.getSessions(eventId);
-        if (res.statusCode == 200 && res.body is List) {
-          sessions.addAll((res.body as List).map((s) => _parseSession(s)));
-        }
-      } catch (_) {}
+      sessions.addAll(await _fetchSessionsForEvent(eventId));
     }
     allSessions.value = sessions;
   }
@@ -40,12 +39,15 @@ class ScheduleController extends GetxController {
 
   /// Check if a session conflicts with any saved session
   List<SessionModel> getConflicts(SessionModel session) {
-    return mySessions.where((s) =>
-      s.id != session.id &&
-      s.dayIndex == session.dayIndex &&
-      s.startTime.isBefore(session.endTime) &&
-      s.endTime.isAfter(session.startTime)
-    ).toList();
+    return mySessions
+        .where(
+          (s) =>
+              s.id != session.id &&
+              s.dayIndex == session.dayIndex &&
+              s.startTime.isBefore(session.endTime) &&
+              s.endTime.isAfter(session.startTime),
+        )
+        .toList();
   }
 
   Future<void> toggleSession(String sessionId) async {
@@ -71,16 +73,28 @@ class ScheduleController extends GetxController {
     }
   }
 
-  Future<bool?> _showConflictDialog(SessionModel session, List<SessionModel> conflicts) {
+  Future<bool?> _showConflictDialog(
+    SessionModel session,
+    List<SessionModel> conflicts,
+  ) {
     final isZh = Get.locale?.languageCode == 'zh';
-    final conflictNames = conflicts.map((c) => isZh ? c.titleZh : c.titleEn).join('\n• ');
+    final conflictNames = conflicts
+        .map((c) => isZh ? c.titleZh : c.titleEn)
+        .join('\n• ');
     return Get.dialog<bool>(
       AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 24,
+            ),
             const SizedBox(width: 8),
-            Text(isZh ? '日程冲突' : 'Schedule Conflict', style: const TextStyle(fontSize: 16)),
+            Text(
+              isZh ? '日程冲突' : 'Schedule Conflict',
+              style: const TextStyle(fontSize: 16),
+            ),
           ],
         ),
         content: Column(
@@ -94,7 +108,10 @@ class ScheduleController extends GetxController {
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 8),
-            Text('• $conflictNames', style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+            Text(
+              '• $conflictNames',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            ),
             const SizedBox(height: 12),
             Text(
               isZh ? '是否仍要添加？' : 'Add anyway?',
@@ -110,7 +127,10 @@ class ScheduleController extends GetxController {
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: Text(isZh ? '仍然添加' : 'Add Anyway', style: const TextStyle(color: Colors.white)),
+            child: Text(
+              isZh ? '仍然添加' : 'Add Anyway',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -118,16 +138,8 @@ class ScheduleController extends GetxController {
   }
 
   Future<bool> addAllSessionsFromEvent(String eventId) async {
-    List<SessionModel> sessions;
-    try {
-      final api = Get.find<ApiService>();
-      final res = await api.getSessions(eventId);
-      if (res.statusCode == 200 && res.body is List) {
-        sessions = (res.body as List).map((s) => _parseSession(s)).toList();
-      } else {
-        return false;
-      }
-    } catch (_) {
+    final sessions = await _fetchSessionsForEvent(eventId);
+    if (sessions.isEmpty) {
       return false;
     }
 
@@ -138,9 +150,74 @@ class ScheduleController extends GetxController {
         await _scheduleReminder(session);
       }
     }
+    await _storage.markScheduleEventHydrated(eventId);
     await refreshSessions();
     await _scheduleDailyReminders();
     return true;
+  }
+
+  Future<void> syncJoinedEventSchedules({Iterable<String>? eventIds}) async {
+    final targetEventIds = (eventIds ?? _storage.subscribedEventIds).toList();
+    final hydratedIds = _storage.hydratedScheduleEventIds.toSet();
+    var changed = false;
+
+    for (final eventId in targetEventIds) {
+      if (hydratedIds.contains(eventId)) {
+        continue;
+      }
+
+      final sessions = await _fetchSessionsForEvent(eventId);
+      if (sessions.isEmpty) {
+        continue;
+      }
+
+      for (final session in sessions) {
+        if (!isSaved(session.id)) {
+          await _storage.saveSession(session.id);
+          savedSessionIds.add(session.id);
+          await _scheduleReminder(session);
+          changed = true;
+        }
+      }
+
+      await _storage.markScheduleEventHydrated(eventId);
+    }
+
+    if (changed) {
+      await refreshSessions();
+      await _scheduleDailyReminders();
+    }
+  }
+
+  Future<void> removeSessionsFromEvent(String eventId) async {
+    final sessions = await _fetchSessionsForEvent(eventId);
+    if (sessions.isEmpty) {
+      await _storage.unmarkScheduleEventHydrated(eventId);
+      await refreshSessions();
+      return;
+    }
+
+    final sessionIdsToRemove = sessions.map((session) => session.id).toSet();
+    final remainingSessionIds = savedSessionIds
+        .where((id) => !sessionIdsToRemove.contains(id))
+        .toList();
+
+    for (final session in sessions) {
+      if (savedSessionIds.contains(session.id)) {
+        try {
+          final notifService = Get.find<NotificationService>();
+          await notifService.cancelNotification(
+            session.id.hashCode.abs() % 100000,
+          );
+        } catch (_) {}
+      }
+    }
+
+    savedSessionIds.value = remainingSessionIds;
+    await _storage.setSavedSessionIds(remainingSessionIds);
+    await _storage.unmarkScheduleEventHydrated(eventId);
+    await refreshSessions();
+    await _scheduleDailyReminders();
   }
 
   List<SessionModel> get mySessions {
@@ -154,7 +231,9 @@ class ScheduleController extends GetxController {
   }
 
   List<SessionModel> get sessionsForSelectedDay {
-    return mySessions.where((s) => s.dayIndex == selectedDayIndex.value).toList()
+    return mySessions
+        .where((s) => s.dayIndex == selectedDayIndex.value)
+        .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
@@ -181,16 +260,30 @@ class ScheduleController extends GetxController {
     } catch (_) {}
   }
 
+  Future<List<SessionModel>> _fetchSessionsForEvent(String eventId) async {
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.getSessions(eventId);
+      if (res.statusCode == 200 && res.body is List) {
+        return (res.body as List).map((s) => _parseSession(s)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
   Future<void> _scheduleDailyReminders() async {
     try {
       final notifService = Get.find<NotificationService>();
       final days = availableDays;
       for (final day in days) {
-        final sessionsOnDay = mySessions.where((s) =>
-          s.startTime.year == day.year &&
-          s.startTime.month == day.month &&
-          s.startTime.day == day.day
-        ).length;
+        final sessionsOnDay = mySessions
+            .where(
+              (s) =>
+                  s.startTime.year == day.year &&
+                  s.startTime.month == day.month &&
+                  s.startTime.day == day.day,
+            )
+            .length;
         if (sessionsOnDay > 0) {
           await notifService.scheduleDailyReminder(day, sessionsOnDay);
         }
@@ -212,7 +305,9 @@ class ScheduleController extends GetxController {
       startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
       endTime: DateTime.tryParse(json['endTime'] ?? '') ?? DateTime.now(),
       type: SessionType.values.firstWhere(
-        (t) => t.name == json['type'] || t.name == (json['type'] as String?)?.replaceAll('_', ''),
+        (t) =>
+            t.name == json['type'] ||
+            t.name == (json['type'] as String?)?.replaceAll('_', ''),
         orElse: () => SessionType.keynote,
       ),
       dayIndex: json['dayIndex'] ?? 0,

@@ -444,14 +444,19 @@ class _EventPortalScreenState extends State<EventPortalScreen> with SingleTicker
         children: [
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Image.network(
-              event.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.image, color: Colors.grey),
-              ),
-            ),
+            child: event.imageUrl.isNotEmpty
+                ? Image.network(
+                    event.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.image, color: Colors.grey),
+                    ),
+                  )
+                : Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.image, color: Colors.grey),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),

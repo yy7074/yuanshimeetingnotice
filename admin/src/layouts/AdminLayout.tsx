@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Layout, Menu, Button, Dropdown, Space, Typography } from 'antd';
+import { Suspense, useState } from 'react';
+import { Flex, Layout, Menu, Button, Dropdown, Space, Spin, Typography } from 'antd';
 import {
   DashboardOutlined, CalendarOutlined,
   UserOutlined, LogoutOutlined, GlobalOutlined,
@@ -26,10 +26,10 @@ export default function AdminLayout() {
     { key: '/speakers', icon: <SoundOutlined />, label: t('menu.speakers') },
     { key: '/materials', icon: <FileTextOutlined />, label: t('menu.materials') },
     { key: '/users', icon: <UserOutlined />, label: t('menu.users') },
-    { key: '/import', icon: <ImportOutlined />, label: '导入名单 / Import' },
+    { key: '/import', icon: <ImportOutlined />, label: t('menu.import') },
     { key: '/checkin', icon: <CheckCircleOutlined />, label: t('menu.checkin') },
-    { key: '/notifications', icon: <NotificationOutlined />, label: '通知推送 / Push' },
-    { key: '/export', icon: <ExportOutlined />, label: '数据导出 / Export' },
+    { key: '/notifications', icon: <NotificationOutlined />, label: t('menu.notifications') },
+    { key: '/export', icon: <ExportOutlined />, label: t('menu.export') },
   ];
 
   const handleLogout = () => {
@@ -82,7 +82,15 @@ export default function AdminLayout() {
           </Space>
         </Header>
         <Content style={{ margin: 24, padding: 24, background: '#fff', borderRadius: 8, minHeight: 360 }}>
-          <Outlet />
+          <Suspense
+            fallback={
+              <Flex align="center" justify="center" style={{ minHeight: 320 }}>
+                <Spin />
+              </Flex>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </Content>
       </Layout>
     </Layout>

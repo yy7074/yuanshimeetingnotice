@@ -1,5 +1,17 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Res,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { MaterialsService } from './materials.service';
 import { Material } from './entities/material.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -52,5 +64,24 @@ export class MaterialsController {
   @ApiOperation({ summary: 'Track material download' })
   download(@Param('id') id: string) {
     return this.materialsService.incrementDownload(id);
+  }
+
+  @Get(':id/file')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Download material file (role-gated, streams the protected file)',
+  })
+  async downloadFile(
+    @Param('id') id: string,
+    @Request() req,
+    @Res() res: Response,
+  ) {
+    const { absPath, filename, material } =
+      await this.materialsService.resolveDownloadPath(id, req.user.role);
+    this.materialsService.incrementDownload(id).catch(() => undefined);
+    const downloadName =
+      (material.nameEn || material.nameZh || filename).replace(/[^\w\-. ]/g, '_');
+    res.download(absPath, downloadName);
   }
 }

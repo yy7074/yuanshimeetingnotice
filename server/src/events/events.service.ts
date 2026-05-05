@@ -1,15 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { CreateEventDto, UpdateEventDto } from './dto/event.dto';
 import { User } from '../users/entities/user.entity';
+import { NotificationDispatcherService } from '../notifications/notification-dispatcher.service';
 
 @Injectable()
 export class EventsService {
+  private readonly logger = new Logger(EventsService.name);
+
   constructor(
     @InjectRepository(Event) private eventRepo: Repository<Event>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    private notificationDispatcher: NotificationDispatcherService,
   ) {}
 
   async findAll(query?: { search?: string; status?: string }) {
@@ -37,7 +41,10 @@ export class EventsService {
         .where('e.id = :id', { id: event.id })
         .select('COUNT(s.id)', 'count')
         .getRawOne();
-      result.push({ ...event, currentAttendees: parseInt(count?.count || '0') });
+      result.push({
+        ...event,
+        currentAttendees: parseInt(count?.count || '0'),
+      });
     }
     return result;
   }
@@ -53,13 +60,49 @@ export class EventsService {
 
   async create(dto: CreateEventDto) {
     const event = this.eventRepo.create(dto);
-    return this.eventRepo.save(event);
+    const saved = await this.eventRepo.save(event);
+
+    // Notify all users if event is published on creation
+    if (saved.status === 'published') {
+      this.notificationDispatcher
+        .onEventPublished(saved.id, saved.titleEn, saved.titleZh)
+        .catch((e) =>
+          this.logger.warn(
+            `Failed to dispatch event published notification: ${e.message}`,
+          ),
+        );
+    }
+
+    return saved;
   }
 
   async update(id: string, dto: UpdateEventDto) {
     const event = await this.findOne(id);
+    const wasDraft = event.status !== 'published';
     Object.assign(event, dto);
-    return this.eventRepo.save(event);
+    const saved = await this.eventRepo.save(event);
+
+    // If just published (was draft/ended, now published) → broadcast to all
+    if (wasDraft && saved.status === 'published') {
+      this.notificationDispatcher
+        .onEventPublished(saved.id, saved.titleEn, saved.titleZh)
+        .catch((e) =>
+          this.logger.warn(
+            `Failed to dispatch event published notification: ${e.message}`,
+          ),
+        );
+    } else if (saved.status === 'published') {
+      // Already published, just updated → notify subscribers
+      this.notificationDispatcher
+        .onEventUpdated(saved.id, saved.titleEn, saved.titleZh)
+        .catch((e) =>
+          this.logger.warn(
+            `Failed to dispatch event updated notification: ${e.message}`,
+          ),
+        );
+    }
+
+    return saved;
   }
 
   async remove(id: string) {
@@ -77,7 +120,9 @@ export class EventsService {
     const event = await this.eventRepo.findOne({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
 
-    const alreadySubscribed = user.subscribedEvents.some((e) => e.id === eventId);
+    const alreadySubscribed = user.subscribedEvents.some(
+      (e) => e.id === eventId,
+    );
     if (!alreadySubscribed) {
       user.subscribedEvents.push(event);
       await this.userRepo.save(user);
@@ -92,7 +137,9 @@ export class EventsService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    user.subscribedEvents = user.subscribedEvents.filter((e) => e.id !== eventId);
+    user.subscribedEvents = user.subscribedEvents.filter(
+      (e) => e.id !== eventId,
+    );
     await this.userRepo.save(user);
     return { message: 'Unsubscribed successfully' };
   }
@@ -108,8 +155,12 @@ export class EventsService {
 
   async getStats() {
     const total = await this.eventRepo.count();
-    const published = await this.eventRepo.count({ where: { status: 'published' as any } });
-    const draft = await this.eventRepo.count({ where: { status: 'draft' as any } });
+    const published = await this.eventRepo.count({
+      where: { status: 'published' as any },
+    });
+    const draft = await this.eventRepo.count({
+      where: { status: 'draft' as any },
+    });
     return { total, published, draft };
   }
 }

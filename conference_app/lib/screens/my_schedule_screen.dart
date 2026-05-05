@@ -4,6 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import '../controllers/schedule_controller.dart';
 import '../models/session_model.dart';
+import '../utils/ics_exporter.dart';
 
 class MyScheduleScreen extends StatefulWidget {
   const MyScheduleScreen({super.key});
@@ -392,7 +393,14 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
-                            image: DecorationImage(image: NetworkImage(session.speakerAvatarUrl), fit: BoxFit.cover),
+                            color: Colors.grey.shade100,
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: Image.network(
+                            session.speakerAvatarUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.person, size: 20, color: Colors.grey.shade400),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -490,11 +498,54 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton(
+                onPressed: () {
+                  Get.back();
+                  _doShareIcs(sessions, primaryColor);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primaryColor,
+                  side: BorderSide(color: primaryColor),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  isZh ? '分享 .ics 日历文件' : 'Share .ics Calendar File',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _doShareIcs(
+    List<SessionModel> sessions,
+    Color primaryColor,
+  ) async {
+    final isZh = Get.locale?.languageCode == 'zh';
+    try {
+      await IcsExporter.share(
+        sessions,
+        isZh: isZh,
+        subject: isZh ? 'APSCVIR 我的日程' : 'APSCVIR My Schedule',
+      );
+    } catch (e) {
+      Get.snackbar(
+        isZh ? '导出失败' : 'Export Failed',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade400,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
   }
 
   void _doExportAll(List<SessionModel> sessions, Color primaryColor) {

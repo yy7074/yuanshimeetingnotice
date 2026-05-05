@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
-import { User } from '../users/entities/user.entity';
+import { User, UserRole } from '../users/entities/user.entity';
 import { PushService } from '../common/push.service';
 import { EmailService } from '../common/email.service';
 
@@ -41,7 +41,8 @@ export class NotificationDispatcherService {
 
     // 3. Push notification
     if (sendPush && user.pushEnabled && user.fcmToken) {
-      const title = user.language === 'zh' ? notifData.titleZh : notifData.titleEn;
+      const title =
+        user.language === 'zh' ? notifData.titleZh : notifData.titleEn;
       const body = user.language === 'zh' ? notifData.bodyZh : notifData.bodyEn;
       await this.pushService.sendToDevice(user.fcmToken, title, body, {
         type: notifData.type,
@@ -88,7 +89,12 @@ export class NotificationDispatcherService {
     sendPush?: boolean;
     sendEmail?: boolean;
   }) {
-    const { eventId, sendPush = true, sendEmail = false, ...notifData } = params;
+    const {
+      eventId,
+      sendPush = true,
+      sendEmail = false,
+      ...notifData
+    } = params;
 
     // Get all subscribers
     const users = await this.userRepo
@@ -119,6 +125,72 @@ export class NotificationDispatcherService {
   }
 
   /**
+   * Broadcast to users matched by admin-selected filters
+   */
+  async broadcastByFilter(params: {
+    titleEn: string;
+    titleZh: string;
+    bodyEn: string;
+    bodyZh: string;
+    type: NotificationType;
+    eventId?: string;
+    sendPush?: boolean;
+    sendEmail?: boolean;
+    userIds?: string[];
+    role?: UserRole;
+    isActive?: boolean;
+    search?: string;
+  }) {
+    const {
+      userIds,
+      role,
+      isActive,
+      search,
+      ...notifData
+    } = params;
+
+    const qb = this.userRepo.createQueryBuilder('user');
+
+    if (Array.isArray(userIds) && userIds.length > 0) {
+      qb.andWhere('user.id IN (:...userIds)', { userIds });
+    }
+    if (role) {
+      qb.andWhere('user.role = :role', { role });
+    }
+    if (typeof isActive === 'boolean') {
+      qb.andWhere('user.is_active = :isActive', { isActive });
+    }
+    if (search?.trim()) {
+      qb.andWhere(
+        '(user.email LIKE :q OR user.name_en LIKE :q OR user.name_zh LIKE :q)',
+        { q: `%${search.trim()}%` },
+      );
+    }
+
+    const users = await qb.getMany();
+
+    let count = 0;
+    for (const user of users) {
+      await this.dispatch({
+        ...notifData,
+        userId: user.id,
+      });
+      count++;
+    }
+
+    return {
+      sent: count,
+      filters: {
+        userIds: userIds?.length || 0,
+        role: role || null,
+        isActive:
+          typeof isActive === 'boolean' ? isActive : null,
+        search: search?.trim() || null,
+      },
+    };
+  }
+
+  /**
    * Broadcast to all active users
    */
   async broadcastToAll(params: {
@@ -145,7 +217,11 @@ export class NotificationDispatcherService {
   /**
    * Event published notification
    */
-  async onEventPublished(eventId: string, eventNameEn: string, eventNameZh: string) {
+  async onEventPublished(
+    eventId: string,
+    eventNameEn: string,
+    eventNameZh: string,
+  ) {
     return this.broadcastToAll({
       titleEn: 'New Event Published',
       titleZh: '新会议已发布',
@@ -159,7 +235,11 @@ export class NotificationDispatcherService {
   /**
    * Event updated notification
    */
-  async onEventUpdated(eventId: string, eventNameEn: string, eventNameZh: string) {
+  async onEventUpdated(
+    eventId: string,
+    eventNameEn: string,
+    eventNameZh: string,
+  ) {
     return this.broadcastToEvent({
       eventId,
       titleEn: 'Event Updated',
@@ -174,7 +254,11 @@ export class NotificationDispatcherService {
   /**
    * Material uploaded notification
    */
-  async onMaterialUploaded(eventId: string, materialNameEn: string, materialNameZh: string) {
+  async onMaterialUploaded(
+    eventId: string,
+    materialNameEn: string,
+    materialNameZh: string,
+  ) {
     return this.broadcastToEvent({
       eventId,
       titleEn: 'New Material Available',
@@ -189,7 +273,11 @@ export class NotificationDispatcherService {
   /**
    * Check-in success notification
    */
-  async onCheckInSuccess(userId: string, eventNameEn: string, eventNameZh: string) {
+  async onCheckInSuccess(
+    userId: string,
+    eventNameEn: string,
+    eventNameZh: string,
+  ) {
     return this.dispatch({
       userId,
       titleEn: 'Check-in Successful',
@@ -204,7 +292,13 @@ export class NotificationDispatcherService {
   /**
    * Schedule reminder notification
    */
-  async sendScheduleReminder(userId: string, sessionTitleEn: string, sessionTitleZh: string, roomEn: string, roomZh: string) {
+  async sendScheduleReminder(
+    userId: string,
+    sessionTitleEn: string,
+    sessionTitleZh: string,
+    roomEn: string,
+    roomZh: string,
+  ) {
     return this.dispatch({
       userId,
       titleEn: 'Session Starting Soon',

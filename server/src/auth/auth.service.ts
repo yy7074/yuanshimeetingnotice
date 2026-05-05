@@ -1,15 +1,28 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcryptjs from 'bcryptjs';
 import { User } from '../users/entities/user.entity';
-import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto/register.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/register.dto';
 import { EmailService } from '../common/email.service';
 
 @Injectable()
 export class AuthService {
-  private verificationCodes = new Map<string, { code: string; expiresAt: number; count: number; lastSent: number }>();
+  private verificationCodes = new Map<
+    string,
+    { code: string; expiresAt: number; count: number; lastSent: number }
+  >();
 
   constructor(
     @InjectRepository(User)
@@ -19,7 +32,9 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.userRepo.findOne({ where: { email: dto.email } });
+    const existing = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -68,14 +83,22 @@ export class AuthService {
     const existing = this.verificationCodes.get(email);
     if (existing) {
       if (Date.now() - existing.lastSent < 60000) {
-        throw new BadRequestException('Please wait 1 minute before requesting another code');
+        throw new BadRequestException(
+          'Please wait 1 minute before requesting another code',
+        );
       }
       if (existing.count >= 5) {
-        throw new BadRequestException('Daily verification code limit reached (5)');
+        throw new BadRequestException(
+          'Daily verification code limit reached (5)',
+        );
       }
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const simulateVerification = this.isVerificationSimulationEnabled();
+    const code = simulateVerification
+      ? this.configuredSimulationCode()
+      : Math.floor(100000 + Math.random() * 900000).toString();
+
     this.verificationCodes.set(email, {
       code,
       expiresAt: Date.now() + 5 * 60 * 1000,
@@ -84,8 +107,19 @@ export class AuthService {
     });
 
     await this.emailService.sendVerificationCode(email, code);
-    console.log(`[DEV] Verification code for ${email}: ${code}`);
-    return { message: 'Verification code sent.', code: process.env.NODE_ENV === 'development' ? code : undefined };
+    if (simulateVerification) {
+      console.log(`[SIMULATED] Verification code for ${email}: ${code}`);
+    } else {
+      console.log(`[DEV] Verification code for ${email}: ${code}`);
+    }
+    return {
+      message: 'Verification code sent.',
+      code:
+        process.env.NODE_ENV === 'development' || simulateVerification
+          ? code
+          : undefined,
+      simulated: simulateVerification,
+    };
   }
 
   async verifyCode(email: string, code: string) {
@@ -105,7 +139,10 @@ export class AuthService {
   async forgotPassword(dto: ForgotPasswordDto) {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) {
-      return { message: 'If this email is registered, a verification code has been sent.' };
+      return {
+        message:
+          'If this email is registered, a verification code has been sent.',
+      };
     }
     return this.sendVerificationCode(dto.email);
   }
@@ -122,6 +159,8 @@ export class AuthService {
     }
 
     user.password = await bcryptjs.hash(dto.newPassword, 10);
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    user.mustChangePassword = false;
     await this.userRepo.save(user);
     this.verificationCodes.delete(dto.email);
 
@@ -133,11 +172,28 @@ export class AuthService {
   }
 
   private generateToken(user: User): string {
-    return this.jwtService.sign({ sub: user.id, email: user.email, role: user.role });
+    return this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      tv: user.tokenVersion ?? 0,
+    });
   }
 
   private sanitizeUser(user: User) {
     const { password, ...result } = user;
     return result;
+  }
+
+  private isVerificationSimulationEnabled(): boolean {
+    const configured = process.env.AUTH_SIMULATE_VERIFICATION;
+    if (configured != null) {
+      return configured === 'true';
+    }
+    return !this.emailService.isConfigured;
+  }
+
+  private configuredSimulationCode(): string {
+    return process.env.AUTH_SIMULATED_CODE?.trim() || '0000';
   }
 }

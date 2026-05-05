@@ -1,25 +1,28 @@
-import { useEffect, useState } from 'react';
-import { Card, Form, Input, Select, Button, Switch, message, Typography, Space, Divider } from 'antd';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Card, Form, Input, Select, Button, Switch, message, Typography, Space, Divider, Alert } from 'antd';
 import { SendOutlined, NotificationOutlined } from '@ant-design/icons';
 import { eventsApi, notificationsApi, usersApi } from '../services/api';
+import { qk } from '../lib/queryKeys';
 
 const { TextArea } = Input;
 
 export default function SendNotification() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
   const [sending, setSending] = useState(false);
   const [mode, setMode] = useState<'single' | 'broadcast'>('broadcast');
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    eventsApi.list().then(r => setEvents(r.data)).catch(() => {
-      message.error('Failed to load events');
-    });
-    usersApi.list().then(r => setUsers(r.data)).catch(() => {
-      message.error('Failed to load users');
-    });
-  }, []);
+  const { data: events = [] } = useQuery({
+    queryKey: qk.events.list(),
+    queryFn: async () => (await eventsApi.list()).data,
+  });
+  const { data: users = [] } = useQuery({
+    queryKey: qk.users.list(),
+    queryFn: async () => {
+      const { data } = await usersApi.list();
+      return Array.isArray(data) ? data : (data?.items ?? []);
+    },
+  });
 
   const handleSend = async () => {
     setSending(true);
@@ -78,7 +81,7 @@ export default function SendNotification() {
                   showSearch
                   placeholder="Select user..."
                   optionFilterProp="label"
-                  options={users.map(u => ({
+                  options={users.map((u: any) => ({
                     value: u.id,
                     label: `${u.email} (${u.nameEn || u.nameZh || 'No name'})`,
                   }))}
@@ -92,20 +95,72 @@ export default function SendNotification() {
                 <Select
                   allowClear
                   placeholder="Select event / 选择会议"
-                  options={events.map(e => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
+                  options={events.map((e: any) => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
                 />
               </Form.Item>
             </>
           )}
 
           {mode === 'broadcast' && (
-            <Form.Item label="Scope / 范围" name="eventId" help="Leave empty to broadcast to all users">
-              <Select
-                allowClear
-                placeholder="All users / 全部用户 (or select event)"
-                options={events.map(e => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
+            <>
+              <Alert
+                type="info"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message="Leave all filters empty to send to all active users. If only an event is selected, the message goes to event subscribers. If role, status, search, or selected users are set, those filters take precedence."
               />
-            </Form.Item>
+              <Form.Item label="Scope / 范围" name="eventId" help="Optional related event. Without user filters, this targets event subscribers.">
+                <Select
+                  allowClear
+                  placeholder="All users / 全部用户 (or select event)"
+                  options={events.map((e: any) => ({ value: e.id, label: `${e.titleZh} (${e.titleEn})` }))}
+                />
+              </Form.Item>
+              <div style={{ display: 'flex', gap: 16 }}>
+                <Form.Item label="Recipient Role / 用户角色" name="role" style={{ flex: 1 }}>
+                  <Select
+                    allowClear
+                    placeholder="All roles / 全部角色"
+                    options={[
+                      { value: 'attendee', label: 'Attendee / 参会者' },
+                      { value: 'speaker', label: 'Speaker / 演讲者' },
+                      { value: 'vip', label: 'VIP' },
+                      { value: 'admin', label: 'Admin / 管理员' },
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item label="Recipient Status / 用户状态" name="isActive" style={{ flex: 1 }}>
+                  <Select
+                    allowClear
+                    placeholder="Active users / 活跃用户"
+                    options={[
+                      { value: true, label: 'Active / 启用' },
+                      { value: false, label: 'Inactive / 停用' },
+                    ]}
+                  />
+                </Form.Item>
+              </div>
+              <Form.Item
+                label="Search Users / 搜索用户"
+                name="search"
+                help="Matches email, English name, or Chinese name."
+              >
+                <Input placeholder="alice@example.com / Alice / 张三" />
+              </Form.Item>
+              <Form.Item label="Specific Users / 指定用户" name="userIds">
+                <Select
+                  mode="multiple"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="Optional. Further narrows the recipients."
+                  options={users.map((u: any) => ({
+                    value: u.id,
+                    label: `${u.email} (${u.nameEn || u.nameZh || 'No name'})`,
+                  }))}
+                />
+              </Form.Item>
+            </>
           )}
 
           <Divider>Notification Content / 通知内容</Divider>

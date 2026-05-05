@@ -124,6 +124,32 @@ class AuthController extends GetxController {
     Get.offAllNamed('/login');
   }
 
+  bool get mustChangePassword => currentUser.value?.mustChangePassword == true;
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.changePassword(currentPassword, newPassword);
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        // Backend bumped tokenVersion — old token is now invalid.
+        await _storage.clearAuth();
+        currentUser.value = null;
+        return true;
+      }
+      errorMessage.value = res.body?['message'] ??
+          (Get.locale?.languageCode == 'zh' ? '密码修改失败' : 'Failed to change password');
+      return false;
+    } catch (_) {
+      errorMessage.value = Get.locale?.languageCode == 'zh'
+          ? '网络错误，请稍后重试'
+          : 'Network error. Please try again.';
+      return false;
+    }
+  }
+
   UserModel _parseUser(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] ?? '',
@@ -139,6 +165,7 @@ class AuthController extends GetxController {
         (e) => e.name == json['role'],
         orElse: () => UserRole.attendee,
       ),
+      mustChangePassword: json['mustChangePassword'] == true,
     );
   }
 }

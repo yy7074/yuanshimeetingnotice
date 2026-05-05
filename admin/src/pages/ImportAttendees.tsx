@@ -1,13 +1,22 @@
 import { useState } from 'react';
-import { Card, Button, Upload, Table, Tag, message, Typography, Space, Alert } from 'antd';
-import { UploadOutlined, ImportOutlined } from '@ant-design/icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { Card, Button, Upload, Table, Tag, message, Typography, Space, Alert, Input } from 'antd';
+import { UploadOutlined, ImportOutlined, MailOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { usersApi } from '../services/api';
+import { qk } from '../lib/queryKeys';
 import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 export default function ImportAttendees() {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [parsedData, setParsedData] = useState<any[]>([]);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [invitationSubject, setInvitationSubject] = useState('');
+  const [sendingInvitations, setSendingInvitations] = useState(false);
+  const [invitationResult, setInvitationResult] = useState<any>(null);
 
   const handleFile = (file: File) => {
     const reader = new FileReader();
@@ -28,6 +37,10 @@ export default function ImportAttendees() {
           organizationZh: row.organizationZh || row['机构'] || '',
         }));
 
+        const invalid = mapped.filter((row) => !row.email.trim());
+        if (invalid.length > 0) {
+          message.warning(`Found ${invalid.length} rows without email. They can be fixed before import.`);
+        }
         setParsedData(mapped);
         setResult(null);
         message.success(`Parsed ${mapped.length} rows`);
@@ -39,6 +52,24 @@ export default function ImportAttendees() {
     return false; // prevent default upload
   };
 
+  const downloadTemplate = () => {
+    const rows = [
+      {
+        email: 'attendee@example.com',
+        nameEn: 'John Doe',
+        nameZh: '张三',
+        role: 'attendee',
+        organizationEn: 'Hospital Name',
+        organizationZh: '医院名称',
+      },
+    ];
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Attendees');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buf], { type: 'application/octet-stream' }), 'attendees-template.xlsx');
+  };
+
   const handleImport = async () => {
     if (parsedData.length === 0) return;
     setImporting(true);
@@ -46,11 +77,28 @@ export default function ImportAttendees() {
       await usersApi.list(); // Confirm auth before import to surface a clean 401 if needed.
       const res = await usersApi.importAttendees(parsedData);
       setResult(res.data);
+      queryClient.invalidateQueries({ queryKey: qk.users.all });
       message.success(`Import complete: ${res.data.created} created, ${res.data.skipped} skipped`);
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Import failed');
     }
     setImporting(false);
+  };
+
+  const handleSendInvitations = async () => {
+    setSendingInvitations(true);
+    try {
+      const userIds = result?.createdIds || undefined;
+      const res = await usersApi.sendInvitations({
+        userIds,
+        subject: invitationSubject || undefined,
+      });
+      setInvitationResult(res.data);
+      message.success(t('import.invitationSent'));
+    } catch (err: any) {
+      message.error(err.response?.data?.message || t('import.invitationFailed'));
+    }
+    setSendingInvitations(false);
   };
 
   const columns = [
@@ -78,6 +126,9 @@ export default function ImportAttendees() {
             style={{ marginBottom: 16 }}
           />
           <Space>
+            <Button onClick={downloadTemplate}>
+              下载模板 / Download Template
+            </Button>
             <Upload beforeUpload={handleFile} accept=".xlsx,.xls,.csv" showUploadList={false}>
               <Button icon={<UploadOutlined />} size="large">
                 选择 Excel/CSV 文件 / Select File
@@ -103,6 +154,32 @@ export default function ImportAttendees() {
             type={result.errors?.length > 0 ? 'warning' : 'success'}
             showIcon
           />
+        )}
+
+        {result && result.created > 0 && (
+          <Card title={t('import.sendInvitations')} style={{ marginTop: 0 }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Input
+                placeholder={t('import.emailSubjectPlaceholder')}
+                value={invitationSubject}
+                onChange={(e) => setInvitationSubject(e.target.value)}
+              />
+              <Button
+                type="primary"
+                icon={<MailOutlined />}
+                loading={sendingInvitations}
+                onClick={handleSendInvitations}
+              >
+                {t('import.sendToImported')} ({result.created})
+              </Button>
+              {invitationResult && (
+                <Alert
+                  type="success"
+                  message={`${t('import.sent')}: ${invitationResult.sent}, ${t('import.failed')}: ${invitationResult.failed}`}
+                />
+              )}
+            </Space>
+          </Card>
         )}
 
         {parsedData.length > 0 && (
