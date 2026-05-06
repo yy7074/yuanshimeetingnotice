@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import '../models/event_model.dart';
 import '../models/session_model.dart';
+import '../utils/pinyin_search.dart';
 import 'schedule_controller.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
@@ -99,17 +102,22 @@ class EventController extends GetxController {
   List<EventModel> get filteredEvents {
     var events = allEvents.toList();
 
-    // Search filter
+    // Search filter — matches against the raw text AND the pinyin/initials of
+    // any Chinese fields, so users can type "shanghai" / "shyy" and still find
+    // 上海 events.
     if (searchQuery.value.isNotEmpty) {
       final q = searchQuery.value.toLowerCase();
       events = events
           .where(
-            (e) =>
-                e.titleEn.toLowerCase().contains(q) ||
-                e.titleZh.contains(q) ||
-                e.locationEn.toLowerCase().contains(q) ||
-                e.locationZh.contains(q) ||
-                e.tags.any((t) => t.toLowerCase().contains(q)),
+            (e) => matchesPinyin(q, [
+              e.titleEn,
+              e.titleZh,
+              e.locationEn,
+              e.locationZh,
+              e.organizerEn,
+              e.organizerZh,
+              ...e.tags,
+            ]),
           )
           .toList();
     }
@@ -198,25 +206,58 @@ class EventController extends GetxController {
     final scheduleCtrl = Get.isRegistered<ScheduleController>()
         ? Get.find<ScheduleController>()
         : null;
+    final wasSubscribed = isSubscribed(eventId);
+
+    if (wasSubscribed) {
+      subscribedEventIds.remove(eventId);
+      await _storage.unsubscribeEvent(eventId);
+      notifService.removeEventTag(eventId);
+    } else {
+      subscribedEventIds.add(eventId);
+      await _storage.subscribeEvent(eventId);
+      notifService.addEventTag(eventId);
+    }
+
     try {
       final api = Get.find<ApiService>();
-      if (isSubscribed(eventId)) {
+      if (wasSubscribed) {
         await api.unsubscribeEvent(eventId);
-        subscribedEventIds.remove(eventId);
-        await _storage.unsubscribeEvent(eventId);
-        await scheduleCtrl?.removeSessionsFromEvent(eventId);
-        notifService.removeEventTag(eventId);
+        unawaited(_syncScheduleAfterUnsubscribe(scheduleCtrl, eventId));
       } else {
         await api.subscribeEvent(eventId);
-        subscribedEventIds.add(eventId);
-        await _storage.subscribeEvent(eventId);
-        await scheduleCtrl?.addAllSessionsFromEvent(eventId);
-        notifService.addEventTag(eventId);
+        unawaited(_syncScheduleAfterSubscribe(scheduleCtrl, eventId));
       }
       return true;
     } catch (_) {
+      if (wasSubscribed) {
+        subscribedEventIds.add(eventId);
+        await _storage.subscribeEvent(eventId);
+        notifService.addEventTag(eventId);
+      } else {
+        subscribedEventIds.remove(eventId);
+        await _storage.unsubscribeEvent(eventId);
+        notifService.removeEventTag(eventId);
+      }
       return false;
     }
+  }
+
+  Future<void> _syncScheduleAfterSubscribe(
+    ScheduleController? scheduleCtrl,
+    String eventId,
+  ) async {
+    try {
+      await scheduleCtrl?.addAllSessionsFromEvent(eventId);
+    } catch (_) {}
+  }
+
+  Future<void> _syncScheduleAfterUnsubscribe(
+    ScheduleController? scheduleCtrl,
+    String eventId,
+  ) async {
+    try {
+      await scheduleCtrl?.removeSessionsFromEvent(eventId);
+    } catch (_) {}
   }
 
   Future<void> selectEvent(String eventId) async {
@@ -250,6 +291,9 @@ class EventController extends GetxController {
   }
 
   EventModel _parseEvent(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic value) =>
+        DateTime.tryParse(value?.toString() ?? '')?.toLocal() ?? DateTime.now();
+
     return EventModel(
       id: json['id'] ?? '',
       titleEn: json['titleEn'] ?? '',
@@ -259,8 +303,8 @@ class EventController extends GetxController {
       locationEn: json['locationEn'] ?? '',
       locationZh: json['locationZh'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
-      startDate: DateTime.tryParse(json['startDate'] ?? '') ?? DateTime.now(),
-      endDate: DateTime.tryParse(json['endDate'] ?? '') ?? DateTime.now(),
+      startDate: parseDate(json['startDate']),
+      endDate: parseDate(json['endDate']),
       organizerEn: json['organizerEn'] ?? '',
       organizerZh: json['organizerZh'] ?? '',
       tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
@@ -273,6 +317,12 @@ class EventController extends GetxController {
 
   SessionModel _parseSession(Map<String, dynamic> json) {
     final speaker = json['speaker'] as Map<String, dynamic>?;
+    DateTime parseDate(dynamic value) =>
+        DateTime.tryParse(value?.toString() ?? '')?.toLocal() ?? DateTime.now();
+    final typeValue = (json['type'] as String? ?? '')
+        .replaceAll('_', '')
+        .toLowerCase();
+
     return SessionModel(
       id: json['id'] ?? '',
       eventId: json['eventId'] ?? '',
@@ -282,12 +332,10 @@ class EventController extends GetxController {
       descriptionZh: json['descriptionZh'] ?? '',
       roomEn: json['roomEn'] ?? '',
       roomZh: json['roomZh'] ?? '',
-      startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
-      endTime: DateTime.tryParse(json['endTime'] ?? '') ?? DateTime.now(),
+      startTime: parseDate(json['startTime']),
+      endTime: parseDate(json['endTime']),
       type: SessionType.values.firstWhere(
-        (t) =>
-            t.name == json['type'] ||
-            t.name == (json['type'] as String?)?.replaceAll('_', ''),
+        (t) => t.name.toLowerCase() == typeValue,
         orElse: () => SessionType.keynote,
       ),
       dayIndex: json['dayIndex'] ?? 0,

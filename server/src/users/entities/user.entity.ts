@@ -60,7 +60,7 @@ export class User {
   @Column({ name: 'push_enabled', default: true })
   pushEnabled: boolean;
 
-  @Column({ name: 'language', default: 'zh' })
+  @Column({ name: 'language', default: 'en' })
   language: string;
 
   @Column({ name: 'fcm_token', nullable: true })

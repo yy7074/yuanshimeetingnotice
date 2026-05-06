@@ -44,6 +44,18 @@ export class Material {
   })
   visibleTo: string[];
 
+  /**
+   * Per-user override allow-list. When non-empty, listed users get access
+   * regardless of their role. Always evaluated in addition to (not in place
+   * of) `visibleTo` so existing role-based gates keep working.
+   */
+  @Column({
+    name: 'visible_user_ids',
+    type: 'simple-array',
+    nullable: true,
+  })
+  visibleUserIds: string[];
+
   @Column({ name: 'download_count', default: 0 })
   downloadCount: number;
 

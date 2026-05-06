@@ -33,6 +33,7 @@ export class EventsController {
   @ApiOperation({ summary: 'Get all events' })
   @ApiQuery({ name: 'search', required: false, example: 'summit' })
   @ApiQuery({ name: 'status', required: false, example: 'published' })
+  @ApiQuery({ name: 'region', required: false, example: '上海' })
   @ApiOkResponse({
     description: 'Event list',
     schema: {
@@ -55,8 +56,18 @@ export class EventsController {
       ],
     },
   })
-  findAll(@Query('search') search?: string, @Query('status') status?: string) {
-    return this.eventsService.findAll({ search, status });
+  findAll(
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('region') region?: string,
+  ) {
+    return this.eventsService.findAll({ search, status, region });
+  }
+
+  @Get('regions')
+  @ApiOperation({ summary: 'List distinct event regions (for filter dropdown)' })
+  getRegions() {
+    return this.eventsService.getRegions();
   }
 
   @Get('stats')

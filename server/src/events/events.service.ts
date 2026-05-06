@@ -16,7 +16,7 @@ export class EventsService {
     private notificationDispatcher: NotificationDispatcherService,
   ) {}
 
-  async findAll(query?: { search?: string; status?: string }) {
+  async findAll(query?: { search?: string; status?: string; region?: string }) {
     const qb = this.eventRepo.createQueryBuilder('event');
 
     if (query?.status) {
@@ -26,6 +26,12 @@ export class EventsService {
       qb.andWhere(
         '(event.title_en LIKE :search OR event.title_zh LIKE :search OR event.location_en LIKE :search)',
         { search: `%${query.search}%` },
+      );
+    }
+    if (query?.region) {
+      qb.andWhere(
+        '(event.location_en LIKE :region OR event.location_zh LIKE :region)',
+        { region: `%${query.region}%` },
       );
     }
 
@@ -151,6 +157,25 @@ export class EventsService {
     });
     if (!user) throw new NotFoundException('User not found');
     return user.subscribedEvents;
+  }
+
+  /**
+   * Distinct regions across all events (used by mobile/admin to populate the
+   * region filter dropdown). Returns localized pairs so the client picks the
+   * right label by current language.
+   */
+  async getRegions() {
+    const rows = await this.eventRepo
+      .createQueryBuilder('event')
+      .select('DISTINCT event.location_en', 'locationEn')
+      .addSelect('event.location_zh', 'locationZh')
+      .where("event.location_en <> ''")
+      .orderBy('event.location_en', 'ASC')
+      .getRawMany();
+    return rows.map((r: { locationEn: string; locationZh: string }) => ({
+      regionEn: r.locationEn,
+      regionZh: r.locationZh || r.locationEn,
+    }));
   }
 
   async getStats() {

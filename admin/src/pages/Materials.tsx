@@ -4,7 +4,7 @@ import type { UploadFile } from 'antd/es/upload/interface';
 import { PlusOutlined, EditOutlined, DeleteOutlined, InboxOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { eventsApi, materialsApi, sessionsApi } from '../services/api';
+import { eventsApi, materialsApi, sessionsApi, usersApi } from '../services/api';
 import { qk } from '../lib/queryKeys';
 
 export default function Materials() {
@@ -38,14 +38,43 @@ export default function Materials() {
     queryFn: async () => (await sessionsApi.list(selectedEventId)).data,
     enabled: !!selectedEventId,
   });
+  // Lightweight user list for the per-user visibility allow-list. Loaded
+  // lazily on first form open via `enabled`.
+  const [userPickerEnabled, setUserPickerEnabled] = useState(false);
+  const { data: usersData = [] } = useQuery({
+    queryKey: qk.users.list({ scope: 'material-visibility' }),
+    queryFn: async () => {
+      const res = await usersApi.list();
+      return Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
+    },
+    enabled: userPickerEnabled,
+  });
+  const userOptions = useMemo(
+    () =>
+      (usersData as any[]).map((u) => ({
+        value: u.id,
+        label: `${u.nameZh || u.nameEn || u.email} · ${u.email}`,
+      })),
+    [usersData],
+  );
   const invalidateMaterials = () =>
     queryClient.invalidateQueries({ queryKey: qk.materials.listByEvent(selectedEventId) });
   const fetchMaterials = invalidateMaterials;
 
-  const openCreate = () => { setEditing(null); form.resetFields(); setModalOpen(true); };
+  const openCreate = () => {
+    setEditing(null);
+    form.resetFields();
+    setUserPickerEnabled(true);
+    setModalOpen(true);
+  };
   const openEdit = (r: any) => {
     setEditing(r);
-    form.setFieldsValue({ ...r, visibleTo: r.visibleTo?.join(',') || 'attendee,speaker,vip,admin' });
+    form.setFieldsValue({
+      ...r,
+      visibleTo: r.visibleTo?.join(',') || 'attendee,speaker,vip,admin',
+      visibleUserIds: Array.isArray(r.visibleUserIds) ? r.visibleUserIds : [],
+    });
+    setUserPickerEnabled(true);
     setModalOpen(true);
   };
 
@@ -55,6 +84,7 @@ export default function Materials() {
       const payload = {
         ...values,
         visibleTo: values.visibleTo ? values.visibleTo.split(',').map((s: string) => s.trim()) : ['attendee', 'speaker', 'vip', 'admin'],
+        visibleUserIds: Array.isArray(values.visibleUserIds) ? values.visibleUserIds : [],
       };
       if (editing) {
         await materialsApi.update(selectedEventId, editing.id, payload);
@@ -88,8 +118,10 @@ export default function Materials() {
     batchForm.resetFields();
     batchForm.setFieldsValue({
       visibleTo: 'attendee,speaker,vip,admin',
+      visibleUserIds: [],
     });
     setBatchFiles([]);
+    setUserPickerEnabled(true);
     setBatchOpen(true);
   };
 
@@ -157,6 +189,9 @@ export default function Materials() {
     const visibleTo = values.visibleTo
       ? values.visibleTo.split(',').map((item: string) => item.trim()).filter(Boolean)
       : ['attendee', 'speaker', 'vip', 'admin'];
+    const visibleUserIds = Array.isArray(values.visibleUserIds)
+      ? values.visibleUserIds
+      : [];
 
     const files = batchFiles.flatMap((item) => (item.originFileObj ? [item.originFileObj] : []));
 
@@ -176,6 +211,7 @@ export default function Materials() {
           type: inferMaterialType(file.name),
           sessionId: values.sessionId || undefined,
           visibleTo,
+          visibleUserIds,
         });
         created++;
       } catch {
@@ -327,6 +363,21 @@ export default function Materials() {
           <Form.Item label="Visible To (comma separated)" name="visibleTo" initialValue="attendee,speaker,vip,admin">
             <Input placeholder="attendee,speaker,vip,admin" />
           </Form.Item>
+          <Form.Item
+            label="指定可见名单 / Specific Users"
+            name="visibleUserIds"
+            tooltip="若设置，列表内用户将无视角色规则始终可见此资料"
+          >
+            <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              placeholder="按邮箱或姓名搜索 / Search users by email or name"
+              optionFilterProp="label"
+              options={userOptions}
+              maxTagCount="responsive"
+            />
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -385,6 +436,21 @@ export default function Materials() {
           </Form.Item>
           <Form.Item label="Visible To (comma separated)" name="visibleTo" initialValue="attendee,speaker,vip,admin">
             <Input placeholder="attendee,speaker,vip,admin" />
+          </Form.Item>
+          <Form.Item
+            label="指定可见名单 / Specific Users"
+            name="visibleUserIds"
+            tooltip="批量上传的所有资料都将共用同一份名单"
+          >
+            <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              placeholder="按邮箱或姓名搜索 / Search users by email or name"
+              optionFilterProp="label"
+              options={userOptions}
+              maxTagCount="responsive"
+            />
           </Form.Item>
           <Form.Item label="Files / 文件">
             <Upload.Dragger

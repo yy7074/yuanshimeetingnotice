@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>APSCVIR 会议管理 / Conference App</title>
+<meta name="description" content="APSCVIR 官方会议 App - 会议浏览、个人日程、电子签到、资料中心、推送通知，全程数字化的参会体验。" />
+
+<!-- Open Graph -->
+<meta property="og:title" content="APSCVIR 会议管理 App" />
+<meta property="og:description" content="您的数字化参会通行证：电子签到 · 个人日程 · 资料中心 · 多语言" />
+<meta property="og:type" content="website" />
+
+<!-- Tailwind CDN (JIT) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            50: '#eef4ff',
+            100: '#dbe6ff',
+            500: '#196EE6',
+            600: '#1554b8',
+            700: '#000666',
+          },
+          accent: '#FFDEA5',
+        },
+        fontFamily: {
+          serif: ['"Noto Serif SC"', '"Noto Serif"', 'Georgia', 'serif'],
+          sans: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-feature-settings: "kern" 1, "liga" 1; -webkit-font-smoothing: antialiased; }
+  /* Phone mockup */
+  .phone-frame {
+    width: 280px;
+    aspect-ratio: 9 / 19.5;
+    border-radius: 38px;
+    background: #1a1a1a;
+    padding: 10px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.1),
+      0 30px 60px -10px rgba(0, 6, 102, 0.25),
+      inset 0 0 0 2px #2c2c2c;
+    position: relative;
+  }
+  .phone-frame::before {
+    content: '';
+    position: absolute;
+    top: 18px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 24px;
+    background: #1a1a1a; border-radius: 14px;
+    z-index: 2;
+  }
+  .phone-screen {
+    width: 100%; height: 100%;
+    border-radius: 28px; overflow: hidden;
+    background: linear-gradient(180deg, #F3FAFF 0%, #DBE6FF 100%);
+    position: relative;
+  }
+  .feature-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px -10px rgba(0, 6, 102, 0.18);
+  }
+  .download-btn {
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.35);
+  }
+  .download-btn:active { transform: translateY(0); }
+  /* Hidden by default in EN, switched via JS */
+  [data-i18n-en] { display: none; }
+  html[lang="en"] [data-i18n-zh] { display: none; }
+  html[lang="en"] [data-i18n-en] { display: inline; }
+  html[lang="en"] [data-i18n-en-block] { display: block; }
+  html[lang="en"] [data-i18n-zh-block] { display: none; }
+</style>
+</head>
+<body class="font-sans text-slate-900 bg-white">
+
+<!-- ============== Nav ============== -->
+<nav class="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur border-b border-slate-100">
+  <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 font-serif font-black text-brand-700">
+      <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
+        <rect x="3" y="3" width="26" height="26" rx="6" fill="#000666"/>
+        <path d="M10 20l4-8 4 8M11 18h6" stroke="#FFDEA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="22" cy="11" r="2" fill="#FFDEA5"/>
+      </svg>
+      <span class="hidden sm:inline">APSCVIR</span>
+    </a>
+    <div class="flex items-center gap-6 text-sm">
+      <a href="#features" class="text-slate-600 hover:text-brand-600">
+        <span data-i18n-zh>功能</span><span data-i18n-en>Features</span>
+      </a>
+      <a href="#screenshots" class="hidden sm:inline text-slate-600 hover:text-brand-600">
+        <span data-i18n-zh>截图</span><span data-i18n-en>Screens</span>
+      </a>
+      <a href="#download" class="text-slate-600 hover:text-brand-600">
+        <span data-i18n-zh>下载</span><span data-i18n-en>Download</span>
+      </a>
+      <button id="lang-toggle" class="px-3 py-1 rounded-full border border-slate-200 text-xs font-medium hover:border-brand-500 hover:text-brand-600 transition">
+        <span data-i18n-zh>EN</span><span data-i18n-en>中</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============== Hero ============== -->
+<header id="top" class="pt-28 pb-20 bg-gradient-to-b from-brand-50 via-white to-white">
+  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-medium mb-6">
+        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+        <span data-i18n-zh>iOS · Android · 中英双语</span>
+        <span data-i18n-en>iOS · Android · Bilingual</span>
+      </div>
+      <h1 class="font-serif font-black text-5xl sm:text-6xl text-brand-700 leading-tight tracking-tight">
+        <span data-i18n-zh-block>您的会议<br>数字通行证</span>
+        <span data-i18n-en-block style="display:none">Your Digital<br>Conference Pass</span>
+      </h1>
+      <p class="mt-6 text-lg text-slate-600 leading-relaxed">
+        <span data-i18n-zh>覆盖参会全流程：会议浏览、个人日程、动态二维码签到、资料下载、实时推送。一个 App，让每场会议都从容掌控。</span>
+        <span data-i18n-en>End-to-end conference experience: event browsing, personal schedule, dynamic QR check-in, gated materials, push notifications. One app, every conference under control.</span>
+      </p>
+
+      <!-- Download buttons -->
+      <div id="download-hero" class="mt-10 flex flex-wrap gap-4">
+        <!-- iOS App Store -->
+        <a href="#" id="ios-link" class="download-btn flex items-center gap-3 bg-black text-white pl-4 pr-5 py-3 rounded-2xl">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09M12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+          <span class="text-left leading-tight">
+            <span class="block text-[10px] uppercase tracking-wider opacity-70">
+              <span data-i18n-zh>下载于</span><span data-i18n-en>Download on the</span>
+            </span>
+            <span class="block text-base font-semibold">App Store</span>
+          </span>
+        </a>
+
+        <!-- Google Play -->
+        <a href="#" id="android-link" class="download-btn flex items-center gap-3 bg-black text-white pl-4 pr-5 py-3 rounded-2xl">
+          <svg class="w-7 h-7" viewBox="0 0 24 24"><path fill="#34A853" d="M3.6 20.5l10.5-10.5-2.7-2.7L3.6 13.1z"/><path fill="#EA4335" d="M3.6 3.5l8 8 2.5-2.5L3.6 3.5z"/><path fill="#FBBC04" d="M14.1 11.5l-2.7 2.7 6 3.4 3.6-2c.9-.5.9-1.7 0-2.2l-3.6-2-3.3 0z"/><path fill="#4285F4" d="M3.6 3.5v17l8.5-8.5z"/></svg>
+          <span class="text-left leading-tight">
+            <span class="block text-[10px] uppercase tracking-wider opacity-70">
+              <span data-i18n-zh>获取应用</span><span data-i18n-en>Get it on</span>
+            </span>
+            <span class="block text-base font-semibold">Google Play</span>
+          </span>
+        </a>
+
+        <!-- APK Direct -->
+        <a href="#" id="apk-link" class="download-btn flex items-center gap-3 bg-brand-700 text-white pl-4 pr-5 py-3 rounded-2xl">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+          <span class="text-left leading-tight">
+            <span class="block text-[10px] uppercase tracking-wider opacity-70">
+              <span data-i18n-zh>直接下载</span><span data-i18n-en>Direct Install</span>
+            </span>
+            <span class="block text-base font-semibold">Android APK</span>
+          </span>
+        </a>
+      </div>
+
+      <p class="mt-6 text-xs text-slate-400">
+        <span data-i18n-zh>iOS 14+ · Android 8.0+ · 免费下载</span>
+        <span data-i18n-en>iOS 14+ · Android 8.0+ · Free download</span>
+      </p>
+    </div>
+
+    <!-- Phone mockup with mini check-in pass -->
+    <div class="flex justify-center md:justify-end">
+      <div class="phone-frame">
+        <div class="phone-screen flex flex-col items-center pt-12 pb-6 px-5">
+          <div class="text-[10px] font-black tracking-widest text-brand-700">DIGITAL PASS</div>
+          <div class="mt-4 w-16 h-16 rounded-full bg-white shadow flex items-center justify-center">
+            <svg class="w-8 h-8 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div class="mt-3 font-serif font-black text-brand-700">张三</div>
+          <div class="text-[9px] text-slate-500 tracking-wider">SENIOR PHYSICIAN</div>
+          <!-- QR placeholder -->
+          <div class="mt-4 p-2 rounded-xl bg-gradient-to-br from-accent to-amber-600">
+            <div class="bg-white p-2 rounded-lg">
+              <div class="w-32 h-32 grid grid-cols-7 gap-[2px]">
+                <!-- pseudo QR pattern -->
+                <script>
+                  // pattern injected by inline JS below
+                </script>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 text-[9px] font-black tracking-widest text-brand-700">APSCVIR 2026</div>
+          <div class="text-[9px] text-slate-500">SHANGHAI · 上海</div>
+          <div class="mt-3 px-3 py-1 rounded-full bg-brand-50 text-[9px] text-brand-700 font-bold tracking-wider">
+            REFRESHES IN 00:23
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============== Features ============== -->
+<section id="features" class="py-24 bg-white">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="max-w-2xl mx-auto text-center mb-16">
+      <div class="text-xs font-bold tracking-widest text-brand-500 uppercase mb-3">
+        <span data-i18n-zh>核心功能</span><span data-i18n-en>Core Features</span>
+      </div>
+      <h2 class="font-serif font-black text-4xl text-slate-900">
+        <span data-i18n-zh>专业会议，全流程数字化</span>
+        <span data-i18n-en>Every step of the conference, digitized</span>
+      </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Feature: Multi-Event -->
+      <div class="feature-card bg-white border border-slate-100 rounded-2xl p-6">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">
+          <span data-i18n-zh>多会议订阅</span><span data-i18n-en>Multi-Event Subscription</span>
+        </h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          <span data-i18n-zh>双 Tab 管理「全部会议」与「已订阅」，按时间、地区、领域筛选，支持模糊搜索和拼音匹配。</span>
+          <span data-i18n-en>Manage subscribed and discoverable events in two tabs. Filter by date, region, topic; supports fuzzy and pinyin search.</span>
+        </p>
+      </div>
+
+      <!-- Feature: Schedule -->
+      <div class="feature-card bg-white border border-slate-100 rounded-2xl p-6">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">
+          <span data-i18n-zh>个人日程 · 冲突检测</span><span data-i18n-en>My Schedule · Conflict Detection</span>
+        </h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          <span data-i18n-zh>一键收藏 Session 生成日程；时间冲突自动提醒；支持 ICS 导出到系统日历。</span>
+          <span data-i18n-en>Bookmark sessions to build your schedule, with conflict alerts and one-tap ICS export to your system calendar.</span>
+        </p>
+      </div>
+
+      <!-- Feature: Check-in -->
+      <div class="feature-card bg-white border border-slate-100 rounded-2xl p-6">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">
+          <span data-i18n-zh>电子签到</span><span data-i18n-en>Digital Check-in</span>
+        </h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          <span data-i18n-zh>每 30 秒滚动刷新的签名二维码，HMAC 加签防伪造，现场扫码即时核验。</span>
+          <span data-i18n-en>HMAC-signed QR codes refreshed every 30 seconds — forgery-proof and verified instantly at the entrance.</span>
+        </p>
+      </div>
+
+      <!-- Feature: Materials -->
+      <div class="feature-card bg-white border border-slate-100 rounded-2xl p-6">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6h13M3 7h13M3 12h6M3 17h6"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">
+          <span data-i18n-zh>资料中心 · 权限可见</span><span data-i18n-en>Materials · Role-Based Access</span>
+        </h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          <span data-i18n-zh>PDF / PPT / 图片在线预览与下载；按身份（普通 / 嘉宾 / VIP）或指定名单精细控制可见性。</span>
+          <span data-i18n-en>In-app preview and download for PDFs, slides, and images, gated by role or per-user allow-list.</span>
+        </p>
+      </div>
+
+      <!-- Feature: Notifications -->
+      <div class="feature-card bg-white border border-slate-100 rounded-2xl p-6">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14V11a6 6 0 00-12 0v3a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">
+          <span data-i18n-zh>实时推送</span><span data-i18n-en>Real-time Notifications</span>
+        </h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          <span data-i18n-zh>Session 前 15 分钟提醒、每日早 9 点议程概览、会议变更与新资料通知，App 内消息中心已读未读分明。</span>
+          <span data-i18n-en>15-minute pre-session reminders, daily 9am agenda digest, change alerts; in-app inbox with read/unread state.</span>
+        </p>
+      </div>
+
+      <!-- Feature: Bilingual -->
+      <div class="feature-card bg-white border border-slate-100 rounded-2xl p-6">
+        <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h12M9 3v2m4 13l-4-9-4 9m1.5-3h5M14 21l5-10 5 10m-1.5-4h-7"/></svg>
+        </div>
+        <h3 class="font-bold text-lg mb-2">
+          <span data-i18n-zh>中英双语</span><span data-i18n-en>Full Bilingual Support</span>
+        </h3>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          <span data-i18n-zh>所有界面、推送文案、资料标题、邀请邮件均支持中英双语，一键切换实时生效。</span>
+          <span data-i18n-en>Every screen, notification, material title, and invitation email is bilingual. Switch instantly.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Screenshots ============== -->
+<section id="screenshots" class="py-24 bg-gradient-to-b from-white via-brand-50 to-white">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="max-w-2xl mx-auto text-center mb-16">
+      <div class="text-xs font-bold tracking-widest text-brand-500 uppercase mb-3">
+        <span data-i18n-zh>界面预览</span><span data-i18n-en>App Screens</span>
+      </div>
+      <h2 class="font-serif font-black text-4xl text-slate-900">
+        <span data-i18n-zh>简洁优雅，专业可信</span>
+        <span data-i18n-en>Clean. Elegant. Professional.</span>
+      </h2>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-12 justify-items-center">
+      <!-- Screen 1: Event Portal -->
+      <div class="phone-frame scale-90">
+        <div class="phone-screen flex flex-col pt-10 px-3 text-[8px]">
+          <div class="px-3 pt-2 text-brand-700 font-black text-[10px]">EVENTS · 会议大厅</div>
+          <div class="mx-3 mt-2 mb-1 px-2 py-1 rounded-md bg-white text-slate-400 border border-slate-100">
+            <span class="opacity-50">Search · 搜索</span>
+          </div>
+          <div class="mx-3 mt-2 flex gap-1">
+            <span class="px-2 py-0.5 rounded-full bg-brand-700 text-white text-[7px]">All</span>
+            <span class="px-2 py-0.5 rounded-full bg-white border text-[7px] text-slate-500">Subscribed</span>
+          </div>
+          <div class="mx-3 mt-2 space-y-2">
+            <div class="bg-white rounded-lg p-2 shadow-sm">
+              <div class="h-12 rounded bg-gradient-to-r from-brand-500 to-brand-700"></div>
+              <div class="font-bold mt-1 text-slate-700">APSCVIR 2026</div>
+              <div class="text-slate-500">May · Shanghai</div>
+            </div>
+            <div class="bg-white rounded-lg p-2 shadow-sm">
+              <div class="h-12 rounded bg-gradient-to-r from-amber-400 to-amber-600"></div>
+              <div class="font-bold mt-1 text-slate-700">Vascular Workshop</div>
+              <div class="text-slate-500">Jun · Beijing</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 2: Schedule -->
+      <div class="phone-frame scale-90">
+        <div class="phone-screen flex flex-col pt-10 px-3 text-[8px]">
+          <div class="px-3 pt-2 text-brand-700 font-black text-[10px]">MY SCHEDULE · 日程</div>
+          <div class="mx-3 mt-2 flex gap-1">
+            <span class="px-2 py-0.5 rounded-full bg-brand-700 text-white text-[7px]">Day 1</span>
+            <span class="px-2 py-0.5 rounded-full bg-white border text-[7px] text-slate-500">Day 2</span>
+            <span class="px-2 py-0.5 rounded-full bg-white border text-[7px] text-slate-500">Day 3</span>
+          </div>
+          <div class="mx-3 mt-2 space-y-1.5">
+            <div class="bg-white rounded-lg p-2 border-l-2 border-brand-500">
+              <div class="text-slate-400 text-[7px]">09:00 — 10:30</div>
+              <div class="font-bold text-slate-700">Opening Keynote</div>
+              <div class="text-slate-500">Hall A · 大会堂</div>
+            </div>
+            <div class="bg-white rounded-lg p-2 border-l-2 border-amber-500">
+              <div class="text-slate-400 text-[7px]">10:30 — 11:30</div>
+              <div class="font-bold text-slate-700">AI in Imaging</div>
+              <div class="text-amber-600 text-[7px] font-bold">⚠ Conflict</div>
+            </div>
+            <div class="bg-white rounded-lg p-2 border-l-2 border-brand-500">
+              <div class="text-slate-400 text-[7px]">14:00 — 15:00</div>
+              <div class="font-bold text-slate-700">Panel Discussion</div>
+              <div class="text-slate-500">Hall B</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Screen 3: Check-in -->
+      <div class="phone-frame scale-90">
+        <div class="phone-screen flex flex-col items-center pt-12 px-4 text-[8px]">
+          <div class="text-[10px] font-black tracking-widest text-brand-700">DIGITAL PASS</div>
+          <div class="mt-3 w-12 h-12 rounded-full bg-white shadow flex items-center justify-center">
+            <svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div class="mt-2 font-serif font-black text-brand-700 text-sm">李医生</div>
+          <div class="text-[7px] text-slate-500 tracking-wider">VIP ACCESS</div>
+          <div class="mt-3 p-1.5 rounded-lg bg-gradient-to-br from-accent to-amber-600">
+            <div class="bg-white p-1.5 rounded-md">
+              <div class="qr-mini-2 w-20 h-20"></div>
+            </div>
+          </div>
+          <div class="mt-3 text-[9px] font-black tracking-widest text-brand-700">APSCVIR 2026</div>
+          <div class="mt-2 px-2 py-0.5 rounded-full bg-brand-50 text-[7px] text-brand-700 font-bold tracking-wider">
+            REFRESHES IN 00:18
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Final CTA ============== -->
+<section id="download" class="py-24">
+  <div class="max-w-4xl mx-auto px-6 text-center">
+    <h2 class="font-serif font-black text-4xl sm:text-5xl text-brand-700 leading-tight">
+      <span data-i18n-zh>立即下载，开启数字化参会</span>
+      <span data-i18n-en>Get the app, conferences made simple</span>
+    </h2>
+    <p class="mt-6 text-slate-600">
+      <span data-i18n-zh>免费下载 · 无需付费 · 支持 iOS 与 Android</span>
+      <span data-i18n-en>Free · No payment required · iOS &amp; Android</span>
+    </p>
+
+    <div id="download-cta" class="mt-10 flex flex-wrap gap-4 justify-center">
+      <!-- duplicates of hero buttons; populated by JS -->
+    </div>
+
+    <div class="mt-12 inline-flex items-center gap-2 text-xs text-slate-400">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-7a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2zm10-9V7a4 4 0 00-8 0v4h8z"/></svg>
+      <span data-i18n-zh>HTTPS 传输 · HMAC 签名 · 服务端鉴权</span>
+      <span data-i18n-en>HTTPS · HMAC-signed · Server-side auth</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Footer ============== -->
+<footer class="border-t border-slate-100 py-10 text-center text-xs text-slate-400">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="font-serif font-black text-brand-700 text-base mb-2">APSCVIR Conference</div>
+    <p>
+      <span data-i18n-zh>&copy; 2026 APSCVIR · 亚太血管介入学会 · 保留所有权利</span>
+      <span data-i18n-en>&copy; 2026 APSCVIR · All rights reserved</span>
+    </p>
+    <p class="mt-2">
+      <a href="/admin" class="hover:text-brand-600">
+        <span data-i18n-zh>管理后台</span><span data-i18n-en>Admin Panel</span>
+      </a>
+      <span class="mx-2">·</span>
+      <a href="mailto:contact@apscvir.org" class="hover:text-brand-600">contact@apscvir.org</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+  // === Configurable download URLs — edit these to point at your real stores ===
+  const DOWNLOAD_LINKS = {
+    ios:     'https://apps.apple.com/app/idXXXXXXXXX',          // ← App Store URL
+    android: 'https://play.google.com/store/apps/details?id=org.apscvir.conference',  // ← Google Play URL
+    apk:     '/downloads/apscvir-conference-latest.apk',         // ← Direct APK URL
+  };
+
+  // === Apply links to all download buttons ===
+  document.getElementById('ios-link').href = DOWNLOAD_LINKS.ios;
+  document.getElementById('android-link').href = DOWNLOAD_LINKS.android;
+  document.getElementById('apk-link').href = DOWNLOAD_LINKS.apk;
+
+  // === Duplicate hero buttons into the CTA section ===
+  document.getElementById('download-cta').innerHTML =
+    document.getElementById('download-hero').innerHTML;
+
+  // === Language toggle (default: zh, toggles to en and back) ===
+  const html = document.documentElement;
+  document.getElementById('lang-toggle').addEventListener('click', () => {
+    const next = html.lang === 'en' ? 'zh' : 'en';
+    html.lang = next;
+    try { localStorage.setItem('apscvir.lang', next); } catch {}
+  });
+  try {
+    const saved = localStorage.getItem('apscvir.lang');
+    if (saved === 'en' || saved === 'zh') html.lang = saved;
+  } catch {}
+
+  // === Generate a faux QR pattern for the hero phone (purely decorative) ===
+  (function paintFakeQr() {
+    const containers = document.querySelectorAll('.phone-frame .grid-cols-7, .qr-mini-2');
+    // Hero QR (7×7 grid wasn't rendered in HTML; draw inline canvas-style instead)
+    document.querySelectorAll('.qr-mini-2').forEach((el) => {
+      el.innerHTML = '';
+      el.style.display = 'grid';
+      el.style.gridTemplateColumns = 'repeat(11, 1fr)';
+      el.style.gap = '1px';
+      for (let i = 0; i < 121; i++) {
+        const cell = document.createElement('div');
+        cell.style.background = Math.random() > 0.5 ? '#000' : 'transparent';
+        // Fixed corner finder squares for a more QR-ish look
+        const r = Math.floor(i / 11), c = i % 11;
+        const inCorner = (r < 3 && c < 3) || (r < 3 && c > 7) || (r > 7 && c < 3);
+        if (inCorner) cell.style.background = (r === 0 || r === 2 || c === 0 || c === 2 || r === 8 || r === 10 || c === 8 || c === 10) ? '#000' : 'transparent';
+        el.appendChild(cell);
+      }
+    });
+    // Hero "phone-screen" QR — replace the empty 7×7 with an 11×11 generated one
+    document.querySelectorAll('.phone-screen .grid-cols-7').forEach((el) => {
+      const wrap = el.parentElement;
+      el.remove();
+      const big = document.createElement('div');
+      big.className = 'qr-mini-2';
+      big.style.width = '128px';
+      big.style.height = '128px';
+      wrap.appendChild(big);
+    });
+    // Re-paint the newly created hero QR
+    document.querySelectorAll('.qr-mini-2').forEach((el) => {
+      if (el.children.length > 0) return;
+      el.style.display = 'grid';
+      el.style.gridTemplateColumns = 'repeat(11, 1fr)';
+      el.style.gap = '1px';
+      for (let i = 0; i < 121; i++) {
+        const cell = document.createElement('div');
+        const r = Math.floor(i / 11), c = i % 11;
+        const inCorner = (r < 3 && c < 3) || (r < 3 && c > 7) || (r > 7 && c < 3);
+        cell.style.background = inCorner
+          ? ((r === 0 || r === 2 || c === 0 || c === 2 || r === 8 || r === 10 || c === 8 || c === 10) ? '#000' : 'transparent')
+          : (Math.random() > 0.5 ? '#000' : 'transparent');
+        el.appendChild(cell);
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>

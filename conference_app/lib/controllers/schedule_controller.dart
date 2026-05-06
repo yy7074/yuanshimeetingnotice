@@ -293,6 +293,13 @@ class ScheduleController extends GetxController {
 
   SessionModel _parseSession(Map<String, dynamic> json) {
     final speaker = json['speaker'] as Map<String, dynamic>?;
+    DateTime parseDate(dynamic value) =>
+        DateTime.tryParse(value?.toString() ?? '')?.toLocal() ??
+        DateTime.now();
+    final typeValue = (json['type'] as String? ?? '')
+        .replaceAll('_', '')
+        .toLowerCase();
+
     return SessionModel(
       id: json['id'] ?? '',
       eventId: json['eventId'] ?? '',
@@ -302,12 +309,10 @@ class ScheduleController extends GetxController {
       descriptionZh: json['descriptionZh'] ?? '',
       roomEn: json['roomEn'] ?? '',
       roomZh: json['roomZh'] ?? '',
-      startTime: DateTime.tryParse(json['startTime'] ?? '') ?? DateTime.now(),
-      endTime: DateTime.tryParse(json['endTime'] ?? '') ?? DateTime.now(),
+      startTime: parseDate(json['startTime']),
+      endTime: parseDate(json['endTime']),
       type: SessionType.values.firstWhere(
-        (t) =>
-            t.name == json['type'] ||
-            t.name == (json['type'] as String?)?.replaceAll('_', ''),
+        (t) => t.name.toLowerCase() == typeValue,
         orElse: () => SessionType.keynote,
       ),
       dayIndex: json['dayIndex'] ?? 0,

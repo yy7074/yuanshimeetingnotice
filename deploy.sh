@@ -313,11 +313,17 @@ EOF
   cat "$nginx_conf" | ssh_cmd "cat > '/www/server/panel/vhost/nginx/${APP_NAME}.conf'"
   rm -f "$nginx_conf"
 
-  ssh_cmd "nginx -t
-if systemctl is-active --quiet nginx; then
-  systemctl reload nginx
+  ssh_cmd "set -e
+if [ -x /www/server/nginx/sbin/nginx ] && [ -f /www/server/nginx/conf/nginx.conf ]; then
+  /www/server/nginx/sbin/nginx -t -c /www/server/nginx/conf/nginx.conf
+  /www/server/nginx/sbin/nginx -s reload -c /www/server/nginx/conf/nginx.conf
 else
-  nginx -s reload
+  nginx -t
+  if systemctl is-active --quiet nginx; then
+    systemctl reload nginx
+  else
+    nginx -s reload
+  fi
 fi"
 }
 
@@ -328,21 +334,13 @@ fi"
 }
 
 restart_server() {
-  ssh_cmd "python3 - <<'PY'
+  ssh_cmd "cat > '${REMOTE_RUN_DIR}/start-server.py' <<'PY'
 import os
-import subprocess
 from pathlib import Path
 
 base = Path('${REMOTE_BASE_DIR}')
-pid_file = base / 'run' / 'server.pid'
-log_file = base / 'logs' / 'server.log'
-server_dir = base / 'server'
 env_file = base / 'shared' / 'server.env'
-
-(base / 'run').mkdir(parents=True, exist_ok=True)
-(base / 'logs').mkdir(parents=True, exist_ok=True)
-
-subprocess.run(\"pkill -f 'node dist/main'\", shell=True, check=False)
+server_dir = base / 'server'
 
 extra_env = {}
 for raw_line in env_file.read_text().splitlines():
@@ -352,27 +350,45 @@ for raw_line in env_file.read_text().splitlines():
     key, value = line.split('=', 1)
     extra_env[key] = value
 
-env = os.environ.copy()
-env.update(extra_env)
+os.environ.update(extra_env)
+os.chdir(server_dir)
+os.execvp('node', ['node', 'dist/main'])
+PY
+chmod 755 '${REMOTE_RUN_DIR}/start-server.py'
 
-with log_file.open('ab') as log_handle:
-    proc = subprocess.Popen(
-        ['node', 'dist/main'],
-        cwd=str(server_dir),
-        env=env,
-        stdin=subprocess.DEVNULL,
-        stdout=log_handle,
-        stderr=subprocess.STDOUT,
-        start_new_session=True,
-    )
+cat > '/etc/systemd/system/${APP_NAME}.service' <<EOF
+[Unit]
+Description=${APP_NAME} API
+After=network.target nginx.service
 
-pid_file.write_text(str(proc.pid))
-print(proc.pid)
-PY"
+[Service]
+Type=simple
+WorkingDirectory=${REMOTE_SERVER_DIR}
+ExecStart=/usr/bin/python3 ${REMOTE_RUN_DIR}/start-server.py
+Restart=always
+RestartSec=5
+StandardOutput=append:${REMOTE_LOG_DIR}/server.log
+StandardError=append:${REMOTE_LOG_DIR}/server.log
 
-  ssh_cmd "sleep 5
-  PID=\$(cat '${REMOTE_RUN_DIR}/server.pid')
-  kill -0 \$PID"
+[Install]
+WantedBy=multi-user.target
+EOF
+
+if [ -f '${REMOTE_RUN_DIR}/server.pid' ]; then
+  old_pid=\$(cat '${REMOTE_RUN_DIR}/server.pid' 2>/dev/null || true)
+  if [ -n \"\$old_pid\" ]; then
+    kill \"\$old_pid\" 2>/dev/null || true
+  fi
+fi
+
+systemctl daemon-reload
+systemctl enable '${APP_NAME}.service'
+systemctl restart '${APP_NAME}.service'
+sleep 5
+systemctl is-active --quiet '${APP_NAME}.service'
+PID=\$(systemctl show -p MainPID --value '${APP_NAME}.service')
+echo \"\$PID\" > '${REMOTE_RUN_DIR}/server.pid'
+kill -0 \"\$PID\""
 }
 
 verify_remote() {

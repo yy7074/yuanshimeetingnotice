@@ -103,6 +103,8 @@ const resources = {
       'dashboard.topMaterials': 'Top Downloaded Materials',
       'dashboard.noCheckInData': 'No check-in data available',
       'dashboard.noMaterialData': 'No material data available',
+      'dashboard.popularSessions': 'Popular Sessions (by views)',
+      'dashboard.noPopularSessions': 'No view data yet',
 
       // Events
       'events.title': 'Events Management',
@@ -403,6 +405,8 @@ const resources = {
       'dashboard.topMaterials': '热门下载资料',
       'dashboard.noCheckInData': '暂无签到数据',
       'dashboard.noMaterialData': '暂无资料数据',
+      'dashboard.popularSessions': '热门 Session（按浏览量）',
+      'dashboard.noPopularSessions': '暂无浏览数据',
 
       // Events
       'events.title': '会议管理',

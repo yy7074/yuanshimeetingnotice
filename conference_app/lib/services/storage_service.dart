@@ -100,7 +100,7 @@ class StorageService extends GetxService {
   }
 
   // Language
-  String get languageCode => _prefs.getString('language') ?? 'zh';
+  String get languageCode => _prefs.getString('language') ?? 'en';
 
   Future<void> saveLanguage(String code) async {
     await _prefs.setString('language', code);

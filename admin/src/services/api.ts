@@ -62,6 +62,7 @@ export const sessionsApi = {
   create: (eventId: string, data: any) => api.post(`/events/${eventId}/sessions`, data),
   update: (eventId: string, id: string, data: any) => api.put(`/events/${eventId}/sessions/${id}`, data),
   delete: (eventId: string, id: string) => api.delete(`/events/${eventId}/sessions/${id}`),
+  popular: (limit = 10) => api.get('/sessions/popular', { params: { limit } }),
 };
 
 // Speakers

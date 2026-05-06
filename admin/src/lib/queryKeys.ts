@@ -11,6 +11,7 @@ export const qk = {
   sessions: {
     all: ['sessions'] as const,
     listByEvent: (eventId: string) => ['sessions', 'list', eventId] as const,
+    popular: (limit: number) => ['sessions', 'popular', limit] as const,
   },
   speakers: {
     all: ['speakers'] as const,

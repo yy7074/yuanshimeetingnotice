@@ -7,9 +7,10 @@ import {
   TeamOutlined,
   FileOutlined,
   RiseOutlined,
+  FireOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { eventsApi, usersApi, checkInApi, materialsApi } from '../services/api';
+import { eventsApi, usersApi, checkInApi, materialsApi, sessionsApi } from '../services/api';
 import { qk } from '../lib/queryKeys';
 
 const { Title, Text } = Typography;
@@ -42,6 +43,10 @@ export default function Dashboard() {
   const { data: events = [] } = useQuery({
     queryKey: qk.events.list(),
     queryFn: async () => (await eventsApi.list()).data || [],
+  });
+  const { data: popularSessions = [] } = useQuery({
+    queryKey: qk.sessions.popular(10),
+    queryFn: async () => (await sessionsApi.popular(10)).data || [],
   });
 
   const topEvents = events.slice(0, 5);
@@ -271,6 +276,71 @@ export default function Dashboard() {
           </Card>
         </Col>
       </Row>
+
+      {/* Popular Sessions */}
+      <Card
+        title={
+          <span>
+            <FireOutlined style={{ color: '#fa541c', marginRight: 8 }} />
+            {t('dashboard.popularSessions')}
+          </span>
+        }
+        style={{ marginTop: 24 }}
+      >
+        {popularSessions.length > 0 ? (
+          <List
+            dataSource={popularSessions}
+            renderItem={(item: any, index: number) => (
+              <List.Item
+                extra={<Tag color="volcano">{item.viewCount} views</Tag>}
+              >
+                <List.Item.Meta
+                  avatar={
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        background:
+                          index === 0
+                            ? '#f5222d'
+                            : index === 1
+                              ? '#fa8c16'
+                              : index === 2
+                                ? '#fadb14'
+                                : '#d9d9d9',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: index <= 1 ? '#fff' : '#333',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {index + 1}
+                    </div>
+                  }
+                  title={
+                    <Text ellipsis>
+                      {item.titleEn || item.titleZh || 'Untitled'}
+                      {item.titleZh && item.titleEn ? ` / ${item.titleZh}` : ''}
+                    </Text>
+                  }
+                  description={
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {item.event?.titleEn || item.event?.titleZh || '—'}
+                      {item.speaker?.nameEn ? ` · ${item.speaker.nameEn}` : ''}
+                    </Text>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        ) : (
+          <div style={{ textAlign: 'center', padding: '24px 0' }}>
+            <Text type="secondary">{t('dashboard.noPopularSessions')}</Text>
+          </div>
+        )}
+      </Card>
 
       {/* Bottom: Recent Events Table */}
       <Card title={t('dashboard.recentEvents')} style={{ marginTop: 24 }}>

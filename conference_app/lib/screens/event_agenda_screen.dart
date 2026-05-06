@@ -18,7 +18,11 @@ class EventAgendaScreen extends StatefulWidget {
   State<EventAgendaScreen> createState() => _EventAgendaScreenState();
 }
 
-class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTickerProviderStateMixin {
+class _EventAgendaScreenState extends State<EventAgendaScreen>
+    with SingleTickerProviderStateMixin {
+  static const _officialProgramUrl =
+      'https://www.apscvir2026.com/en/minisite/program-view/29839';
+
   late TabController _tabController;
   int _selectedDay = 0;
   Future<List<Map<String, dynamic>>>? _materialsFuture;
@@ -66,7 +70,12 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
             event != null
                 ? (isZh ? event.titleZh : event.titleEn)
                 : (isZh ? '会议详情' : 'Event Details'),
-            style: TextStyle(fontFamily: 'Noto Serif', fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor),
+            style: TextStyle(
+              fontFamily: 'Noto Serif',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           );
@@ -77,7 +86,10 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
           indicatorColor: primaryColor,
           labelColor: primaryColor,
           unselectedLabelColor: Colors.grey.shade500,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
           tabs: [
             Tab(text: isZh ? '简介' : 'INFO'),
             Tab(text: isZh ? '议程' : 'AGENDA'),
@@ -90,30 +102,62 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
         controller: _tabController,
         children: [
           _buildInfoTab(eventCtrl, primaryColor, surfaceColor),
-          _buildAgendaTab(eventCtrl, scheduleCtrl, primaryColor, surfaceColor, accentColor),
+          _buildAgendaTab(
+            eventCtrl,
+            scheduleCtrl,
+            primaryColor,
+            surfaceColor,
+            accentColor,
+          ),
           _buildSpeakersTab(primaryColor, surfaceColor, accentColor),
           _buildMaterialsTab(primaryColor),
         ],
       ),
-      bottomNavigationBar: AnimatedBuilder(
-        animation: _tabController,
-        builder: (context, _) {
-          if (_tabController.index != 1) return const SizedBox.shrink();
+      bottomNavigationBar: _buildAgendaBottomBar(
+        eventCtrl,
+        scheduleCtrl,
+        primaryColor,
+      ),
+    );
+  }
+
+  Widget _buildAgendaBottomBar(
+    EventController eventCtrl,
+    ScheduleController scheduleCtrl,
+    Color primaryColor,
+  ) {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        if (_tabController.index != 1) return const SizedBox.shrink();
+        return Obx(() {
+          if (eventCtrl.sessions.isEmpty) return const SizedBox.shrink();
+          final isZh = Get.locale?.languageCode == 'zh';
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black.withAlpha((0.05 * 255).round()), blurRadius: 10, offset: const Offset(0, -4))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha((0.05 * 255).round()),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
             child: SafeArea(
               child: ElevatedButton(
                 onPressed: () async {
                   final eventId = eventCtrl.selectedEventId.value;
-                  final success = await scheduleCtrl.addAllSessionsFromEvent(eventId);
+                  final success = await scheduleCtrl.addAllSessionsFromEvent(
+                    eventId,
+                  );
                   if (success) {
                     Get.snackbar(
                       isZh ? '已添加' : 'Added',
-                      isZh ? '所有议程已添加到我的日程' : 'All sessions added to My Schedule',
+                      isZh
+                          ? '所有议程已添加到我的日程'
+                          : 'All sessions added to My Schedule',
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: primaryColor,
                       colorText: Colors.white,
@@ -121,10 +165,12 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                     );
                   } else {
                     Get.snackbar(
-                      isZh ? '操作失败' : 'Action Failed',
-                      isZh ? '无法加载议程，请稍后重试' : 'Unable to load sessions. Please try again later.',
+                      isZh ? '暂无可添加议程' : 'No Sessions Available',
+                      isZh
+                          ? '请在资料中查看官方详细日程'
+                          : 'Please view the official program in Materials.',
                       snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: Colors.red,
+                      backgroundColor: Colors.orange.shade700,
                       colorText: Colors.white,
                       margin: const EdgeInsets.all(16),
                     );
@@ -134,17 +180,22 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: Text(
                   isZh ? '添加到我的日程' : 'Add to My Schedule',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
           );
-        },
-      ),
+        });
+      },
     );
   }
 
@@ -180,10 +231,16 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     });
   }
 
-  Widget _buildInfoTab(EventController eventCtrl, Color primaryColor, Color surfaceColor) {
+  Widget _buildInfoTab(
+    EventController eventCtrl,
+    Color primaryColor,
+    Color surfaceColor,
+  ) {
     return Obx(() {
       final event = eventCtrl.selectedEvent;
-      if (event == null) return const Center(child: CircularProgressIndicator());
+      if (event == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
       final isZh = Get.locale?.languageCode == 'zh';
 
       return SingleChildScrollView(
@@ -202,8 +259,15 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     height: 200,
-                    decoration: BoxDecoration(color: surfaceColor, borderRadius: BorderRadius.circular(12)),
-                    child: Icon(Icons.image, size: 48, color: Colors.grey.shade400),
+                    decoration: BoxDecoration(
+                      color: surfaceColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.image,
+                      size: 48,
+                      color: Colors.grey.shade400,
+                    ),
                   ),
                 ),
               ),
@@ -212,7 +276,12 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
             // Title
             Text(
               isZh ? event.titleZh : event.titleEn,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor, height: 1.3),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+                height: 1.3,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -222,40 +291,86 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
             const SizedBox(height: 20),
 
             // Info cards
-            _buildInfoRow(Icons.calendar_today, isZh ? '会议时间' : 'Date', event.dateRangeStr, primaryColor),
+            _buildInfoRow(
+              Icons.calendar_today,
+              isZh ? '会议时间' : 'Date',
+              event.dateRangeStr,
+              primaryColor,
+            ),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.location_on, isZh ? '会议地点' : 'Location', isZh ? event.locationZh : event.locationEn, primaryColor),
+            _buildInfoRow(
+              Icons.location_on,
+              isZh ? '会议地点' : 'Location',
+              isZh ? event.locationZh : event.locationEn,
+              primaryColor,
+            ),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.business, isZh ? '主办方' : 'Organizer', isZh ? event.organizerZh : event.organizerEn, primaryColor),
+            _buildInfoRow(
+              Icons.business,
+              isZh ? '主办方' : 'Organizer',
+              isZh ? event.organizerZh : event.organizerEn,
+              primaryColor,
+            ),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.people, isZh ? '参会人数' : 'Attendees',
+            _buildInfoRow(
+              Icons.people,
+              isZh ? '参会人数' : 'Attendees',
               event.maxAttendees > 0
                   ? '${event.currentAttendees} / ${event.maxAttendees}'
                   : '${event.currentAttendees}',
-              primaryColor),
+              primaryColor,
+            ),
             const SizedBox(height: 20),
 
             // Tags
             if (event.tags.isNotEmpty) ...[
-              Text(isZh ? '领域标签' : 'Tags', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor)),
+              Text(
+                isZh ? '领域标签' : 'Tags',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: event.tags.map((tag) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: surfaceColor,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(tag, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor)),
-                )).toList(),
+                children: event.tags
+                    .map(
+                      (tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: surfaceColor,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          tag,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 20),
             ],
 
             // Description
-            Text(isZh ? '会议简介' : 'About', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: primaryColor)),
+            Text(
+              isZh ? '会议简介' : 'About',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
+            ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -270,15 +385,24 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                 children: [
                   Text(
                     isZh ? event.descriptionZh : event.descriptionEn,
-                    style: TextStyle(fontSize: 15, color: Colors.grey.shade800, height: 1.6),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade800,
+                      height: 1.6,
+                    ),
                   ),
-                  if ((isZh ? event.descriptionEn : event.descriptionZh).isNotEmpty) ...[
+                  if ((isZh ? event.descriptionEn : event.descriptionZh)
+                      .isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Divider(color: Colors.grey.shade200),
                     const SizedBox(height: 12),
                     Text(
                       isZh ? event.descriptionEn : event.descriptionZh,
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500, height: 1.6),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                        height: 1.6,
+                      ),
                     ),
                   ],
                 ],
@@ -291,7 +415,12 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     });
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, Color primaryColor) {
+  Widget _buildInfoRow(
+    IconData icon,
+    String label,
+    String value,
+    Color primaryColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -315,9 +444,22 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
@@ -326,7 +468,13 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     );
   }
 
-  Widget _buildAgendaTab(EventController eventCtrl, ScheduleController scheduleCtrl, Color primaryColor, Color surfaceColor, Color accentColor) {
+  Widget _buildAgendaTab(
+    EventController eventCtrl,
+    ScheduleController scheduleCtrl,
+    Color primaryColor,
+    Color surfaceColor,
+    Color accentColor,
+  ) {
     return Obx(() {
       final totalDays = eventCtrl.totalDays;
       final sessions = eventCtrl.getSessionsForDay(_selectedDay);
@@ -350,21 +498,36 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                   return GestureDetector(
                     onTap: () => setState(() => _selectedDay = index),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      margin: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      margin: const EdgeInsets.only(
+                        right: 8,
+                        top: 6,
+                        bottom: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected ? primaryColor : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: isSelected ? primaryColor : Colors.grey.shade300),
+                        border: Border.all(
+                          color: isSelected
+                              ? primaryColor
+                              : Colors.grey.shade300,
+                        ),
                       ),
                       child: Text(
                         dayDate != null
-                            ? (isZh ? '第${index + 1}天 (${dayDate.month}/${dayDate.day})' : 'Day ${index + 1} (${dayDate.month}/${dayDate.day})')
+                            ? (isZh
+                                  ? '第${index + 1}天 (${dayDate.month}/${dayDate.day})'
+                                  : 'Day ${index + 1} (${dayDate.month}/${dayDate.day})')
                             : 'Day ${index + 1}',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : Colors.grey.shade600,
+                          color: isSelected
+                              ? Colors.white
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ),
@@ -376,9 +539,36 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
           Expanded(
             child: sessions.isEmpty
                 ? Center(
-                    child: Text(
-                      isZh ? '该日暂无议程安排' : 'No sessions scheduled for this day',
-                      style: TextStyle(color: Colors.grey.shade500),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.event_note_outlined,
+                            size: 56,
+                            color: Colors.grey.shade300,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            isZh
+                                ? '该日暂无议程安排'
+                                : 'No sessions scheduled for this day',
+                            style: TextStyle(color: Colors.grey.shade500),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (totalDays == 0) ...[
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: _openOfficialProgram,
+                              icon: const Icon(Icons.open_in_new, size: 18),
+                              label: Text(
+                                isZh ? '查看官方详细日程' : 'View Official Program',
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   )
                 : ListView.builder(
@@ -393,9 +583,22 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border(left: BorderSide(color: session.type == SessionType.keynote ? accentColor : primaryColor, width: 4)),
+                          border: Border(
+                            left: BorderSide(
+                              color: session.type == SessionType.keynote
+                                  ? accentColor
+                                  : primaryColor,
+                              width: 4,
+                            ),
+                          ),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withAlpha((0.05 * 255).round()), blurRadius: 10, offset: const Offset(0, 4)),
+                            BoxShadow(
+                              color: Colors.black.withAlpha(
+                                (0.05 * 255).round(),
+                              ),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
                         child: Column(
@@ -405,25 +608,48 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: session.type == SessionType.keynote ? accentColor : surfaceColor,
+                                    color: session.type == SessionType.keynote
+                                        ? accentColor
+                                        : surfaceColor,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Text(session.typeLabel, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: primaryColor)),
+                                  child: Text(
+                                    session.typeLabel,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryColor,
+                                    ),
+                                  ),
                                 ),
                                 Row(
                                   children: [
-                                    Text(session.timeRangeStr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600)),
+                                    Text(
+                                      session.timeRangeStr,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
                                       onTap: () {
                                         scheduleCtrl.toggleSession(session.id);
                                       },
                                       child: Icon(
-                                        isSaved ? Icons.bookmark : Icons.bookmark_border,
+                                        isSaved
+                                            ? Icons.bookmark
+                                            : Icons.bookmark_border,
                                         size: 22,
-                                        color: isSaved ? primaryColor : Colors.grey.shade400,
+                                        color: isSaved
+                                            ? primaryColor
+                                            : Colors.grey.shade400,
                                       ),
                                     ),
                                   ],
@@ -433,19 +659,37 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                             const SizedBox(height: 12),
                             Text(
                               isZh ? session.titleZh : session.titleEn,
-                              style: TextStyle(fontFamily: 'Noto Serif', fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
+                              style: TextStyle(
+                                fontFamily: 'Noto Serif',
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               isZh ? session.titleEn : session.titleZh,
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
+                                Icon(
+                                  Icons.location_on,
+                                  size: 14,
+                                  color: Colors.grey.shade500,
+                                ),
                                 const SizedBox(width: 4),
-                                Text(isZh ? session.roomZh : session.roomEn, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                Text(
+                                  isZh ? session.roomZh : session.roomEn,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -456,7 +700,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                   height: 32,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.grey.shade200),
+                                    border: Border.all(
+                                      color: Colors.grey.shade200,
+                                    ),
                                     color: Colors.grey.shade100,
                                   ),
                                   clipBehavior: Clip.antiAlias,
@@ -464,20 +710,42 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                       ? Image.network(
                                           session.speakerAvatarUrl,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) =>
-                                              Icon(Icons.person, size: 20, color: Colors.grey.shade400),
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Icon(
+                                                    Icons.person,
+                                                    size: 20,
+                                                    color: Colors.grey.shade400,
+                                                  ),
                                         )
-                                      : Icon(Icons.person, size: 20, color: Colors.grey.shade400),
+                                      : Icon(
+                                          Icons.person,
+                                          size: 20,
+                                          color: Colors.grey.shade400,
+                                        ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(session.speakerName, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: primaryColor)),
                                       Text(
-                                        isZh ? session.speakerTitleZh : session.speakerTitleEn,
-                                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                        session.speakerName,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                      Text(
+                                        isZh
+                                            ? session.speakerTitleZh
+                                            : session.speakerTitleEn,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey.shade600,
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -497,7 +765,23 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     });
   }
 
-  Widget _buildSpeakersTab(Color primaryColor, Color surfaceColor, Color accentColor) {
+  Future<void> _openOfficialProgram() async {
+    final uri = Uri.parse(_officialProgramUrl);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      _showMaterialMessage(
+        Get.locale?.languageCode == 'zh'
+            ? '无法打开官方日程链接'
+            : 'Unable to open the official program link',
+        isError: true,
+      );
+    }
+  }
+
+  Widget _buildSpeakersTab(
+    Color primaryColor,
+    Color surfaceColor,
+    Color accentColor,
+  ) {
     final eventCtrl = Get.find<EventController>();
     final speakerCtrl = Get.find<SpeakerController>();
     final isZh = Get.locale?.languageCode == 'zh';
@@ -509,7 +793,11 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.groups_2_outlined, size: 64, color: Colors.grey.shade300),
+              Icon(
+                Icons.groups_2_outlined,
+                size: 64,
+                color: Colors.grey.shade300,
+              ),
               const SizedBox(height: 16),
               Text(
                 isZh ? '该会议暂无嘉宾信息' : 'No speakers available for this event',
@@ -532,7 +820,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: surfaceColor.withAlpha((0.5 * 255).round())),
+                border: Border.all(
+                  color: surfaceColor.withAlpha((0.5 * 255).round()),
+                ),
               ),
               child: Row(
                 children: [
@@ -552,8 +842,13 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                     child: Image.network(
                                       speaker.avatarUrl,
                                       fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Icon(Icons.person, size: 96, color: Colors.white),
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Icon(
+                                                Icons.person,
+                                                size: 96,
+                                                color: Colors.white,
+                                              ),
                                     ),
                                   ),
                                 ),
@@ -562,7 +857,11 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                   right: 16,
                                   child: IconButton(
                                     onPressed: () => Get.back(),
-                                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -586,9 +885,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                               speaker.avatarUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.person, size: 28, color: Colors.grey.shade400),
+                                  Icon(
+                                    Icons.person,
+                                    size: 28,
+                                    color: Colors.grey.shade400,
+                                  ),
                             )
-                          : Icon(Icons.person, size: 28, color: Colors.grey.shade400),
+                          : Icon(
+                              Icons.person,
+                              size: 28,
+                              color: Colors.grey.shade400,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -596,19 +903,52 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(isZh ? speaker.nameZh : speaker.nameEn, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor)),
-                        Text(isZh ? speaker.titleZh : speaker.titleEn, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                        Text(
+                          isZh ? speaker.nameZh : speaker.nameEn,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
+                        ),
+                        Text(
+                          isZh ? speaker.titleZh : speaker.titleEn,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
                         const SizedBox(height: 4),
-                        Text(isZh ? speaker.organizationZh : speaker.organizationEn, style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                        Text(
+                          isZh
+                              ? speaker.organizationZh
+                              : speaker.organizationEn,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: Text(
-                      isZh ? speaker.category.labelZh : speaker.category.labelEn,
-                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: primaryColor),
+                      isZh
+                          ? speaker.category.labelZh
+                          : speaker.category.labelEn,
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
                     ),
                   ),
                 ],
@@ -729,13 +1069,23 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
               margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _getRoleBannerColor(userRole).withAlpha((0.1 * 255).round()),
+                color: _getRoleBannerColor(
+                  userRole,
+                ).withAlpha((0.1 * 255).round()),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _getRoleBannerColor(userRole).withAlpha((0.3 * 255).round())),
+                border: Border.all(
+                  color: _getRoleBannerColor(
+                    userRole,
+                  ).withAlpha((0.3 * 255).round()),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(_getRoleIcon(userRole), size: 20, color: _getRoleBannerColor(userRole)),
+                  Icon(
+                    _getRoleIcon(userRole),
+                    size: 20,
+                    color: _getRoleBannerColor(userRole),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -743,11 +1093,20 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                       children: [
                         Text(
                           _getRoleLabel(userRole, isZh),
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: _getRoleBannerColor(userRole)),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: _getRoleBannerColor(userRole),
+                          ),
                         ),
                         Text(
                           _getRoleAccessDesc(userRole, isZh),
-                          style: TextStyle(fontSize: 11, color: _getRoleBannerColor(userRole).withAlpha((0.8 * 255).round())),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _getRoleBannerColor(
+                              userRole,
+                            ).withAlpha((0.8 * 255).round()),
+                          ),
                         ),
                       ],
                     ),
@@ -768,14 +1127,23 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                   final nameZh = m['nameZh'] as String? ?? nameEn;
                   final fileUrl = m['fileUrl'] as String? ?? '';
                   final downloadCount = m['downloadCount'] as int? ?? 0;
-                  final visibleTo = m['visibleTo'] as List? ?? ['attendee', 'speaker', 'vip', 'admin'];
+                  final visibleTo =
+                      m['visibleTo'] as List? ??
+                      ['attendee', 'speaker', 'vip', 'admin'];
 
                   IconData typeIcon;
                   switch (type) {
-                    case 'PDF': typeIcon = Icons.picture_as_pdf; break;
-                    case 'PPT': typeIcon = Icons.slideshow; break;
-                    case 'IMAGE': typeIcon = Icons.image; break;
-                    default: typeIcon = Icons.insert_drive_file;
+                    case 'PDF':
+                      typeIcon = Icons.picture_as_pdf;
+                      break;
+                    case 'PPT':
+                      typeIcon = Icons.slideshow;
+                      break;
+                    case 'IMAGE':
+                      typeIcon = Icons.image;
+                      break;
+                    default:
+                      typeIcon = Icons.insert_drive_file;
                   }
 
                   final accessLabel = _getVisibilityLabel(visibleTo, isZh);
@@ -806,25 +1174,39 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                             children: [
                               Text(
                                 isZh ? nameZh : nameEn,
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: primaryColor),
-                                maxLines: 2, overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryColor,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '$type • $sizeStr • ${isZh ? '$downloadCount 次下载' : '$downloadCount downloads'}',
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade500,
+                                ),
                               ),
                               if (accessLabel.isNotEmpty) ...[
                                 const SizedBox(height: 4),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade100,
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
                                     accessLabel,
-                                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -837,18 +1219,26 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                             // Preview button (for images and PDFs)
                             if (type == 'IMAGE' || type == 'PDF')
                               IconButton(
-                                icon: Icon(Icons.visibility, color: primaryColor, size: 22),
+                                icon: Icon(
+                                  Icons.visibility,
+                                  color: primaryColor,
+                                  size: 22,
+                                ),
                                 onPressed: () async {
                                   if (fileUrl.isEmpty) {
                                     _showMaterialMessage(
-                                      isZh ? '资料链接不可用' : 'Material link is unavailable',
+                                      isZh
+                                          ? '资料链接不可用'
+                                          : 'Material link is unavailable',
                                       isError: true,
                                     );
                                     return;
                                   }
 
                                   if (type == 'IMAGE') {
-                                    final resolvedUrl = _resolveMaterialUrl(fileUrl);
+                                    final resolvedUrl = _resolveMaterialUrl(
+                                      fileUrl,
+                                    );
                                     // Show image in dialog with zoom
                                     Get.dialog(
                                       Dialog(
@@ -863,8 +1253,16 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                                 child: Image.network(
                                                   resolvedUrl,
                                                   fit: BoxFit.contain,
-                                                  errorBuilder: (context, error, stackTrace) =>
-                                                      const Icon(Icons.broken_image, size: 96, color: Colors.white),
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) => const Icon(
+                                                        Icons.broken_image,
+                                                        size: 96,
+                                                        color: Colors.white,
+                                                      ),
                                                 ),
                                               ),
                                             ),
@@ -873,7 +1271,11 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                               right: 16,
                                               child: IconButton(
                                                 onPressed: () => Get.back(),
-                                                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                                                icon: const Icon(
+                                                  Icons.close,
+                                                  color: Colors.white,
+                                                  size: 28,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -883,12 +1285,20 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                     );
                                   } else {
                                     // Open PDF in browser for preview
-                                    final uri = Uri.tryParse(_resolveMaterialUrl(fileUrl));
-                                    if (uri != null && await canLaunchUrl(uri)) {
-                                      await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                                    final uri = Uri.tryParse(
+                                      _resolveMaterialUrl(fileUrl),
+                                    );
+                                    if (uri != null &&
+                                        await canLaunchUrl(uri)) {
+                                      await launchUrl(
+                                        uri,
+                                        mode: LaunchMode.inAppBrowserView,
+                                      );
                                     } else {
                                       _showMaterialMessage(
-                                        isZh ? '无法预览当前资料' : 'Unable to preview this material',
+                                        isZh
+                                            ? '无法预览当前资料'
+                                            : 'Unable to preview this material',
                                         isError: true,
                                       );
                                     }
@@ -901,7 +1311,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                               onPressed: () async {
                                 if (fileUrl.isEmpty) {
                                   _showMaterialMessage(
-                                    isZh ? '资料链接不可用' : 'Material link is unavailable',
+                                    isZh
+                                        ? '资料链接不可用'
+                                        : 'Material link is unavailable',
                                     isError: true,
                                   );
                                   return;
@@ -920,10 +1332,14 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                   return;
                                 }
 
-                                final uri = Uri.tryParse(_resolveMaterialUrl(fileUrl));
+                                final uri = Uri.tryParse(
+                                  _resolveMaterialUrl(fileUrl),
+                                );
                                 if (uri == null || !await canLaunchUrl(uri)) {
                                   _showMaterialMessage(
-                                    isZh ? '无法打开下载链接' : 'Unable to open download link',
+                                    isZh
+                                        ? '无法打开下载链接'
+                                        : 'Unable to open download link',
                                     isError: true,
                                   );
                                   return;
@@ -934,9 +1350,14 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
                                   await api.trackDownload(eventId, materialId);
                                 } catch (_) {}
 
-                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
                                 _showMaterialMessage(
-                                  isZh ? '$nameZh 正在下载...' : '$nameEn downloading...',
+                                  isZh
+                                      ? '$nameZh 正在下载...'
+                                      : '$nameEn downloading...',
                                 );
                               },
                             ),
@@ -956,37 +1377,61 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
 
   Color _getRoleBannerColor(UserRole role) {
     switch (role) {
-      case UserRole.vip: return const Color(0xFFD97706);
-      case UserRole.speaker: return const Color(0xFF7C3AED);
-      case UserRole.admin: return const Color(0xFFDC2626);
-      case UserRole.attendee: return const Color(0xFF196EE6);
+      case UserRole.vip:
+        return const Color(0xFFD97706);
+      case UserRole.speaker:
+        return const Color(0xFF7C3AED);
+      case UserRole.admin:
+        return const Color(0xFFDC2626);
+      case UserRole.attendee:
+        return const Color(0xFF196EE6);
     }
   }
 
   IconData _getRoleIcon(UserRole role) {
     switch (role) {
-      case UserRole.vip: return Icons.workspace_premium;
-      case UserRole.speaker: return Icons.record_voice_over;
-      case UserRole.admin: return Icons.admin_panel_settings;
-      case UserRole.attendee: return Icons.person;
+      case UserRole.vip:
+        return Icons.workspace_premium;
+      case UserRole.speaker:
+        return Icons.record_voice_over;
+      case UserRole.admin:
+        return Icons.admin_panel_settings;
+      case UserRole.attendee:
+        return Icons.person;
     }
   }
 
   String _getRoleLabel(UserRole role, bool isZh) {
     switch (role) {
-      case UserRole.vip: return isZh ? 'VIP 全部资料访问权限' : 'VIP — Full Access';
-      case UserRole.speaker: return isZh ? '嘉宾 公共+专属资料' : 'Speaker — Public + Exclusive';
-      case UserRole.admin: return isZh ? '管理员 全部资料访问权限' : 'Admin — Full Access';
-      case UserRole.attendee: return isZh ? '参会者 公共资料' : 'Attendee — Public Materials';
+      case UserRole.vip:
+        return isZh ? 'VIP 全部资料访问权限' : 'VIP — Full Access';
+      case UserRole.speaker:
+        return isZh ? '嘉宾 公共+专属资料' : 'Speaker — Public + Exclusive';
+      case UserRole.admin:
+        return isZh ? '管理员 全部资料访问权限' : 'Admin — Full Access';
+      case UserRole.attendee:
+        return isZh ? '参会者 公共资料' : 'Attendee — Public Materials';
     }
   }
 
   String _getRoleAccessDesc(UserRole role, bool isZh) {
     switch (role) {
-      case UserRole.vip: return isZh ? '您可以查看和下载所有会议资料' : 'You can view and download all materials';
-      case UserRole.speaker: return isZh ? '您可以查看公共资料和嘉宾专属内容' : 'You can access public and speaker-exclusive content';
-      case UserRole.admin: return isZh ? '您可以查看和管理所有会议资料' : 'You can view and manage all materials';
-      case UserRole.attendee: return isZh ? '您可以查看公共资料，部分内容需要更高权限' : 'You can access public materials. Some content requires higher access';
+      case UserRole.vip:
+        return isZh
+            ? '您可以查看和下载所有会议资料'
+            : 'You can view and download all materials';
+      case UserRole.speaker:
+        return isZh
+            ? '您可以查看公共资料和嘉宾专属内容'
+            : 'You can access public and speaker-exclusive content';
+      case UserRole.admin:
+        return isZh
+            ? '您可以查看和管理所有会议资料'
+            : 'You can view and manage all materials';
+      case UserRole.attendee:
+        return isZh
+            ? '您可以查看公共资料，部分内容需要更高权限'
+            : 'You can access public materials. Some content requires higher access';
     }
   }
 
@@ -1008,12 +1453,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
       final api = Get.find<ApiService>();
       final res = await api.getMaterials(eventId);
       if (res.statusCode == 200 && res.body is List) {
-        return (res.body as List).map((e) => Map<String, dynamic>.from(e)).toList();
+        return (res.body as List)
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       }
       final message = res.body is Map<String, dynamic>
           ? (res.body['message'] as String?)
           : null;
-      throw Exception(message ?? (isZh ? '服务器未返回资料数据' : 'Server did not return materials data'));
+      throw Exception(
+        message ??
+            (isZh ? '服务器未返回资料数据' : 'Server did not return materials data'),
+      );
     } catch (error) {
       if (error is Exception) {
         rethrow;
@@ -1054,7 +1504,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
@@ -1069,7 +1521,8 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     }
 
     final normalizedPath = fileUrl.startsWith('/') ? fileUrl : '/$fileUrl';
-    final origin = '${apiBaseUri.scheme}://${apiBaseUri.host}${apiBaseUri.hasPort ? ':${apiBaseUri.port}' : ''}';
+    final origin =
+        '${apiBaseUri.scheme}://${apiBaseUri.host}${apiBaseUri.hasPort ? ':${apiBaseUri.port}' : ''}';
     return '$origin$normalizedPath';
   }
 
@@ -1095,8 +1548,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
     _showMaterialMessage(isZh ? '正在准备下载...' : 'Preparing download...');
     try {
       final api = Get.find<ApiService>();
-      final suggestedName =
-          displayName.isNotEmpty ? displayName : fallbackName;
+      final suggestedName = displayName.isNotEmpty ? displayName : fallbackName;
       final file = await api.downloadMaterialFile(
         eventId,
         materialId,
@@ -1105,10 +1557,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen> with SingleTicker
       try {
         await api.trackDownload(eventId, materialId);
       } catch (_) {}
-      await Share.shareXFiles(
-        [XFile(file.path, name: file.uri.pathSegments.last)],
-        subject: isZh ? '会议资料' : 'Conference Material',
-      );
+      await Share.shareXFiles([
+        XFile(file.path, name: file.uri.pathSegments.last),
+      ], subject: isZh ? '会议资料' : 'Conference Material');
     } catch (e) {
       _showMaterialMessage(
         isZh ? '下载失败：$e' : 'Download failed: $e',

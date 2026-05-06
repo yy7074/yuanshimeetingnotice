@@ -22,15 +22,19 @@ export class MaterialsService {
     private notificationDispatcher: NotificationDispatcherService,
   ) {}
 
-  canUserAccess(material: Material, userRole: string): boolean {
+  canUserAccess(material: Material, userRole: string, userId?: string): boolean {
     if (userRole === UserRole.ADMIN) return true;
+    const userAllowList = Array.isArray(material.visibleUserIds)
+      ? material.visibleUserIds
+      : [];
+    if (userId && userAllowList.includes(userId)) return true;
     const visibleTo = Array.isArray(material.visibleTo) ? material.visibleTo : [];
     return visibleTo.length === 0 || visibleTo.includes(userRole);
   }
 
-  async resolveDownloadPath(id: string, userRole: string) {
+  async resolveDownloadPath(id: string, userRole: string, userId?: string) {
     const material = await this.findOne(id);
-    if (!this.canUserAccess(material, userRole)) {
+    if (!this.canUserAccess(material, userRole, userId)) {
       throw new ForbiddenException('You do not have access to this material');
     }
     const raw = (material.fileUrl || '').trim();
@@ -57,18 +61,15 @@ export class MaterialsService {
     return { material, absPath: normalized, filename: safeName };
   }
 
-  async findByEvent(eventId: string, userRole?: string) {
+  async findByEvent(eventId: string, userRole?: string, userId?: string) {
     const materials = await this.materialRepo.find({
       where: { eventId },
       order: { createdAt: 'DESC' },
     });
     if (userRole) {
-      return materials.filter((material) => {
-        const visibleTo = Array.isArray(material.visibleTo)
-          ? material.visibleTo
-          : [];
-        return visibleTo.length === 0 || visibleTo.includes(userRole);
-      });
+      return materials.filter((material) =>
+        this.canUserAccess(material, userRole, userId),
+      );
     }
     return materials;
   }

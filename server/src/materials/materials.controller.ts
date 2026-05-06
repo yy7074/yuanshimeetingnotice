@@ -28,7 +28,11 @@ export class MaterialsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get materials for an event' })
   findByEvent(@Param('eventId') eventId: string, @Request() req) {
-    return this.materialsService.findByEvent(eventId, req.user.role);
+    return this.materialsService.findByEvent(
+      eventId,
+      req.user.role,
+      req.user.id,
+    );
   }
 
   @Post()
@@ -78,7 +82,11 @@ export class MaterialsController {
     @Res() res: Response,
   ) {
     const { absPath, filename, material } =
-      await this.materialsService.resolveDownloadPath(id, req.user.role);
+      await this.materialsService.resolveDownloadPath(
+        id,
+        req.user.role,
+        req.user.id,
+      );
     this.materialsService.incrementDownload(id).catch(() => undefined);
     const downloadName =
       (material.nameEn || material.nameZh || filename).replace(/[^\w\-. ]/g, '_');

@@ -42,7 +42,7 @@ void main() async {
   Get.put(ScheduleController());
   Get.put(SpeakerController());
 
-  // Restore saved language
+  // Restore saved language; fresh installs default to English.
   final locale = storage.languageCode == 'en'
       ? const Locale('en', 'US')
       : const Locale('zh', 'CN');

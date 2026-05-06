@@ -56,6 +56,9 @@ export class Session {
   @Column({ name: 'sort_order', default: 0 })
   sortOrder: number;
 
+  @Column({ name: 'view_count', default: 0 })
+  viewCount: number;
+
   @ManyToOne(() => Event, (event) => event.sessions, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'event_id' })
   event: Event;
