@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/event_controller.dart';
 import '../models/event_model.dart';
+import '../theme/app_theme.dart';
 
 class EventPortalScreen extends StatefulWidget {
   const EventPortalScreen({super.key});
@@ -30,9 +31,9 @@ class _EventPortalScreenState extends State<EventPortalScreen>
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF196EE6);
-    const Color backgroundColor = Color(0xFFF6F7F8);
-    const Color textColor = Color(0xFF0F172A);
+    const Color primaryColor = AppColors.primary;
+    const Color backgroundColor = AppColors.background;
+    const Color textColor = AppColors.ink;
     final eventCtrl = Get.find<EventController>();
 
     return Scaffold(
@@ -69,9 +70,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              Get.locale?.languageCode == 'zh'
-                                  ? '暂未订阅任何会议'
-                                  : 'No subscribed events yet',
+                              'No subscribed events yet',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey.shade500,
@@ -79,9 +78,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              Get.locale?.languageCode == 'zh'
-                                  ? '在"所有会议"中点击"加入会议"即可订阅'
-                                  : 'Tap "Join Event" in ALL EVENTS to subscribe',
+                              'Tap "Join Event" in ALL EVENTS to subscribe',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey.shade400,
@@ -106,18 +103,37 @@ class _EventPortalScreenState extends State<EventPortalScreen>
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      child: Center(
-        child: Text(
-          'global_conferences'.tr,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-            letterSpacing: -0.5,
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            onPressed: _goBackToMain,
+            tooltip: 'Back',
           ),
-        ),
+          Expanded(
+            child: Text(
+              'global_conferences'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
       ),
     );
+  }
+
+  void _goBackToMain() {
+    if (Get.key.currentState?.canPop() == true) {
+      Get.back();
+    } else {
+      Get.offAllNamed('/main');
+    }
   }
 
   Widget _buildSearchBar(EventController eventCtrl) {
@@ -158,7 +174,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
   }
 
   Widget _buildFilterBar(EventController eventCtrl, Color primaryColor) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -171,7 +187,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
               _buildFilterChip(
                 label: eventCtrl.filterTimeRange.value != null
                     ? _getTimeRangeLabel(eventCtrl.filterTimeRange.value!, isZh)
-                    : (isZh ? '时间' : 'Time'),
+                    : (isZh ? 'Time' : 'Time'),
                 isActive: eventCtrl.filterTimeRange.value != null,
                 onTap: () => _showTimeFilterSheet(eventCtrl, primaryColor),
                 primaryColor: primaryColor,
@@ -179,14 +195,15 @@ class _EventPortalScreenState extends State<EventPortalScreen>
               const SizedBox(width: 8),
               _buildFilterChip(
                 label:
-                    eventCtrl.filterLocation.value ?? (isZh ? '地区' : 'Region'),
+                    eventCtrl.filterLocation.value ??
+                    (isZh ? 'Region' : 'Region'),
                 isActive: eventCtrl.filterLocation.value != null,
                 onTap: () => _showLocationFilterSheet(eventCtrl, primaryColor),
                 primaryColor: primaryColor,
               ),
               const SizedBox(width: 8),
               _buildFilterChip(
-                label: eventCtrl.filterTag.value ?? (isZh ? '领域' : 'Field'),
+                label: eventCtrl.filterTag.value ?? (isZh ? 'Field' : 'Field'),
                 isActive: eventCtrl.filterTag.value != null,
                 onTap: () => _showTagFilterSheet(eventCtrl, primaryColor),
                 primaryColor: primaryColor,
@@ -233,8 +250,8 @@ class _EventPortalScreenState extends State<EventPortalScreen>
             const SizedBox(width: 4),
             Text(
               eventCtrl.sortMode.value == 'upcoming_first'
-                  ? (isZh ? '即将' : 'Soon')
-                  : (isZh ? '最新' : 'New'),
+                  ? (isZh ? 'Soon' : 'Soon')
+                  : (isZh ? 'New' : 'New'),
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -268,7 +285,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
             Icon(Icons.clear_all, size: 16, color: Colors.red.shade400),
             const SizedBox(width: 4),
             Text(
-              isZh ? '清除' : 'Clear',
+              isZh ? 'Clear' : 'Clear',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -331,28 +348,28 @@ class _EventPortalScreenState extends State<EventPortalScreen>
   String _getTimeRangeLabel(String value, bool isZh) {
     switch (value) {
       case 'upcoming':
-        return isZh ? '即将举办' : 'Upcoming';
+        return isZh ? 'Upcoming' : 'Upcoming';
       case 'past':
-        return isZh ? '已结束' : 'Past';
+        return isZh ? 'ENDED' : 'Past';
       case 'this_month':
-        return isZh ? '本月' : 'This Month';
+        return isZh ? 'This Month' : 'This Month';
       case 'next_month':
-        return isZh ? '下月' : 'Next Month';
+        return isZh ? 'Next Month' : 'Next Month';
       default:
         return value;
     }
   }
 
   void _showTimeFilterSheet(EventController eventCtrl, Color primaryColor) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final options = [
-      {'key': 'upcoming', 'en': 'Upcoming Events', 'zh': '即将举办'},
-      {'key': 'past', 'en': 'Past Events', 'zh': '已结束'},
-      {'key': 'this_month', 'en': 'This Month', 'zh': '本月'},
-      {'key': 'next_month', 'en': 'Next Month', 'zh': '下月'},
+      {'key': 'upcoming', 'en': 'Upcoming Events', 'zh': 'Upcoming'},
+      {'key': 'past', 'en': 'Past Events', 'zh': 'ENDED'},
+      {'key': 'this_month', 'en': 'This Month', 'zh': 'This Month'},
+      {'key': 'next_month', 'en': 'Next Month', 'zh': 'Next Month'},
     ];
     _showFilterBottomSheet(
-      title: isZh ? '按时间筛选' : 'Filter by Time',
+      title: isZh ? 'Filter by Time' : 'Filter by Time',
       options: options.map((o) => o[isZh ? 'zh' : 'en']!).toList(),
       selectedIndex: options.indexWhere(
         (o) => o['key'] == eventCtrl.filterTimeRange.value,
@@ -370,10 +387,10 @@ class _EventPortalScreenState extends State<EventPortalScreen>
   }
 
   void _showLocationFilterSheet(EventController eventCtrl, Color primaryColor) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final locations = eventCtrl.availableLocations;
     _showFilterBottomSheet(
-      title: isZh ? '按地区筛选' : 'Filter by Region',
+      title: isZh ? 'Filter by Region' : 'Filter by Region',
       options: locations,
       selectedIndex: locations.indexOf(eventCtrl.filterLocation.value ?? ''),
       onSelect: (index) {
@@ -389,10 +406,10 @@ class _EventPortalScreenState extends State<EventPortalScreen>
   }
 
   void _showTagFilterSheet(EventController eventCtrl, Color primaryColor) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final tags = eventCtrl.availableTags;
     _showFilterBottomSheet(
-      title: isZh ? '按领域筛选' : 'Filter by Field',
+      title: isZh ? 'Filter by Field' : 'Filter by Field',
       options: tags,
       selectedIndex: tags.indexOf(eventCtrl.filterTag.value ?? ''),
       onSelect: (index) {
@@ -414,7 +431,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
     required Function(int) onSelect,
     required Color primaryColor,
   }) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     Get.bottomSheet(
       Container(
         constraints: BoxConstraints(maxHeight: Get.height * 0.5),
@@ -450,7 +467,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                     TextButton(
                       onPressed: () => onSelect(-1),
                       child: Text(
-                        isZh ? '清除' : 'Clear',
+                        isZh ? 'Clear' : 'Clear',
                         style: TextStyle(color: Colors.red.shade400),
                       ),
                     ),
@@ -501,12 +518,12 @@ class _EventPortalScreenState extends State<EventPortalScreen>
         labelStyle: const TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 14,
-          letterSpacing: 1.0,
+          letterSpacing: 0,
         ),
         unselectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.bold,
           fontSize: 14,
-          letterSpacing: 1.0,
+          letterSpacing: 0,
         ),
         tabs: [
           Tab(text: 'all_events'.tr),
@@ -522,7 +539,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
     EventController eventCtrl,
   ) {
     if (events.isEmpty) {
-      final isZh = Get.locale?.languageCode == 'zh';
+      final isZh = Get.locale?.languageCode == '__zh_disabled__';
       final canClear =
           eventCtrl.hasActiveFilters || eventCtrl.searchQuery.value.isNotEmpty;
       return Center(
@@ -534,7 +551,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
               Icon(Icons.search_off, size: 56, color: Colors.grey.shade300),
               const SizedBox(height: 16),
               Text(
-                isZh ? '未找到匹配的会议' : 'No matching events found',
+                isZh ? 'No matching events found' : 'No matching events found',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
               ),
@@ -543,7 +560,9 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                 OutlinedButton.icon(
                   onPressed: () => _clearSearchAndFilters(eventCtrl),
                   icon: const Icon(Icons.clear_all, size: 18),
-                  label: Text(isZh ? '清除搜索和筛选' : 'Clear Search & Filters'),
+                  label: Text(
+                    isZh ? 'Clear Search & Filters' : 'Clear Search & Filters',
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryColor,
                     side: BorderSide(color: primaryColor),
@@ -578,7 +597,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
     Color primaryColor,
     EventController eventCtrl,
   ) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final isSubscribed = eventCtrl.isSubscribed(event.id);
 
     return Container(
@@ -630,7 +649,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      isZh ? '已结束' : 'ENDED',
+                      isZh ? 'ENDED' : 'ENDED',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -641,11 +660,11 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                   const SizedBox(height: 8),
                 ],
                 Text(
-                  isZh ? event.titleZh : event.titleEn,
+                  event.titleEn,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF0F172A),
+                    color: AppColors.ink,
                     height: 1.2,
                   ),
                 ),
@@ -679,7 +698,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        isZh ? event.locationZh : event.locationEn,
+                        event.locationEn,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade500,
@@ -723,7 +742,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                         event.remainingSpots <= 10)
                       Text(
                         isZh
-                            ? '仅剩 ${event.remainingSpots} 个参会名额'
+                            ? 'Only ${event.remainingSpots} seats left'
                             : 'Last ${event.remainingSpots} tickets left',
                         style: TextStyle(
                           fontSize: 12,
@@ -733,7 +752,7 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                       )
                     else
                       Text(
-                        '${event.currentAttendees} ${isZh ? '人参会' : 'attendees'}',
+                        '${event.currentAttendees} ${isZh ? 'attendees' : 'attendees'}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade500,
@@ -748,9 +767,9 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                             );
                             if (!success) {
                               Get.snackbar(
-                                isZh ? '操作失败' : 'Action Failed',
+                                isZh ? 'Action Failed' : 'Action Failed',
                                 isZh
-                                    ? '无法更新会议状态，请稍后重试'
+                                    ? 'Unable to update event status. Please try again.'
                                     : 'Unable to update event status. Please try again later.',
                                 snackPosition: SnackPosition.BOTTOM,
                                 backgroundColor: Colors.red,
@@ -761,9 +780,9 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                             }
                             if (!isSubscribed) {
                               Get.snackbar(
-                                isZh ? '成功' : 'Success',
+                                isZh ? 'Success' : 'Success',
                                 isZh
-                                    ? '已成功订阅该会议'
+                                    ? 'Event joined successfully'
                                     : 'Successfully subscribed to event',
                                 snackPosition: SnackPosition.BOTTOM,
                                 backgroundColor: primaryColor,
@@ -795,8 +814,8 @@ class _EventPortalScreenState extends State<EventPortalScreen>
                           ),
                           child: Text(
                             isSubscribed
-                                ? (isZh ? '已加入' : 'Joined')
-                                : (isZh ? '加入会议' : 'Join'),
+                                ? (isZh ? 'Joined' : 'Joined')
+                                : (isZh ? 'Join' : 'Join'),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

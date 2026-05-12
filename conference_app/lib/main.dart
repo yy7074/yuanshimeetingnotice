@@ -9,6 +9,7 @@ import 'controllers/schedule_controller.dart';
 import 'controllers/speaker_controller.dart';
 import 'services/api_service.dart';
 import 'services/notification_service.dart';
+import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/event_portal_screen.dart';
@@ -21,6 +22,7 @@ import 'screens/notification_screen.dart';
 import 'screens/profile_edit_screen.dart';
 import 'screens/speaker_detail_screen.dart';
 import 'screens/startup_screen.dart';
+import 'screens/speakers_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,21 +44,21 @@ void main() async {
   Get.put(ScheduleController());
   Get.put(SpeakerController());
 
-  // Restore saved language; fresh installs default to English.
-  final locale = storage.languageCode == 'en'
-      ? const Locale('en', 'US')
-      : const Locale('zh', 'CN');
+  await storage.saveLanguage('en');
+  const locale = Locale('en', 'US');
 
   runApp(ConferenceApp(initialLocale: locale));
 
   // Initialize notification service after UI is running (non-blocking)
-  unawaited(Future<void>(() async {
-    try {
-      await notificationService.init();
-    } catch (e) {
-      debugPrint('NotificationService init failed: $e');
-    }
-  }));
+  unawaited(
+    Future<void>(() async {
+      try {
+        await notificationService.init();
+      } catch (e) {
+        debugPrint('NotificationService init failed: $e');
+      }
+    }),
+  );
 }
 
 class ConferenceApp extends StatelessWidget {
@@ -71,10 +73,7 @@ class ConferenceApp extends StatelessWidget {
       translations: AppTranslations(),
       locale: initialLocale,
       fallbackLocale: const Locale('en', 'US'),
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       initialRoute: '/startup',
       getPages: [
         GetPage(name: '/startup', page: () => const StartupScreen()),
@@ -83,12 +82,22 @@ class ConferenceApp extends StatelessWidget {
         GetPage(name: '/event_portal', page: () => const EventPortalScreen()),
         GetPage(name: '/event_agenda', page: () => const EventAgendaScreen()),
         GetPage(name: '/my_schedule', page: () => const MyScheduleScreen()),
-        GetPage(name: '/digital_check_in', page: () => const DigitalCheckInScreen()),
+        GetPage(
+          name: '/digital_check_in',
+          page: () => const DigitalCheckInScreen(),
+        ),
         GetPage(name: '/register', page: () => const RegisterScreen()),
-        GetPage(name: '/change_password', page: () => const ChangePasswordScreen()),
+        GetPage(
+          name: '/change_password',
+          page: () => const ChangePasswordScreen(),
+        ),
         GetPage(name: '/notifications', page: () => const NotificationScreen()),
         GetPage(name: '/profile_edit', page: () => const ProfileEditScreen()),
-        GetPage(name: '/speaker_detail', page: () => const SpeakerDetailScreen()),
+        GetPage(
+          name: '/speaker_detail',
+          page: () => const SpeakerDetailScreen(),
+        ),
+        GetPage(name: '/speakers', page: () => const SpeakersScreen()),
       ],
     );
   }

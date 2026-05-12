@@ -69,19 +69,19 @@ class AuthController extends GetxController {
     final password = passwordController.text;
 
     if (email.isEmpty) {
-      errorMessage.value = Get.locale?.languageCode == 'zh' ? '请输入邮箱地址' : 'Please enter your email';
+      errorMessage.value = 'Please enter your email';
       return false;
     }
     if (!GetUtils.isEmail(email)) {
-      errorMessage.value = Get.locale?.languageCode == 'zh' ? '请输入有效的邮箱地址' : 'Please enter a valid email';
+      errorMessage.value = 'Please enter a valid email';
       return false;
     }
     if (password.isEmpty) {
-      errorMessage.value = Get.locale?.languageCode == 'zh' ? '请输入密码' : 'Please enter your password';
+      errorMessage.value = 'Please enter your password';
       return false;
     }
     if (password.length < 8) {
-      errorMessage.value = Get.locale?.languageCode == 'zh' ? '密码长度至少为8位' : 'Password must be at least 8 characters';
+      errorMessage.value = 'Password must be at least 8 characters';
       return false;
     }
 
@@ -98,7 +98,9 @@ class AuthController extends GetxController {
         await _storage.saveLoginInfo(email, rememberMe.value);
         currentUser.value = _parseUser(body['user']);
         // Set JPush alias for targeted push
-        try { Get.find<NotificationService>().setAlias(body['user']['id']); } catch (_) {}
+        try {
+          Get.find<NotificationService>().setAlias(body['user']['id']);
+        } catch (_) {}
         isLoading.value = false;
         return true;
       } else {
@@ -108,9 +110,8 @@ class AuthController extends GetxController {
         return false;
       }
     } catch (e) {
-      errorMessage.value = Get.locale?.languageCode == 'zh'
-          ? '网络错误，请检查连接后重试'
-          : 'Network error. Please check your connection and try again';
+      errorMessage.value =
+          'Network error. Please check your connection and try again';
       isLoading.value = false;
       return false;
     }
@@ -139,13 +140,14 @@ class AuthController extends GetxController {
         currentUser.value = null;
         return true;
       }
-      errorMessage.value = res.body?['message'] ??
-          (Get.locale?.languageCode == 'zh' ? '密码修改失败' : 'Failed to change password');
+      errorMessage.value =
+          res.body?['message'] ??
+          (Get.locale?.languageCode == '__zh_disabled__'
+              ? 'Failed to change password'
+              : 'Failed to change password');
       return false;
     } catch (_) {
-      errorMessage.value = Get.locale?.languageCode == 'zh'
-          ? '网络错误，请稍后重试'
-          : 'Network error. Please try again.';
+      errorMessage.value = 'Network error. Please try again.';
       return false;
     }
   }

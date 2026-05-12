@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 class ProfileEditScreen extends StatefulWidget {
   const ProfileEditScreen({super.key});
@@ -22,8 +23,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   bool _isLoading = false;
   bool _hasChanges = false;
 
-  bool get _isZh => Get.locale?.languageCode == 'zh';
-  static const Color _primaryColor = Color(0xFF000666);
+  bool get _isZh => Get.locale?.languageCode == '__zh_disabled__';
+  static const Color _primaryColor = AppColors.primary;
 
   @override
   void initState() {
@@ -32,16 +33,26 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     final user = auth.currentUser.value;
     if (user != null) {
       _nameEnController.text = user.nameEn;
-      _nameZhController.text = user.nameZh;
+      _nameZhController.text = user.nameEn;
       _titleEnController.text = user.titleEn;
-      _titleZhController.text = user.titleZh;
+      _titleZhController.text = user.titleEn;
       _orgEnController.text = user.organizationEn;
-      _orgZhController.text = user.organizationZh;
+      _orgZhController.text = user.organizationEn;
       _avatarUrlController.text = user.avatarUrl;
     }
     // Listen for changes
-    for (final c in [_nameEnController, _nameZhController, _titleEnController, _titleZhController, _orgEnController, _orgZhController, _avatarUrlController]) {
-      c.addListener(() { if (!_hasChanges) setState(() => _hasChanges = true); });
+    for (final c in [
+      _nameEnController,
+      _nameZhController,
+      _titleEnController,
+      _titleZhController,
+      _orgEnController,
+      _orgZhController,
+      _avatarUrlController,
+    ]) {
+      c.addListener(() {
+        if (!_hasChanges) setState(() => _hasChanges = true);
+      });
     }
   }
 
@@ -63,11 +74,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       final api = Get.find<ApiService>();
       final data = {
         'nameEn': _nameEnController.text.trim(),
-        'nameZh': _nameZhController.text.trim(),
+        'nameZh': _nameEnController.text.trim(),
         'titleEn': _titleEnController.text.trim(),
-        'titleZh': _titleZhController.text.trim(),
+        'titleZh': _titleEnController.text.trim(),
         'organizationEn': _orgEnController.text.trim(),
-        'organizationZh': _orgZhController.text.trim(),
+        'organizationZh': _orgEnController.text.trim(),
         'avatarUrl': _avatarUrlController.text.trim(),
       };
       final res = await api.updateProfile(data);
@@ -77,8 +88,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         await auth.loadProfile();
         Get.back();
         Get.snackbar(
-          _isZh ? '保存成功' : 'Saved',
-          _isZh ? '个人信息已更新' : 'Profile updated successfully',
+          _isZh ? 'Saved' : 'Saved',
+          _isZh
+              ? 'Profile updated successfully'
+              : 'Profile updated successfully',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: _primaryColor,
           colorText: Colors.white,
@@ -86,8 +99,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         );
       } else {
         Get.snackbar(
-          _isZh ? '保存失败' : 'Error',
-          res.body?['message'] ?? (_isZh ? '请稍后重试' : 'Please try again'),
+          _isZh ? 'Error' : 'Error',
+          res.body?['message'] ??
+              (_isZh ? 'Please try again' : 'Please try again'),
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
@@ -96,8 +110,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       }
     } catch (_) {
       Get.snackbar(
-        _isZh ? '网络错误' : 'Network Error',
-        _isZh ? '无法连接服务器' : 'Unable to connect to server',
+        _isZh ? 'Network Error' : 'Network Error',
+        _isZh ? 'Unable to connect to server' : 'Unable to connect to server',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
@@ -111,7 +125,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3FAFF),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -121,14 +135,27 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             if (_hasChanges) {
               Get.dialog(
                 AlertDialog(
-                  title: Text(_isZh ? '放弃修改？' : 'Discard Changes?'),
-                  content: Text(_isZh ? '您有未保存的修改' : 'You have unsaved changes'),
+                  title: Text(_isZh ? 'Discard Changes?' : 'Discard Changes?'),
+                  content: Text(
+                    _isZh
+                        ? 'You have unsaved changes'
+                        : 'You have unsaved changes',
+                  ),
                   actions: [
-                    TextButton(onPressed: () => Get.back(), child: Text(_isZh ? '继续编辑' : 'Keep Editing')),
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text(_isZh ? 'Keep Editing' : 'Keep Editing'),
+                    ),
                     ElevatedButton(
-                      onPressed: () { Get.back(); Get.back(); },
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                      child: Text(_isZh ? '放弃' : 'Discard'),
+                      onPressed: () {
+                        Get.back();
+                        Get.back();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(_isZh ? 'Discard' : 'Discard'),
                     ),
                   ],
                 ),
@@ -139,16 +166,31 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           },
         ),
         title: Text(
-          _isZh ? '编辑资料' : 'Edit Profile',
-          style: const TextStyle(fontFamily: 'Noto Serif', fontSize: 18, fontWeight: FontWeight.bold, color: _primaryColor),
+          _isZh ? 'Edit Profile' : 'Edit Profile',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _primaryColor,
+          ),
         ),
         centerTitle: true,
         actions: [
           TextButton(
             onPressed: (_isLoading || !_hasChanges) ? null : _save,
             child: _isLoading
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text(_isZh ? '保存' : 'Save', style: TextStyle(color: _hasChanges ? _primaryColor : Colors.grey, fontWeight: FontWeight.bold, fontSize: 16)),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(
+                    _isZh ? 'Save' : 'Save',
+                    style: TextStyle(
+                      color: _hasChanges ? _primaryColor : Colors.grey,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -166,7 +208,10 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     height: 96,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: _primaryColor.withAlpha(50), width: 3),
+                      border: Border.all(
+                        color: _primaryColor.withAlpha(50),
+                        width: 3,
+                      ),
                       color: Colors.grey.shade100,
                     ),
                     clipBehavior: Clip.antiAlias,
@@ -174,13 +219,23 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                         ? Image.network(
                             _avatarUrlController.text,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.person,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
                           )
-                        : Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                        : Icon(
+                            Icons.person,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
                   ),
                   const SizedBox(height: 8),
-                  Text(_isZh ? '头像' : 'Avatar', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  Text(
+                    _isZh ? 'Avatar' : 'Avatar',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  ),
                 ],
               ),
             ),
@@ -188,28 +243,37 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
             // Avatar URL
             _buildField(
               controller: _avatarUrlController,
-              label: _isZh ? '头像链接' : 'Avatar URL',
+              label: _isZh ? 'Avatar URL' : 'Avatar URL',
               hint: 'https://example.com/avatar.jpg',
               icon: Icons.link,
             ),
             const SizedBox(height: 32),
-            _buildSectionLabel(_isZh ? '姓名 / Name' : 'Name'),
+            _buildSectionLabel(_isZh ? 'Name' : 'Name'),
             const SizedBox(height: 12),
-            _buildField(controller: _nameEnController, label: 'Name (English)', hint: 'John Doe', icon: Icons.person_outline),
-            const SizedBox(height: 16),
-            _buildField(controller: _nameZhController, label: '姓名（中文）', hint: '张三', icon: Icons.person_outline),
+            _buildField(
+              controller: _nameEnController,
+              label: 'Name (English)',
+              hint: 'John Doe',
+              icon: Icons.person_outline,
+            ),
             const SizedBox(height: 32),
-            _buildSectionLabel(_isZh ? '头衔 / Title' : 'Title'),
+            _buildSectionLabel(_isZh ? 'Title' : 'Title'),
             const SizedBox(height: 12),
-            _buildField(controller: _titleEnController, label: 'Title (English)', hint: 'Professor / Director', icon: Icons.badge_outlined),
-            const SizedBox(height: 16),
-            _buildField(controller: _titleZhController, label: '头衔（中文）', hint: '教授 / 主任', icon: Icons.badge_outlined),
+            _buildField(
+              controller: _titleEnController,
+              label: 'Title (English)',
+              hint: 'Professor / Director',
+              icon: Icons.badge_outlined,
+            ),
             const SizedBox(height: 32),
-            _buildSectionLabel(_isZh ? '单位 / Organization' : 'Organization'),
+            _buildSectionLabel(_isZh ? 'Organization' : 'Organization'),
             const SizedBox(height: 12),
-            _buildField(controller: _orgEnController, label: 'Organization (English)', hint: 'University / Hospital', icon: Icons.business_outlined),
-            const SizedBox(height: 16),
-            _buildField(controller: _orgZhController, label: '单位（中文）', hint: '大学 / 医院', icon: Icons.business_outlined),
+            _buildField(
+              controller: _orgEnController,
+              label: 'Organization (English)',
+              hint: 'University / Hospital',
+              icon: Icons.business_outlined,
+            ),
             const SizedBox(height: 40),
           ],
         ),
@@ -218,7 +282,14 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
   }
 
   Widget _buildSectionLabel(String text) {
-    return Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _primaryColor));
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: _primaryColor,
+      ),
+    );
   }
 
   Widget _buildField({
@@ -235,9 +306,18 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         prefixIcon: Icon(icon),
         filled: true,
         fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade200)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _primaryColor, width: 2)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _primaryColor, width: 2),
+        ),
       ),
     );
   }

@@ -17,7 +17,9 @@ class SpeakerController extends GetxController {
       final api = Get.find<ApiService>();
       final res = await api.getSpeakers();
       if (res.statusCode == 200 && res.body is List) {
-        speakers.value = (res.body as List).map((s) => _parseSpeaker(s)).toList();
+        speakers.value = (res.body as List)
+            .map((s) => _parseSpeaker(s))
+            .toList();
         return;
       }
     } catch (_) {}
@@ -27,21 +29,34 @@ class SpeakerController extends GetxController {
   List<SpeakerModel> get filteredSpeakers {
     if (searchQuery.value.isEmpty) return speakers;
     final q = searchQuery.value.toLowerCase();
-    return speakers.where((s) =>
-      s.nameEn.toLowerCase().contains(q) ||
-      s.nameZh.contains(q) ||
-      s.organizationEn.toLowerCase().contains(q) ||
-      s.organizationZh.contains(q) ||
-      s.titleEn.toLowerCase().contains(q) ||
-      s.titleZh.contains(q)
-    ).toList();
+    return speakers
+        .where(
+          (s) =>
+              s.nameEn.toLowerCase().contains(q) ||
+              s.nameZh.contains(q) ||
+              s.organizationEn.toLowerCase().contains(q) ||
+              s.organizationZh.contains(q) ||
+              s.titleEn.toLowerCase().contains(q) ||
+              s.titleZh.contains(q),
+        )
+        .toList();
   }
 
-  List<SpeakerModel> get keynoteSpeakers =>
-    filteredSpeakers.where((s) => s.category == SpeakerCategory.keynote || s.category == SpeakerCategory.vipGuest).toList();
+  List<SpeakerModel> get keynoteSpeakers => filteredSpeakers
+      .where(
+        (s) =>
+            s.category == SpeakerCategory.keynote ||
+            s.category == SpeakerCategory.vipGuest,
+      )
+      .toList();
 
-  List<SpeakerModel> get panelistSpeakers =>
-    filteredSpeakers.where((s) => s.category == SpeakerCategory.research || s.category == SpeakerCategory.workshop).toList();
+  List<SpeakerModel> get panelistSpeakers => filteredSpeakers
+      .where(
+        (s) =>
+            s.category == SpeakerCategory.research ||
+            s.category == SpeakerCategory.workshop,
+      )
+      .toList();
 
   SpeakerModel _parseSpeaker(Map<String, dynamic> json) {
     return SpeakerModel(
@@ -61,11 +76,16 @@ class SpeakerController extends GetxController {
 
   SpeakerCategory _parseCategory(String? cat) {
     switch (cat) {
-      case 'keynote': return SpeakerCategory.keynote;
-      case 'vip_guest': return SpeakerCategory.vipGuest;
-      case 'research': return SpeakerCategory.research;
-      case 'workshop': return SpeakerCategory.workshop;
-      default: return SpeakerCategory.keynote;
+      case 'keynote':
+        return SpeakerCategory.keynote;
+      case 'vip_guest':
+        return SpeakerCategory.vipGuest;
+      case 'research':
+        return SpeakerCategory.research;
+      case 'workshop':
+        return SpeakerCategory.workshop;
+      default:
+        return SpeakerCategory.keynote;
     }
   }
 }

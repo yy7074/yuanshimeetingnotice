@@ -6,6 +6,7 @@ import '../models/session_model.dart';
 import '../utils/pinyin_search.dart';
 import 'schedule_controller.dart';
 import '../services/api_service.dart';
+import '../services/data_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
@@ -67,14 +68,13 @@ class EventController extends GetxController {
       final api = Get.find<ApiService>();
       final res = await api.getEvents();
       if (res.statusCode == 200 && res.body is List) {
-        allEvents.value = (res.body as List)
-            .map((e) => _parseEvent(e))
-            .toList();
+        final events = (res.body as List).map((e) => _parseEvent(e)).toList();
+        allEvents.value = _mergeEvents(events, DataService.events);
         isLoading.value = false;
         return;
       }
     } catch (_) {}
-    allEvents.clear();
+    allEvents.value = DataService.events;
     isLoading.value = false;
   }
 
@@ -83,9 +83,13 @@ class EventController extends GetxController {
       final api = Get.find<ApiService>();
       final res = await api.getMyEvents();
       if (res.statusCode == 200 && res.body is List) {
-        final eventIds = (res.body as List)
+        final apiEventIds = (res.body as List)
             .map((e) => e['id'] as String)
             .toList();
+        final localEventIds = _storage.subscribedEventIds.where(
+          _supportsOfflineEvent,
+        );
+        final eventIds = {...apiEventIds, ...localEventIds}.toList();
         subscribedEventIds.value = eventIds;
         await _storage.setSubscribedEventIds(eventIds);
         if (Get.isRegistered<ScheduleController>()) {
@@ -102,9 +106,7 @@ class EventController extends GetxController {
   List<EventModel> get filteredEvents {
     var events = allEvents.toList();
 
-    // Search filter — matches against the raw text AND the pinyin/initials of
-    // any Chinese fields, so users can type "shanghai" / "shyy" and still find
-    // 上海 events.
+    // Search filter matches raw text plus pinyin/initials for legacy fields.
     if (searchQuery.value.isNotEmpty) {
       final q = searchQuery.value.toLowerCase();
       events = events
@@ -229,6 +231,15 @@ class EventController extends GetxController {
       }
       return true;
     } catch (_) {
+      if (_supportsOfflineEvent(eventId)) {
+        if (wasSubscribed) {
+          unawaited(_syncScheduleAfterUnsubscribe(scheduleCtrl, eventId));
+        } else {
+          unawaited(_syncScheduleAfterSubscribe(scheduleCtrl, eventId));
+        }
+        return true;
+      }
+
       if (wasSubscribed) {
         subscribedEventIds.add(eventId);
         await _storage.subscribeEvent(eventId);
@@ -262,17 +273,26 @@ class EventController extends GetxController {
 
   Future<void> selectEvent(String eventId) async {
     selectedEventId.value = eventId;
+    final localSessions = await DataService.getDetailedSessions(eventId);
+    if (localSessions.isNotEmpty) {
+      sessions.value = localSessions;
+      return;
+    }
+
     try {
       final api = Get.find<ApiService>();
       final res = await api.getSessions(eventId);
       if (res.statusCode == 200 && res.body is List) {
-        sessions.value = (res.body as List)
+        final parsedSessions = (res.body as List)
             .map((s) => _parseSession(s))
             .toList();
-        return;
+        if (parsedSessions.isNotEmpty) {
+          sessions.value = parsedSessions;
+          return;
+        }
       }
     } catch (_) {}
-    sessions.clear();
+    sessions.value = DataService.getSessions(eventId);
   }
 
   EventModel? get selectedEvent {
@@ -313,6 +333,26 @@ class EventController extends GetxController {
       currentAttendees: json['currentAttendees'] ?? 0,
       status: json['status'] ?? 'published',
     );
+  }
+
+  List<EventModel> _mergeEvents(
+    List<EventModel> primary,
+    List<EventModel> fallback,
+  ) {
+    final result = <EventModel>[];
+    final seenIds = <String>{};
+
+    for (final event in [...primary, ...fallback]) {
+      if (event.id.isEmpty || seenIds.contains(event.id)) continue;
+      seenIds.add(event.id);
+      result.add(event);
+    }
+
+    return result;
+  }
+
+  bool _supportsOfflineEvent(String eventId) {
+    return DataService.events.any((event) => event.id == eventId);
   }
 
   SessionModel _parseSession(Map<String, dynamic> json) {

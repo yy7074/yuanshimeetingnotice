@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../services/storage_service.dart';
+import '../theme/app_theme.dart';
 
 class StartupScreen extends StatefulWidget {
   const StartupScreen({super.key});
@@ -31,21 +32,19 @@ class _StartupScreenState extends State<StartupScreen> {
 
     if (!mounted) return;
 
-    if (auth.currentUser.value != null) {
-      Get.offAllNamed(
-        auth.mustChangePassword ? '/change_password' : '/main',
-      );
-    } else {
-      Get.offAllNamed('/login');
+    if (auth.currentUser.value != null && auth.mustChangePassword) {
+      Get.offAllNamed('/change_password');
+      return;
     }
+    Get.offAllNamed('/main');
   }
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF196EE6);
+    const primaryColor = AppColors.primary;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F8),
+      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -57,11 +56,19 @@ class _StartupScreenState extends State<StartupScreen> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF438AEE), Color(0xFF196EE6), Color(0xFF0F52B2)],
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary,
+                    AppColors.primaryDark,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.monitor_heart_rounded, color: Colors.white, size: 40),
+              child: const Icon(
+                Icons.monitor_heart_rounded,
+                color: Colors.white,
+                size: 40,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -69,14 +76,14 @@ class _StartupScreenState extends State<StartupScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.5,
+                color: AppColors.ink,
+                letterSpacing: 0,
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              Get.locale?.languageCode == 'zh' ? '正在检查登录状态...' : 'Checking your session...',
-              style: const TextStyle(fontSize: 14, color: Color(0xFF64748B)),
+            const Text(
+              'Loading conference content...',
+              style: TextStyle(fontSize: 14, color: AppColors.muted),
             ),
             const SizedBox(height: 24),
             const SizedBox(

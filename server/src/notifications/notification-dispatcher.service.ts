@@ -141,13 +141,7 @@ export class NotificationDispatcherService {
     isActive?: boolean;
     search?: string;
   }) {
-    const {
-      userIds,
-      role,
-      isActive,
-      search,
-      ...notifData
-    } = params;
+    const { userIds, role, isActive, search, ...notifData } = params;
 
     const qb = this.userRepo.createQueryBuilder('user');
 
@@ -183,8 +177,7 @@ export class NotificationDispatcherService {
       filters: {
         userIds: userIds?.length || 0,
         role: role || null,
-        isActive:
-          typeof isActive === 'boolean' ? isActive : null,
+        isActive: typeof isActive === 'boolean' ? isActive : null,
         search: search?.trim() || null,
       },
     };
@@ -202,16 +195,31 @@ export class NotificationDispatcherService {
     sendPush?: boolean;
     sendEmail?: boolean;
   }) {
+    const { sendPush = true, sendEmail = false, ...notifData } = params;
     const users = await this.userRepo.find({ where: { isActive: true } });
     let count = 0;
     for (const user of users) {
       await this.dispatch({
-        ...params,
+        ...notifData,
         userId: user.id,
+        sendPush: false,
+        sendEmail,
       });
       count++;
     }
-    return { sent: count };
+
+    const push = sendPush
+      ? await this.pushService.sendToAll(
+          notifData.titleZh || notifData.titleEn,
+          notifData.bodyZh || notifData.bodyEn,
+          {
+            type: notifData.type,
+            eventId: '',
+          },
+        )
+      : null;
+
+    return { sent: count, push };
   }
 
   /**

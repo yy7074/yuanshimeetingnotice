@@ -10,6 +10,7 @@ import '../models/session_model.dart';
 import '../models/speaker_model.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 class EventAgendaScreen extends StatefulWidget {
   const EventAgendaScreen({super.key});
@@ -47,13 +48,13 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF000666);
-    const Color backgroundColor = Color(0xFFF3FAFF);
-    const Color surfaceColor = Color(0xFFDBF1FE);
-    const Color accentColor = Color(0xFFFFDEA5);
+    const Color primaryColor = AppColors.primary;
+    const Color backgroundColor = AppColors.background;
+    const Color surfaceColor = AppColors.surfaceBlue;
+    const Color accentColor = AppColors.accentSoft;
     final eventCtrl = Get.find<EventController>();
     final scheduleCtrl = Get.find<ScheduleController>();
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -62,16 +63,15 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: primaryColor),
-          onPressed: () => Get.back(),
+          onPressed: _goBackToMain,
         ),
         title: Obx(() {
           final event = eventCtrl.selectedEvent;
           return Text(
             event != null
-                ? (isZh ? event.titleZh : event.titleEn)
-                : (isZh ? '会议详情' : 'Event Details'),
+                ? event.titleEn
+                : (isZh ? 'Event Details' : 'Event Details'),
             style: TextStyle(
-              fontFamily: 'Noto Serif',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: primaryColor,
@@ -91,10 +91,10 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
             fontSize: 13,
           ),
           tabs: [
-            Tab(text: isZh ? '简介' : 'INFO'),
-            Tab(text: isZh ? '议程' : 'AGENDA'),
-            Tab(text: isZh ? '嘉宾' : 'SPEAKERS'),
-            Tab(text: isZh ? '资料' : 'MATERIALS'),
+            Tab(text: isZh ? 'INFO' : 'INFO'),
+            Tab(text: isZh ? 'AGENDA' : 'AGENDA'),
+            Tab(text: isZh ? 'Speakers' : 'SPEAKERS'),
+            Tab(text: isZh ? 'MATERIALS' : 'MATERIALS'),
           ],
         ),
       ),
@@ -132,7 +132,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
         if (_tabController.index != 1) return const SizedBox.shrink();
         return Obx(() {
           if (eventCtrl.sessions.isEmpty) return const SizedBox.shrink();
-          final isZh = Get.locale?.languageCode == 'zh';
+          final isZh = Get.locale?.languageCode == '__zh_disabled__';
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -153,10 +153,13 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                     eventId,
                   );
                   if (success) {
+                    if (!eventCtrl.subscribedEventIds.contains(eventId)) {
+                      eventCtrl.subscribedEventIds.add(eventId);
+                    }
                     Get.snackbar(
-                      isZh ? '已添加' : 'Added',
+                      isZh ? 'Added' : 'Added',
                       isZh
-                          ? '所有议程已添加到我的日程'
+                          ? 'All sessions added to My Schedule'
                           : 'All sessions added to My Schedule',
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: primaryColor,
@@ -165,9 +168,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                     );
                   } else {
                     Get.snackbar(
-                      isZh ? '暂无可添加议程' : 'No Sessions Available',
+                      isZh ? 'No Sessions Available' : 'No Sessions Available',
                       isZh
-                          ? '请在资料中查看官方详细日程'
+                          ? 'Please view the official program in Materials'
                           : 'Please view the official program in Materials.',
                       snackPosition: SnackPosition.BOTTOM,
                       backgroundColor: Colors.orange.shade700,
@@ -185,7 +188,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                   ),
                 ),
                 child: Text(
-                  isZh ? '添加到我的日程' : 'Add to My Schedule',
+                  isZh ? 'Add to My Schedule' : 'Add to My Schedule',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -241,7 +244,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
       if (event == null) {
         return const Center(child: CircularProgressIndicator());
       }
-      final isZh = Get.locale?.languageCode == 'zh';
+      final isZh = Get.locale?.languageCode == '__zh_disabled__';
 
       return SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -275,7 +278,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
 
             // Title
             Text(
-              isZh ? event.titleZh : event.titleEn,
+              event.titleEn,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -283,38 +286,33 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                 height: 1.3,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              isZh ? event.titleEn : event.titleZh,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
             const SizedBox(height: 20),
 
             // Info cards
             _buildInfoRow(
               Icons.calendar_today,
-              isZh ? '会议时间' : 'Date',
+              isZh ? 'Date' : 'Date',
               event.dateRangeStr,
               primaryColor,
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
               Icons.location_on,
-              isZh ? '会议地点' : 'Location',
-              isZh ? event.locationZh : event.locationEn,
+              isZh ? 'Location' : 'Location',
+              event.locationEn,
               primaryColor,
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
               Icons.business,
-              isZh ? '主办方' : 'Organizer',
-              isZh ? event.organizerZh : event.organizerEn,
+              isZh ? 'Organizer' : 'Organizer',
+              event.organizerEn,
               primaryColor,
             ),
             const SizedBox(height: 12),
             _buildInfoRow(
               Icons.people,
-              isZh ? '参会人数' : 'Attendees',
+              isZh ? 'Attendees' : 'Attendees',
               event.maxAttendees > 0
                   ? '${event.currentAttendees} / ${event.maxAttendees}'
                   : '${event.currentAttendees}',
@@ -325,7 +323,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
             // Tags
             if (event.tags.isNotEmpty) ...[
               Text(
-                isZh ? '领域标签' : 'Tags',
+                isZh ? 'Tags' : 'Tags',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -364,7 +362,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
 
             // Description
             Text(
-              isZh ? '会议简介' : 'About',
+              isZh ? 'About' : 'About',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -384,27 +382,13 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isZh ? event.descriptionZh : event.descriptionEn,
+                    event.descriptionEn,
                     style: TextStyle(
                       fontSize: 15,
                       color: Colors.grey.shade800,
                       height: 1.6,
                     ),
                   ),
-                  if ((isZh ? event.descriptionEn : event.descriptionZh)
-                      .isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Divider(color: Colors.grey.shade200),
-                    const SizedBox(height: 12),
-                    Text(
-                      isZh ? event.descriptionEn : event.descriptionZh,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                        height: 1.6,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -478,7 +462,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
     return Obx(() {
       final totalDays = eventCtrl.totalDays;
       final sessions = eventCtrl.getSessionsForDay(_selectedDay);
-      final isZh = Get.locale?.languageCode == 'zh';
+      final isZh = Get.locale?.languageCode == '__zh_disabled__';
       final event = eventCtrl.selectedEvent;
 
       return Column(
@@ -519,7 +503,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                       child: Text(
                         dayDate != null
                             ? (isZh
-                                  ? '第${index + 1}天 (${dayDate.month}/${dayDate.day})'
+                                  ? 'Day ${index + 1} (${dayDate.month}/${dayDate.day})'
                                   : 'Day ${index + 1} (${dayDate.month}/${dayDate.day})')
                             : 'Day ${index + 1}',
                         style: TextStyle(
@@ -552,7 +536,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                           const SizedBox(height: 16),
                           Text(
                             isZh
-                                ? '该日暂无议程安排'
+                                ? 'No sessions scheduled for this day'
                                 : 'No sessions scheduled for this day',
                             style: TextStyle(color: Colors.grey.shade500),
                             textAlign: TextAlign.center,
@@ -563,7 +547,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                               onPressed: _openOfficialProgram,
                               icon: const Icon(Icons.open_in_new, size: 18),
                               label: Text(
-                                isZh ? '查看官方详细日程' : 'View Official Program',
+                                isZh
+                                    ? 'View Official Program'
+                                    : 'View Official Program',
                               ),
                             ),
                           ],
@@ -639,8 +625,16 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () {
-                                        scheduleCtrl.toggleSession(session.id);
+                                      onTap: () async {
+                                        await scheduleCtrl.toggleSessionModel(
+                                          session,
+                                        );
+                                        if (!eventCtrl.subscribedEventIds
+                                            .contains(session.eventId)) {
+                                          eventCtrl.subscribedEventIds.add(
+                                            session.eventId,
+                                          );
+                                        }
                                       },
                                       child: Icon(
                                         isSaved
@@ -658,20 +652,11 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              isZh ? session.titleZh : session.titleEn,
+                              session.titleEn,
                               style: TextStyle(
-                                fontFamily: 'Noto Serif',
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              isZh ? session.titleEn : session.titleZh,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -684,7 +669,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isZh ? session.roomZh : session.roomEn,
+                                  session.roomEn,
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey.shade600,
@@ -739,9 +724,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                         ),
                                       ),
                                       Text(
-                                        isZh
-                                            ? session.speakerTitleZh
-                                            : session.speakerTitleEn,
+                                        session.speakerTitleEn,
                                         style: TextStyle(
                                           fontSize: 11,
                                           color: Colors.grey.shade600,
@@ -769,9 +752,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
     final uri = Uri.parse(_officialProgramUrl);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       _showMaterialMessage(
-        Get.locale?.languageCode == 'zh'
-            ? '无法打开官方日程链接'
-            : 'Unable to open the official program link',
+        'Unable to open the official program link',
         isError: true,
       );
     }
@@ -784,7 +765,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
   ) {
     final eventCtrl = Get.find<EventController>();
     final speakerCtrl = Get.find<SpeakerController>();
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
 
     return Obx(() {
       final speakers = _speakersForSelectedEvent(eventCtrl, speakerCtrl);
@@ -800,7 +781,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
               ),
               const SizedBox(height: 16),
               Text(
-                isZh ? '该会议暂无嘉宾信息' : 'No speakers available for this event',
+                isZh
+                    ? 'No speakers available for this event'
+                    : 'No speakers available for this event',
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
               ),
             ],
@@ -904,7 +887,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          isZh ? speaker.nameZh : speaker.nameEn,
+                          speaker.nameEn,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -912,7 +895,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                           ),
                         ),
                         Text(
-                          isZh ? speaker.titleZh : speaker.titleEn,
+                          speaker.titleEn,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.shade600,
@@ -920,9 +903,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          isZh
-                              ? speaker.organizationZh
-                              : speaker.organizationEn,
+                          speaker.organizationEn,
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey.shade500,
@@ -941,9 +922,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      isZh
-                          ? speaker.category.labelZh
-                          : speaker.category.labelEn,
+                      speaker.category.labelEn,
                       style: TextStyle(
                         fontSize: 8,
                         fontWeight: FontWeight.bold,
@@ -990,7 +969,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
   }
 
   Widget _buildMaterialsTab(Color primaryColor) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final eventCtrl = Get.find<EventController>();
     final authCtrl = Get.find<AuthController>();
     final eventId = eventCtrl.selectedEventId.value;
@@ -998,7 +977,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
     if (eventId.isEmpty) {
       return Center(
         child: Text(
-          isZh ? '请先选择会议' : 'Please select an event first',
+          isZh
+              ? 'Please select an event first'
+              : 'Please select an event first',
           style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
         ),
       );
@@ -1022,7 +1003,9 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                   Icon(Icons.cloud_off, size: 64, color: Colors.grey.shade300),
                   const SizedBox(height: 16),
                   Text(
-                    isZh ? '资料加载失败' : 'Unable to load materials',
+                    isZh
+                        ? 'Unable to load materials'
+                        : 'Unable to load materials',
                     style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 8),
@@ -1038,7 +1021,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                       backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
                     ),
-                    child: Text(isZh ? '重试' : 'Retry'),
+                    child: Text(isZh ? 'Retry' : 'Retry'),
                   ),
                 ],
               ),
@@ -1054,7 +1037,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                 Icon(Icons.folder_open, size: 64, color: Colors.grey.shade300),
                 const SizedBox(height: 16),
                 Text(
-                  isZh ? '暂无资料' : 'No materials available',
+                  isZh ? 'No materials available' : 'No materials available',
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
                 ),
               ],
@@ -1124,7 +1107,6 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                   final fileSize = m['fileSize'] as int? ?? 0;
                   final sizeStr = _formatFileSize(fileSize);
                   final nameEn = m['nameEn'] as String? ?? '';
-                  final nameZh = m['nameZh'] as String? ?? nameEn;
                   final fileUrl = m['fileUrl'] as String? ?? '';
                   final downloadCount = m['downloadCount'] as int? ?? 0;
                   final visibleTo =
@@ -1173,7 +1155,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isZh ? nameZh : nameEn,
+                                nameEn,
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -1184,7 +1166,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '$type • $sizeStr • ${isZh ? '$downloadCount 次下载' : '$downloadCount downloads'}',
+                                '$type • $sizeStr • ${isZh ? '$downloadCount downloads' : '$downloadCount downloads'}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade500,
@@ -1228,7 +1210,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                   if (fileUrl.isEmpty) {
                                     _showMaterialMessage(
                                       isZh
-                                          ? '资料链接不可用'
+                                          ? 'Material link is unavailable'
                                           : 'Material link is unavailable',
                                       isError: true,
                                     );
@@ -1297,7 +1279,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                     } else {
                                       _showMaterialMessage(
                                         isZh
-                                            ? '无法预览当前资料'
+                                            ? 'Unable to preview this material'
                                             : 'Unable to preview this material',
                                         isError: true,
                                       );
@@ -1312,7 +1294,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                 if (fileUrl.isEmpty) {
                                   _showMaterialMessage(
                                     isZh
-                                        ? '资料链接不可用'
+                                        ? 'Material link is unavailable'
                                         : 'Material link is unavailable',
                                     isError: true,
                                   );
@@ -1326,7 +1308,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                   await _downloadProtectedMaterial(
                                     eventId: eventId,
                                     materialId: materialId,
-                                    displayName: isZh ? nameZh : nameEn,
+                                    displayName: nameEn,
                                     fallbackName: fileUrl.split('/').last,
                                   );
                                   return;
@@ -1338,7 +1320,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                 if (uri == null || !await canLaunchUrl(uri)) {
                                   _showMaterialMessage(
                                     isZh
-                                        ? '无法打开下载链接'
+                                        ? 'Unable to open download link'
                                         : 'Unable to open download link',
                                     isError: true,
                                   );
@@ -1356,7 +1338,7 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
                                 );
                                 _showMaterialMessage(
                                   isZh
-                                      ? '$nameZh 正在下载...'
+                                      ? 'Downloading $nameEn...'
                                       : '$nameEn downloading...',
                                 );
                               },
@@ -1378,13 +1360,13 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
   Color _getRoleBannerColor(UserRole role) {
     switch (role) {
       case UserRole.vip:
-        return const Color(0xFFD97706);
+        return AppColors.accent;
       case UserRole.speaker:
-        return const Color(0xFF7C3AED);
+        return AppColors.primaryDark;
       case UserRole.admin:
-        return const Color(0xFFDC2626);
+        return AppColors.danger;
       case UserRole.attendee:
-        return const Color(0xFF196EE6);
+        return AppColors.primary;
     }
   }
 
@@ -1404,13 +1386,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
   String _getRoleLabel(UserRole role, bool isZh) {
     switch (role) {
       case UserRole.vip:
-        return isZh ? 'VIP 全部资料访问权限' : 'VIP — Full Access';
+        return isZh ? 'VIP Full Access' : 'VIP — Full Access';
       case UserRole.speaker:
-        return isZh ? '嘉宾 公共+专属资料' : 'Speaker — Public + Exclusive';
+        return isZh
+            ? 'Speaker Public + Exclusive'
+            : 'Speaker — Public + Exclusive';
       case UserRole.admin:
-        return isZh ? '管理员 全部资料访问权限' : 'Admin — Full Access';
+        return isZh ? 'Admin Full Access' : 'Admin — Full Access';
       case UserRole.attendee:
-        return isZh ? '参会者 公共资料' : 'Attendee — Public Materials';
+        return isZh
+            ? 'Attendee Public Materials'
+            : 'Attendee — Public Materials';
     }
   }
 
@@ -1418,19 +1404,19 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
     switch (role) {
       case UserRole.vip:
         return isZh
-            ? '您可以查看和下载所有会议资料'
+            ? 'You can view and download all conference materials.'
             : 'You can view and download all materials';
       case UserRole.speaker:
         return isZh
-            ? '您可以查看公共资料和嘉宾专属内容'
+            ? 'You can view public materials and speaker-only content.'
             : 'You can access public and speaker-exclusive content';
       case UserRole.admin:
         return isZh
-            ? '您可以查看和管理所有会议资料'
+            ? 'You can view and manage all conference materials.'
             : 'You can view and manage all materials';
       case UserRole.attendee:
         return isZh
-            ? '您可以查看公共资料，部分内容需要更高权限'
+            ? 'You can view public materials. Some content requires higher access.'
             : 'You can access public materials. Some content requires higher access';
     }
   }
@@ -1438,17 +1424,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
   String _getVisibilityLabel(List visibleTo, bool isZh) {
     if (visibleTo.length >= 4) return '';
     if (visibleTo.contains('vip') && visibleTo.length == 1) {
-      return isZh ? 'VIP 专属' : 'VIP Only';
+      return isZh ? 'VIP Only' : 'VIP Only';
     }
     if (visibleTo.contains('speaker') && !visibleTo.contains('attendee')) {
-      return isZh ? '嘉宾及以上' : 'Speaker+';
+      return isZh ? 'Speaker+' : 'Speaker+';
     }
     return '';
   }
 
   Future<List<Map<String, dynamic>>> _loadMaterials(String eventId) async {
     if (eventId.isEmpty) return [];
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     try {
       final api = Get.find<ApiService>();
       final res = await api.getMaterials(eventId);
@@ -1462,13 +1448,19 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
           : null;
       throw Exception(
         message ??
-            (isZh ? '服务器未返回资料数据' : 'Server did not return materials data'),
+            (isZh
+                ? 'Server did not return materials data'
+                : 'Server did not return materials data'),
       );
     } catch (error) {
       if (error is Exception) {
         rethrow;
       }
-      throw Exception(isZh ? '网络异常，请稍后重试' : 'Network error. Please try again.');
+      throw Exception(
+        isZh
+            ? 'Network error. Please try again.'
+            : 'Network error. Please try again.',
+      );
     }
   }
 
@@ -1491,11 +1483,15 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
   void _showMaterialMessage(String message, {bool isError = false}) {
     Get.snackbar(
       isError
-          ? (Get.locale?.languageCode == 'zh' ? '操作失败' : 'Action Failed')
-          : (Get.locale?.languageCode == 'zh' ? '处理中' : 'Processing'),
+          ? (Get.locale?.languageCode == '__zh_disabled__'
+                ? 'Action Failed'
+                : 'Action Failed')
+          : (Get.locale?.languageCode == '__zh_disabled__'
+                ? 'Processing'
+                : 'Processing'),
       message,
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: isError ? Colors.red : const Color(0xFF000666),
+      backgroundColor: isError ? Colors.red : AppColors.primary,
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
     );
@@ -1537,15 +1533,17 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
     required String displayName,
     required String fallbackName,
   }) async {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     if (eventId.isEmpty || materialId.isEmpty) {
       _showMaterialMessage(
-        isZh ? '资料链接不可用' : 'Material link is unavailable',
+        isZh ? 'Material link is unavailable' : 'Material link is unavailable',
         isError: true,
       );
       return;
     }
-    _showMaterialMessage(isZh ? '正在准备下载...' : 'Preparing download...');
+    _showMaterialMessage(
+      isZh ? 'Preparing download...' : 'Preparing download...',
+    );
     try {
       final api = Get.find<ApiService>();
       final suggestedName = displayName.isNotEmpty ? displayName : fallbackName;
@@ -1559,12 +1557,20 @@ class _EventAgendaScreenState extends State<EventAgendaScreen>
       } catch (_) {}
       await Share.shareXFiles([
         XFile(file.path, name: file.uri.pathSegments.last),
-      ], subject: isZh ? '会议资料' : 'Conference Material');
+      ], subject: isZh ? 'Conference Material' : 'Conference Material');
     } catch (e) {
       _showMaterialMessage(
-        isZh ? '下载失败：$e' : 'Download failed: $e',
+        isZh ? 'Download failed: $e' : 'Download failed: $e',
         isError: true,
       );
     }
+  }
+}
+
+void _goBackToMain() {
+  if (Get.key.currentState?.canPop() == true) {
+    Get.back();
+  } else {
+    Get.offAllNamed('/main');
   }
 }

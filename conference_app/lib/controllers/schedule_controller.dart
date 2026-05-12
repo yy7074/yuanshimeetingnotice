@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/session_model.dart';
 import '../services/api_service.dart';
+import '../services/data_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
@@ -51,11 +52,13 @@ class ScheduleController extends GetxController {
   }
 
   Future<void> toggleSession(String sessionId) async {
-    final notifService = Get.find<NotificationService>();
+    final notifService = Get.isRegistered<NotificationService>()
+        ? Get.find<NotificationService>()
+        : null;
     if (isSaved(sessionId)) {
       await _storage.removeSession(sessionId);
       savedSessionIds.remove(sessionId);
-      await notifService.cancelNotification(sessionId.hashCode.abs() % 100000);
+      await notifService?.cancelNotification(sessionId.hashCode.abs() % 100000);
     } else {
       final session = allSessions.firstWhereOrNull((s) => s.id == sessionId);
       if (session != null) {
@@ -73,11 +76,24 @@ class ScheduleController extends GetxController {
     }
   }
 
+  Future<void> toggleSessionModel(SessionModel session) async {
+    if (!allSessions.any((item) => item.id == session.id)) {
+      allSessions.add(session);
+    }
+
+    if (!_storage.subscribedEventIds.contains(session.eventId)) {
+      await _storage.subscribeEvent(session.eventId);
+    }
+
+    await toggleSession(session.id);
+    await refreshSessions();
+  }
+
   Future<bool?> _showConflictDialog(
     SessionModel session,
     List<SessionModel> conflicts,
   ) {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final conflictNames = conflicts
         .map((c) => isZh ? c.titleZh : c.titleEn)
         .join('\n• ');
@@ -92,7 +108,7 @@ class ScheduleController extends GetxController {
             ),
             const SizedBox(width: 8),
             Text(
-              isZh ? '日程冲突' : 'Schedule Conflict',
+              isZh ? 'Schedule Conflict' : 'Schedule Conflict',
               style: const TextStyle(fontSize: 16),
             ),
           ],
@@ -103,7 +119,7 @@ class ScheduleController extends GetxController {
           children: [
             Text(
               isZh
-                  ? '"${session.titleZh}" 与以下议程时间冲突：'
+                  ? '"${session.titleEn}" conflicts with:'
                   : '"${session.titleEn}" conflicts with:',
               style: const TextStyle(fontSize: 14),
             ),
@@ -114,7 +130,7 @@ class ScheduleController extends GetxController {
             ),
             const SizedBox(height: 12),
             Text(
-              isZh ? '是否仍要添加？' : 'Add anyway?',
+              isZh ? 'Add anyway?' : 'Add anyway?',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             ),
           ],
@@ -122,13 +138,13 @@ class ScheduleController extends GetxController {
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text(isZh ? '取消' : 'Cancel'),
+            child: Text(isZh ? 'Cancel' : 'Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Get.back(result: true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             child: Text(
-              isZh ? '仍然添加' : 'Add Anyway',
+              isZh ? 'Add Anyway' : 'Add Anyway',
               style: const TextStyle(color: Colors.white),
             ),
           ),
@@ -143,13 +159,29 @@ class ScheduleController extends GetxController {
       return false;
     }
 
+    if (!_storage.subscribedEventIds.contains(eventId)) {
+      await _storage.subscribeEvent(eventId);
+    }
+
+    final updatedIds = savedSessionIds.toList();
+    final updatedIdSet = updatedIds.toSet();
+    final sessionsToSchedule = <SessionModel>[];
+
     for (final session in sessions) {
-      if (!isSaved(session.id)) {
-        await _storage.saveSession(session.id);
-        savedSessionIds.add(session.id);
+      if (updatedIdSet.add(session.id)) {
+        updatedIds.add(session.id);
+        sessionsToSchedule.add(session);
+      }
+    }
+
+    if (sessionsToSchedule.isNotEmpty) {
+      savedSessionIds.value = updatedIds;
+      await _storage.setSavedSessionIds(updatedIds);
+      for (final session in sessionsToSchedule) {
         await _scheduleReminder(session);
       }
     }
+
     await _storage.markScheduleEventHydrated(eventId);
     await refreshSessions();
     await _scheduleDailyReminders();
@@ -159,6 +191,9 @@ class ScheduleController extends GetxController {
   Future<void> syncJoinedEventSchedules({Iterable<String>? eventIds}) async {
     final targetEventIds = (eventIds ?? _storage.subscribedEventIds).toList();
     final hydratedIds = _storage.hydratedScheduleEventIds.toSet();
+    final updatedIds = savedSessionIds.toList();
+    final updatedIdSet = updatedIds.toSet();
+    final sessionsToSchedule = <SessionModel>[];
     var changed = false;
 
     for (final eventId in targetEventIds) {
@@ -172,10 +207,9 @@ class ScheduleController extends GetxController {
       }
 
       for (final session in sessions) {
-        if (!isSaved(session.id)) {
-          await _storage.saveSession(session.id);
-          savedSessionIds.add(session.id);
-          await _scheduleReminder(session);
+        if (updatedIdSet.add(session.id)) {
+          updatedIds.add(session.id);
+          sessionsToSchedule.add(session);
           changed = true;
         }
       }
@@ -184,6 +218,11 @@ class ScheduleController extends GetxController {
     }
 
     if (changed) {
+      savedSessionIds.value = updatedIds;
+      await _storage.setSavedSessionIds(updatedIds);
+      for (final session in sessionsToSchedule) {
+        await _scheduleReminder(session);
+      }
       await refreshSessions();
       await _scheduleDailyReminders();
     }
@@ -231,10 +270,29 @@ class ScheduleController extends GetxController {
   }
 
   List<SessionModel> get sessionsForSelectedDay {
-    return mySessions
+    final sessions = mySessions
         .where((s) => s.dayIndex == selectedDayIndex.value)
-        .toList()
-      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+        .toList();
+    if (sessions.isNotEmpty) {
+      return sessions..sort((a, b) => a.startTime.compareTo(b.startTime));
+    }
+
+    final days = availableDays;
+    final selectedIndex = selectedDayIndex.value;
+    if (selectedIndex >= 0 && selectedIndex < days.length) {
+      final day = days[selectedIndex];
+      return mySessions
+          .where(
+            (s) =>
+                s.startTime.year == day.year &&
+                s.startTime.month == day.month &&
+                s.startTime.day == day.day,
+          )
+          .toList()
+        ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    }
+
+    return sessions;
   }
 
   List<DateTime> get availableDays {
@@ -261,14 +319,26 @@ class ScheduleController extends GetxController {
   }
 
   Future<List<SessionModel>> _fetchSessionsForEvent(String eventId) async {
+    if (eventId == DataService.apscvir2026EventId) {
+      final localSessions = await DataService.getDetailedSessions(eventId);
+      if (localSessions.isNotEmpty) {
+        return localSessions;
+      }
+    }
+
     try {
       final api = Get.find<ApiService>();
       final res = await api.getSessions(eventId);
       if (res.statusCode == 200 && res.body is List) {
-        return (res.body as List).map((s) => _parseSession(s)).toList();
+        final sessions = (res.body as List)
+            .map((s) => _parseSession(s))
+            .toList();
+        if (sessions.isNotEmpty) {
+          return sessions;
+        }
       }
     } catch (_) {}
-    return [];
+    return DataService.getSessions(eventId);
   }
 
   Future<void> _scheduleDailyReminders() async {
@@ -294,8 +364,7 @@ class ScheduleController extends GetxController {
   SessionModel _parseSession(Map<String, dynamic> json) {
     final speaker = json['speaker'] as Map<String, dynamic>?;
     DateTime parseDate(dynamic value) =>
-        DateTime.tryParse(value?.toString() ?? '')?.toLocal() ??
-        DateTime.now();
+        DateTime.tryParse(value?.toString() ?? '')?.toLocal() ?? DateTime.now();
     final typeValue = (json['type'] as String? ?? '')
         .replaceAll('_', '')
         .toLowerCase();

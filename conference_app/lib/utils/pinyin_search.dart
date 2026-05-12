@@ -2,7 +2,7 @@ import 'package:lpinyin/lpinyin.dart';
 
 /// Pinyin-aware search index for a single string.
 ///
-/// For a Chinese phrase like "上海会议中心" we precompute three lowercase forms:
+/// For a Chinese phrase like "Shanghai Conference Center" we precompute three lowercase forms:
 ///   - the original text
 ///   - the full pinyin without separators ("shanghaihuiyizhongxin")
 ///   - the leading initials of each syllable ("shyzx")

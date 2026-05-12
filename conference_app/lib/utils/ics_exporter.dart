@@ -59,10 +59,9 @@ class IcsExporter {
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$fileName');
     await file.writeAsString(content);
-    await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'text/calendar', name: fileName)],
-      subject: subject,
-    );
+    await Share.shareXFiles([
+      XFile(file.path, mimeType: 'text/calendar', name: fileName),
+    ], subject: subject);
   }
 
   static String _formatUtc(DateTime dt) {

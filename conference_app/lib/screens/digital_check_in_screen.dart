@@ -5,6 +5,7 @@ import 'dart:async';
 import '../controllers/auth_controller.dart';
 import '../controllers/event_controller.dart';
 import '../services/api_service.dart';
+import '../theme/app_theme.dart';
 
 class DigitalCheckInScreen extends StatefulWidget {
   const DigitalCheckInScreen({super.key});
@@ -49,7 +50,9 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
 
       final api = Get.find<ApiService>();
       final res = await api.generateQr(eventId);
-      if (!mounted || requestVersion != _qrRequestVersion || eventId != _selectedEventId) {
+      if (!mounted ||
+          requestVersion != _qrRequestVersion ||
+          eventId != _selectedEventId) {
         return;
       }
       if ((res.statusCode == 201 || res.statusCode == 200) &&
@@ -58,14 +61,18 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
         _qrError = '';
       } else {
         _qrData = '';
-        _qrError = _isZh ? '暂时无法生成签到二维码' : 'Unable to generate QR code right now';
+        _qrError = _isZh
+            ? 'Unable to generate check-in QR code right now.'
+            : 'Unable to generate QR code right now';
       }
     } catch (_) {
       if (!mounted || requestVersion != _qrRequestVersion) {
         return;
       }
       _qrData = '';
-      _qrError = _isZh ? '网络异常，无法获取签到二维码' : 'Network error. Unable to fetch QR code';
+      _qrError = _isZh
+          ? 'Network error. Unable to load check-in QR code.'
+          : 'Network error. Unable to fetch QR code';
     }
     if (mounted) setState(() {});
   }
@@ -82,7 +89,6 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
           if (res.statusCode == 200 && res.body != null) {
             final record = Map<String, dynamic>.from(res.body);
             record['eventTitleEn'] = event.titleEn;
-            record['eventTitleZh'] = event.titleZh;
             if (record['checkedIn'] == true) {
               history.add(record);
             }
@@ -121,7 +127,15 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
     super.dispose();
   }
 
-  bool get _isZh => Get.locale?.languageCode == 'zh';
+  bool get _isZh => Get.locale?.languageCode == '__zh_disabled__';
+
+  void _goBackToMain() {
+    if (Get.key.currentState?.canPop() == true) {
+      Get.back();
+    } else {
+      Get.offAllNamed('/main');
+    }
+  }
 
   Widget _buildCheckInHistory(bool isZh, Color primaryColor) {
     return Container(
@@ -130,8 +144,12 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isZh ? '签到记录' : 'Check-in History',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor),
+            isZh ? 'Check-in History' : 'Check-in History',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
           ),
           const SizedBox(height: 12),
           if (_checkInHistory.isEmpty)
@@ -148,7 +166,9 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                   Icon(Icons.history, size: 40, color: Colors.grey.shade300),
                   const SizedBox(height: 8),
                   Text(
-                    isZh ? '暂无签到记录' : 'No check-in records yet',
+                    isZh
+                        ? 'No check-in records yet'
+                        : 'No check-in records yet',
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
                   ),
                 ],
@@ -156,15 +176,14 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
             )
           else
             ...(_checkInHistory.map((record) {
-              final eventTitle = isZh
-                  ? (record['eventTitleZh'] ?? '')
-                  : (record['eventTitleEn'] ?? '');
+              final eventTitle = record['eventTitleEn'] ?? '';
               final checkedInAt = record['checkedInAt'] as String?;
               String timeStr = '';
               if (checkedInAt != null) {
                 final dt = DateTime.tryParse(checkedInAt);
                 if (dt != null) {
-                  timeStr = '${dt.month}/${dt.day} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                  timeStr =
+                      '${dt.month}/${dt.day} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
                 }
               }
               return Container(
@@ -184,22 +203,44 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                         color: Colors.green.shade50,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.green.shade600,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(eventTitle, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text(
+                            eventTitle,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           if (timeStr.isNotEmpty)
-                            Text(timeStr, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                            Text(
+                              timeStr,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
                         ],
                       ),
                     ),
                     Text(
-                      isZh ? '已签到' : 'Checked In',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green.shade600),
+                      isZh ? 'Checked In' : 'Checked In',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade600,
+                      ),
                     ),
                   ],
                 ),
@@ -212,15 +253,15 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF000666);
-    const Color accentColor = Color(0xFFFFDEA5);
-    const Color surfaceContainerColor = Color(0xFFDBF1FE);
+    const Color primaryColor = AppColors.primary;
+    const Color accentColor = AppColors.accentSoft;
+    const Color surfaceContainerColor = AppColors.surfaceBlue;
 
     final auth = Get.find<AuthController>();
     final eventCtrl = Get.find<EventController>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3FAFF),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -232,11 +273,16 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close, color: primaryColor),
-                    onPressed: () => Get.back(),
+                    onPressed: _goBackToMain,
                   ),
                   Text(
-                    _isZh ? '数字通行证' : 'DIGITAL PASS',
-                    style: const TextStyle(fontFamily: 'Noto Serif', fontSize: 16, fontWeight: FontWeight.w900, color: primaryColor, letterSpacing: 0.5),
+                    _isZh ? 'DIGITAL PASS' : 'DIGITAL PASS',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: primaryColor,
+                      letterSpacing: 0,
+                    ),
                   ),
                   const SizedBox(width: 48), // Balance the close button
                 ],
@@ -245,16 +291,24 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
 
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
+                ),
                 child: Obx(() {
                   final user = auth.currentUser.value;
                   final myEvents = eventCtrl.myEvents;
-                  final hasSelectedEvent = _selectedEventId != null &&
+                  final hasSelectedEvent =
+                      _selectedEventId != null &&
                       myEvents.any((event) => event.id == _selectedEventId);
 
                   if (_selectedEventId == null && myEvents.isNotEmpty) {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (!mounted || _selectedEventId != null || myEvents.isEmpty) return;
+                      if (!mounted ||
+                          _selectedEventId != null ||
+                          myEvents.isEmpty) {
+                        return;
+                      }
                       setState(() {
                         _selectedEventId = myEvents.first.id;
                         _secondsRemaining = 30;
@@ -266,7 +320,9 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       if (!mounted) return;
                       setState(() {
-                        _selectedEventId = myEvents.isEmpty ? null : myEvents.first.id;
+                        _selectedEventId = myEvents.isEmpty
+                            ? null
+                            : myEvents.first.id;
                         _secondsRemaining = _selectedEventId == null ? 0 : 30;
                       });
                       _generateQr();
@@ -275,7 +331,10 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                   }
                   // Find selected event
                   final selectedEvent = myEvents.isNotEmpty
-                      ? myEvents.firstWhereOrNull((e) => e.id == _selectedEventId) ?? myEvents.first
+                      ? myEvents.firstWhereOrNull(
+                              (e) => e.id == _selectedEventId,
+                            ) ??
+                            myEvents.first
                       : null;
 
                   return Column(
@@ -283,16 +342,30 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                       // Event selector if multiple events
                       if (myEvents.length > 1) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade200)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               isExpanded: true,
                               value: _selectedEventId ?? myEvents.first.id,
-                              items: myEvents.map((e) => DropdownMenuItem(
-                                value: e.id,
-                                child: Text(_isZh ? e.titleZh : e.titleEn, overflow: TextOverflow.ellipsis),
-                              )).toList(),
+                              items: myEvents
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e.id,
+                                      child: Text(
+                                        e.titleEn,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (val) {
                                 setState(() {
                                   _selectedEventId = val;
@@ -312,27 +385,49 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [BoxShadow(color: Colors.black.withAlpha(13), blurRadius: 20, offset: const Offset(0, 10))],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(13),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
                         ),
                         child: Column(
                           children: [
                             // Role Badge
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
                               decoration: const BoxDecoration(
                                 color: primaryColor,
-                                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                                borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(16),
+                                ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     '${(user?.role.name ?? 'attendee').toUpperCase()} ACCESS',
-                                    style: TextStyle(fontFamily: 'Noto Serif', fontSize: 12, fontWeight: FontWeight.bold, color: accentColor, letterSpacing: 2.0),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: accentColor,
+                                      letterSpacing: 0,
+                                    ),
                                   ),
                                   Text(
                                     'ID: ${(user?.id ?? '').length > 8 ? user!.id.substring(0, 8).toUpperCase() : user?.id.toUpperCase() ?? ''}',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(153), letterSpacing: 1.0),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white.withAlpha(153),
+                                      letterSpacing: 0,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -348,7 +443,10 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                     height: 96,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: surfaceContainerColor, width: 3),
+                                      border: Border.all(
+                                        color: surfaceContainerColor,
+                                        width: 3,
+                                      ),
                                       color: Colors.grey.shade100,
                                     ),
                                     clipBehavior: Clip.antiAlias,
@@ -356,25 +454,44 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                         ? Image.network(
                                             user!.avatarUrl,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) =>
-                                                Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Icon(
+                                                      Icons.person,
+                                                      size: 48,
+                                                      color:
+                                                          Colors.grey.shade400,
+                                                    ),
                                           )
-                                        : Icon(Icons.person, size: 48, color: Colors.grey.shade400),
+                                        : Icon(
+                                            Icons.person,
+                                            size: 48,
+                                            color: Colors.grey.shade400,
+                                          ),
                                   ),
                                   const SizedBox(height: 16),
                                   // User Name
                                   Text(
-                                    _isZh
-                                        ? (user?.nameZh.isNotEmpty == true ? user!.nameZh : user?.nameEn ?? '')
-                                        : (user?.nameEn.isNotEmpty == true ? user!.nameEn : user?.nameZh ?? ''),
-                                    style: const TextStyle(fontFamily: 'Noto Serif', fontSize: 24, fontWeight: FontWeight.w900, color: primaryColor),
+                                    user?.nameEn.isNotEmpty == true
+                                        ? user!.nameEn
+                                        : user?.email ?? 'Guest Delegate',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      color: primaryColor,
+                                    ),
                                     textAlign: TextAlign.center,
                                   ),
                                   const SizedBox(height: 4),
                                   // User Title
                                   Text(
-                                    (_isZh ? user?.titleZh : user?.titleEn) ?? '',
-                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade600, letterSpacing: 1.5),
+                                    user?.titleEn ?? '',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade600,
+                                      letterSpacing: 0,
+                                    ),
                                     textAlign: TextAlign.center,
                                   ),
 
@@ -384,12 +501,19 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                   Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: BoxDecoration(
-                                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [accentColor, Color(0xFFB6924C)]),
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [accentColor, AppColors.accent],
+                                      ),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Container(
                                       padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                       child: _qrData.isEmpty
                                           ? SizedBox(
                                               width: 160,
@@ -398,13 +522,23 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                                 child: Text(
                                                   _qrError.isNotEmpty
                                                       ? _qrError
-                                                      : (_isZh ? '暂无可用二维码' : 'No QR code available'),
+                                                      : (_isZh
+                                                            ? 'No QR code available'
+                                                            : 'No QR code available'),
                                                   textAlign: TextAlign.center,
-                                                  style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey.shade500,
+                                                  ),
                                                 ),
                                               ),
                                             )
-                                          : QrImageView(data: _qrData, version: QrVersions.auto, size: 160, gapless: true),
+                                          : QrImageView(
+                                              data: _qrData,
+                                              version: QrVersions.auto,
+                                              size: 160,
+                                              gapless: true,
+                                            ),
                                     ),
                                   ),
 
@@ -413,9 +547,13 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                   // Event Info
                                   if (selectedEvent != null) ...[
                                     Text(
-                                      _isZh ? selectedEvent.titleZh : selectedEvent.titleEn,
+                                      selectedEvent.titleEn,
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(fontFamily: 'Noto Serif', fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: primaryColor,
+                                      ),
                                     ),
                                     const SizedBox(height: 24),
                                     const Divider(),
@@ -424,24 +562,56 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                       children: [
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Text('DATE / 日期', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1.0)),
+                                              Text(
+                                                'DATE',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.grey.shade500,
+                                                  letterSpacing: 0,
+                                                ),
+                                              ),
                                               const SizedBox(height: 4),
-                                              Text(selectedEvent.dateRangeStr, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryColor)),
+                                              Text(
+                                                selectedEvent.dateRangeStr,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: primaryColor,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              Text('VENUE / 地点', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade500, letterSpacing: 1.0)),
+                                              Text(
+                                                'VENUE',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.grey.shade500,
+                                                  letterSpacing: 0,
+                                                ),
+                                              ),
                                               const SizedBox(height: 4),
                                               Text(
-                                                _isZh ? selectedEvent.locationZh : selectedEvent.locationEn,
-                                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: primaryColor),
-                                                maxLines: 2, overflow: TextOverflow.ellipsis,
+                                                _isZh
+                                                    ? selectedEvent.locationZh
+                                                    : selectedEvent.locationEn,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: primaryColor,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ],
                                           ),
@@ -450,8 +620,13 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                                     ),
                                   ] else ...[
                                     Text(
-                                      _isZh ? '请先订阅一个会议' : 'Please subscribe to an event first',
-                                      style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+                                      _isZh
+                                          ? 'Subscribe to an event first'
+                                          : 'Please subscribe to an event first',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade500,
+                                      ),
                                     ),
                                   ],
 
@@ -459,22 +634,45 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
 
                                   // Refresh Timer
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                    decoration: BoxDecoration(color: const Color(0xFFE6F6FF), borderRadius: BorderRadius.circular(24)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.surfaceBlue,
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.sync, size: 16, color: primaryColor),
+                                        const Icon(
+                                          Icons.sync,
+                                          size: 16,
+                                          color: primaryColor,
+                                        ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          _isZh ? '二维码刷新倒计时: ' : 'CODE REFRESHES IN: ',
-                                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey.shade600, letterSpacing: 1.0),
+                                          _isZh
+                                              ? 'QR refresh countdown: '
+                                              : 'CODE REFRESHES IN: ',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.grey.shade600,
+                                            letterSpacing: 0,
+                                          ),
                                         ),
                                         Text(
                                           _selectedEventId == null
-                                              ? (_isZh ? '未启用' : 'DISABLED')
+                                              ? (_isZh
+                                                    ? 'DISABLED'
+                                                    : 'DISABLED')
                                               : '00:${_secondsRemaining.toString().padLeft(2, '0')}',
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: primaryColor,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -491,9 +689,16 @@ class _DigitalCheckInScreenState extends State<DigitalCheckInScreen> {
                       // Instruction text
                       Text(
                         _selectedEventId == null
-                            ? (_isZh ? '请先在会议详情页订阅会议后再生成签到码' : 'Subscribe to an event before generating a check-in code')
-                            : (_isZh ? '请在入口处出示此二维码进行签到' : 'Show this QR code at the entrance to check in'),
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                            ? (_isZh
+                                  ? 'Subscribe to an event before generating a check-in code.'
+                                  : 'Subscribe to an event before generating a check-in code')
+                            : (_isZh
+                                  ? 'Show this QR code at the entrance for check-in.'
+                                  : 'Show this QR code at the entrance to check in'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
                         textAlign: TextAlign.center,
                       ),
 

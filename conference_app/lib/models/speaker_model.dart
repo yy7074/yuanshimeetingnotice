@@ -37,9 +37,9 @@ extension SpeakerCategoryLabel on SpeakerCategory {
   };
 
   String get labelZh => switch (this) {
-    SpeakerCategory.keynote => '主旨演讲',
-    SpeakerCategory.vipGuest => '特邀嘉宾',
-    SpeakerCategory.research => '学术研究',
-    SpeakerCategory.workshop => '工作坊',
+    SpeakerCategory.keynote => 'Keynote',
+    SpeakerCategory.vipGuest => 'VIP Guest',
+    SpeakerCategory.research => 'Research',
+    SpeakerCategory.workshop => 'Workshop',
   };
 }

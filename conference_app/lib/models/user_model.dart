@@ -49,7 +49,10 @@ class UserModel {
     organizationEn: json['organizationEn'] as String,
     organizationZh: json['organizationZh'] as String,
     avatarUrl: json['avatarUrl'] as String,
-    role: UserRole.values.firstWhere((e) => e.name == json['role'], orElse: () => UserRole.attendee),
+    role: UserRole.values.firstWhere(
+      (e) => e.name == json['role'],
+      orElse: () => UserRole.attendee,
+    ),
     mustChangePassword: json['mustChangePassword'] == true,
   );
 }

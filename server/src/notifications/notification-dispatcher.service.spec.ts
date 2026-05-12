@@ -17,6 +17,11 @@ describe('NotificationDispatcherService', () => {
     create: jest.Mock;
     save: jest.Mock;
   };
+  let pushService: {
+    sendToDevice: jest.Mock;
+    sendToTag: jest.Mock;
+    sendToAll: jest.Mock;
+  };
 
   beforeEach(async () => {
     userRepo = {
@@ -27,6 +32,11 @@ describe('NotificationDispatcherService', () => {
     notifRepo = {
       create: jest.fn((value) => value),
       save: jest.fn(async (value) => value),
+    };
+    pushService = {
+      sendToDevice: jest.fn(),
+      sendToTag: jest.fn(),
+      sendToAll: jest.fn().mockResolvedValue({ success: true, msgId: 'm1' }),
     };
 
     const moduleRef = await Test.createTestingModule({
@@ -42,10 +52,7 @@ describe('NotificationDispatcherService', () => {
         },
         {
           provide: PushService,
-          useValue: {
-            sendToDevice: jest.fn(),
-            sendToTag: jest.fn(),
-          },
+          useValue: pushService,
         },
         {
           provide: EmailService,
@@ -62,10 +69,7 @@ describe('NotificationDispatcherService', () => {
   it('broadcasts to users matched by admin filters', async () => {
     const qb = {
       andWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockResolvedValue([
-        { id: 'u1' },
-        { id: 'u2' },
-      ]),
+      getMany: jest.fn().mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]),
     };
     userRepo.createQueryBuilder.mockReturnValue(qb);
     const dispatchSpy = jest
@@ -100,6 +104,37 @@ describe('NotificationDispatcherService', () => {
         isActive: true,
         search: 'alice',
       },
+    });
+  });
+
+  it('broadcasts to all active users and sends one JPush broadcast', async () => {
+    userRepo.find.mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]);
+    const dispatchSpy = jest
+      .spyOn(service, 'dispatch')
+      .mockResolvedValue({ id: 'n1' } as any);
+
+    const result = await service.broadcastToAll({
+      titleEn: 'Test',
+      titleZh: '测试',
+      bodyEn: 'Body',
+      bodyZh: '内容',
+      type: NotificationType.SYSTEM,
+      sendPush: true,
+      sendEmail: false,
+    });
+
+    expect(userRepo.find).toHaveBeenCalledWith({ where: { isActive: true } });
+    expect(dispatchSpy).toHaveBeenCalledTimes(2);
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'u1', sendPush: false }),
+    );
+    expect(pushService.sendToAll).toHaveBeenCalledWith('测试', '内容', {
+      type: NotificationType.SYSTEM,
+      eventId: '',
+    });
+    expect(result).toEqual({
+      sent: 2,
+      push: { success: true, msgId: 'm1' },
     });
   });
 });

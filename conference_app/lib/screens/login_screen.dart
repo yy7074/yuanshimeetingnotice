@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../services/api_service.dart';
-import '../services/storage_service.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -11,12 +11,12 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Get.find<AuthController>();
 
-    const Color primaryColor = Color(0xFF196EE6);
-    const Color backgroundColor = Color(0xFFF6F7F8);
-    const Color textColor = Color(0xFF0F172A);
-    const Color textLightColor = Color(0xFF64748B);
-    const Color borderColor = Color(0xFFE2E8F0);
-    const Color inputBgColor = Color(0xFFF8FAFC);
+    const Color primaryColor = AppColors.primary;
+    const Color backgroundColor = AppColors.background;
+    const Color textColor = AppColors.ink;
+    const Color textLightColor = AppColors.muted;
+    const Color borderColor = AppColors.border;
+    const Color inputBgColor = AppColors.inputFill;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -65,9 +65,9 @@ class LoginScreen extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFF438AEE),
-                      Color(0xFF196EE6),
-                      Color(0xFF0F52B2),
+                      AppColors.primary,
+                      AppColors.primary,
+                      AppColors.primaryDark,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -94,7 +94,7 @@ class LoginScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                      letterSpacing: 0,
                       color: textColor,
                     ),
                   ),
@@ -104,48 +104,14 @@ class LoginScreen extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: primaryColor,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          InkWell(
-            onTap: () {
-              final storage = Get.find<StorageService>();
-              if (Get.locale?.languageCode == 'zh') {
-                Get.updateLocale(const Locale('en', 'US'));
-                storage.saveLanguage('en');
-              } else {
-                Get.updateLocale(const Locale('zh', 'CN'));
-                storage.saveLanguage('zh');
-              }
-            },
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.language, size: 16, color: primaryColor),
-                  const SizedBox(width: 4),
-                  const Text(
-                    'EN / CN',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF334155),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const SizedBox(width: 44),
         ],
       ),
     );
@@ -155,7 +121,7 @@ class LoginScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Text(
-        '© 2026 APSCVIR Conference. All rights reserved.\n© 2026 APSCVIR 大会。保留所有权利。',
+        '© 2026 APSCVIR Conference. All rights reserved.',
         textAlign: TextAlign.center,
         style: TextStyle(fontSize: 12, color: textLightColor, height: 1.5),
       ),
@@ -201,7 +167,9 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              Get.locale?.languageCode == 'zh' ? '欢迎回来' : 'Welcome Back',
+              Get.locale?.languageCode == '__zh_disabled__'
+                  ? 'Welcome Back'
+                  : 'Welcome Back',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -210,7 +178,7 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              '${'sign_in_desc'.tr}\n${Get.locale?.languageCode == 'zh' ? '请登录您的企业账户' : 'Please sign in to your corporate account'}',
+              '${'sign_in_desc'.tr}\n${Get.locale?.languageCode == '__zh_disabled__' ? 'Please sign in to your corporate account' : 'Please sign in to your corporate account'}',
               style: TextStyle(
                 fontSize: 14,
                 color: textLightColor,
@@ -220,10 +188,10 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 32),
             // Email Field
             Text(
-              '${'email'.tr} / ${Get.locale?.languageCode == 'zh' ? '邮箱' : 'Email'}',
+              '${'email'.tr} / ${Get.locale?.languageCode == '__zh_disabled__' ? 'Email' : 'Email'}',
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF334155),
+                color: AppColors.inkSoft,
               ),
             ),
             const SizedBox(height: 8),
@@ -260,10 +228,10 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 24),
             // Password Field
             Text(
-              '${'password'.tr} / ${Get.locale?.languageCode == 'zh' ? '密码' : 'Password'}',
+              '${'password'.tr} / ${Get.locale?.languageCode == '__zh_disabled__' ? 'Password' : 'Password'}',
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF334155),
+                color: AppColors.inkSoft,
               ),
             ),
             const SizedBox(height: 8),
@@ -276,7 +244,7 @@ class LoginScreen extends StatelessWidget {
                   hintText: '••••••••',
                   hintStyle: TextStyle(
                     color: Colors.grey.shade400,
-                    letterSpacing: 2,
+                    letterSpacing: 0,
                   ),
                   prefixIcon: Icon(
                     Icons.lock_outline,
@@ -376,12 +344,12 @@ class LoginScreen extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: Color(0xFF334155),
+                                color: AppColors.inkSoft,
                               ),
                             ),
                             Text(
-                              Get.locale?.languageCode == 'zh'
-                                  ? '记住我'
+                              Get.locale?.languageCode == '__zh_disabled__'
+                                  ? 'Remember Me'
                                   : 'Remember Me',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -422,8 +390,8 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        Get.locale?.languageCode == 'zh'
-                            ? '忘记密码？'
+                        Get.locale?.languageCode == '__zh_disabled__'
+                            ? 'Forgot Password?'
                             : 'Forgot Password?',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -478,7 +446,7 @@ class LoginScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            '${'sign_in_btn'.tr} / ${Get.locale?.languageCode == 'zh' ? '登录' : 'Sign In'}',
+                            '${'sign_in_btn'.tr} / ${Get.locale?.languageCode == '__zh_disabled__' ? 'Sign In' : 'Sign In'}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -498,16 +466,16 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    Get.locale?.languageCode == 'zh'
-                        ? '还没有账号？'
+                    Get.locale?.languageCode == '__zh_disabled__'
+                        ? 'Need an account?'
                         : "Don't have an account? ",
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   GestureDetector(
                     onTap: () => Get.toNamed('/register'),
                     child: Text(
-                      Get.locale?.languageCode == 'zh'
-                          ? '立即注册'
+                      Get.locale?.languageCode == '__zh_disabled__'
+                          ? 'Register Now'
                           : 'Register Now',
                       style: TextStyle(
                         fontSize: 14,
@@ -520,7 +488,7 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            const Divider(color: Color(0xFFF1F5F9)),
+            const Divider(color: AppColors.border),
             const SizedBox(height: 24),
             Center(
               child: Column(
@@ -531,7 +499,7 @@ class LoginScreen extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey.shade400,
-                      letterSpacing: 1.5,
+                      letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -550,7 +518,7 @@ class LoginScreen extends StatelessWidget {
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey.shade400,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0,
                         ),
                       ),
                       const SizedBox(width: 24),
@@ -566,7 +534,7 @@ class LoginScreen extends StatelessWidget {
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey.shade400,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0,
                         ),
                       ),
                     ],
@@ -609,7 +577,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   int _countdown = 0;
   int _dailySendCount = 0;
 
-  bool get _isZh => Get.locale?.languageCode == 'zh';
+  bool get _isZh => Get.locale?.languageCode == '__zh_disabled__';
 
   void _startCountdown() {
     _countdown = 60;
@@ -639,7 +607,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     if (_countdown > 0) {
       setState(
         () => _error = _isZh
-            ? '请等待 $_countdown 秒后再试'
+            ? 'Please wait $_countdown seconds before trying again'
             : 'Please wait $_countdown seconds',
       );
       return;
@@ -647,7 +615,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     if (_dailySendCount >= 5) {
       setState(
         () => _error = _isZh
-            ? '今日发送次数已达上限(5次)'
+            ? 'Daily send limit reached (5)'
             : 'Daily limit reached (5 requests)',
       );
       return;
@@ -655,7 +623,9 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     final email = _emailController.text.trim();
     if (email.isEmpty || !GetUtils.isEmail(email)) {
       setState(
-        () => _error = _isZh ? '请输入有效的邮箱地址' : 'Please enter a valid email',
+        () => _error = _isZh
+            ? 'Please enter a valid email'
+            : 'Please enter a valid email',
       );
       return;
     }
@@ -675,13 +645,17 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
         });
       } else {
         setState(() {
-          _error = res.body?['message'] ?? (_isZh ? '发送失败' : 'Failed to send');
+          _error =
+              res.body?['message'] ??
+              (_isZh ? 'Failed to send' : 'Failed to send');
           _isLoading = false;
         });
       }
     } catch (_) {
       setState(() {
-        _error = _isZh ? '网络错误，请稍后重试' : 'Network error, please try again';
+        _error = _isZh
+            ? 'Network error, please try again'
+            : 'Network error, please try again';
         _isLoading = false;
       });
     }
@@ -691,7 +665,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     if (!_isValidVerificationCode(_codeController.text)) {
       setState(
         () => _error = _isZh
-            ? '请输入4位或6位验证码'
+            ? 'Please enter the 4- or 6-digit code'
             : 'Please enter a 4-digit or 6-digit code',
       );
       return;
@@ -708,13 +682,17 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
     if (password.length < 8) {
       setState(
         () => _error = _isZh
-            ? '密码长度至少为8位'
+            ? 'Password must be at least 8 characters'
             : 'Password must be at least 8 characters',
       );
       return;
     }
     if (password != confirm) {
-      setState(() => _error = _isZh ? '两次密码输入不一致' : 'Passwords do not match');
+      setState(
+        () => _error = _isZh
+            ? 'Passwords do not match'
+            : 'Passwords do not match',
+      );
       return;
     }
     setState(() {
@@ -731,8 +709,10 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
       if (res.statusCode == 200 || res.statusCode == 201) {
         Get.back();
         Get.snackbar(
-          _isZh ? '密码已重置' : 'Password Reset',
-          _isZh ? '请使用新密码登录' : 'Please sign in with your new password',
+          _isZh ? 'Password Reset' : 'Password Reset',
+          _isZh
+              ? 'Please sign in with your new password'
+              : 'Please sign in with your new password',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: widget.primaryColor,
           colorText: Colors.white,
@@ -740,13 +720,16 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
         );
       } else {
         setState(() {
-          _error = res.body?['message'] ?? (_isZh ? '重置失败' : 'Reset failed');
+          _error =
+              res.body?['message'] ?? (_isZh ? 'Reset failed' : 'Reset failed');
           _isLoading = false;
         });
       }
     } catch (_) {
       setState(() {
-        _error = _isZh ? '网络错误，请稍后重试' : 'Network error, please try again';
+        _error = _isZh
+            ? 'Network error, please try again'
+            : 'Network error, please try again';
         _isLoading = false;
       });
     }
@@ -755,7 +738,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(_isZh ? '找回密码' : 'Reset Password'),
+      title: Text(_isZh ? 'Reset Password' : 'Reset Password'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -789,7 +772,9 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
             ],
             if (_step == 0) ...[
               Text(
-                _isZh ? '请输入您的注册邮箱' : 'Enter your registered email',
+                _isZh
+                    ? 'Enter your registered email'
+                    : 'Enter your registered email',
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 12),
@@ -807,7 +792,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
             ],
             if (_step == 1) ...[
               Text(
-                '${_isZh ? '验证码已发送至' : 'Code sent to'} ${_emailController.text.trim()}',
+                '${_isZh ? 'Code sent to' : 'Code sent to'} ${_emailController.text.trim()}',
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 12),
@@ -817,7 +802,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
                 maxLength: 6,
                 style: const TextStyle(
                   fontSize: 20,
-                  letterSpacing: 6,
+                  letterSpacing: 0,
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,
@@ -832,7 +817,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
             ],
             if (_step == 2) ...[
               Text(
-                _isZh ? '设置新密码' : 'Set your new password',
+                _isZh ? 'Set a new password' : 'Set your new password',
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 12),
@@ -840,7 +825,9 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
                 controller: _newPasswordController,
                 obscureText: _obscure,
                 decoration: InputDecoration(
-                  labelText: _isZh ? '新密码（至少8位）' : 'New Password (min 8 chars)',
+                  labelText: _isZh
+                      ? 'New Password (min 8)'
+                      : 'New Password (min 8 chars)',
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -858,7 +845,9 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
                 controller: _confirmPasswordController,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: _isZh ? '确认新密码' : 'Confirm New Password',
+                  labelText: _isZh
+                      ? 'Confirm New Password'
+                      : 'Confirm New Password',
                   prefixIcon: const Icon(Icons.lock_outline),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -872,7 +861,7 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
       actions: [
         TextButton(
           onPressed: () => Get.back(),
-          child: Text(_isZh ? '取消' : 'Cancel'),
+          child: Text(_isZh ? 'Cancel' : 'Cancel'),
         ),
         ElevatedButton(
           onPressed: _isLoading || (_step == 0 && _countdown > 0)
@@ -902,11 +891,11 @@ class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
               : Text(
                   _step == 0
                       ? (_countdown > 0
-                            ? '${_isZh ? '等待' : 'Wait'} ${_countdown}s'
-                            : (_isZh ? '发送验证码' : 'Send Code'))
+                            ? '${_isZh ? 'Wait' : 'Wait'} ${_countdown}s'
+                            : (_isZh ? 'Send Code' : 'Send Code'))
                       : _step == 1
-                      ? (_isZh ? '下一步' : 'Next')
-                      : (_isZh ? '重置密码' : 'Reset Password'),
+                      ? (_isZh ? 'Next' : 'Next')
+                      : (_isZh ? 'Reset Password' : 'Reset Password'),
                 ),
         ),
       ],

@@ -38,12 +38,26 @@ class EventModel {
   });
 
   String get dateRangeStr {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     if (startDate.month == endDate.month) {
       return '${months[startDate.month - 1]} ${startDate.day}-${endDate.day}, ${startDate.year}';
     }
     return '${months[startDate.month - 1]} ${startDate.day} - ${months[endDate.month - 1]} ${endDate.day}, ${endDate.year}';
   }
 
-  int get remainingSpots => maxAttendees > 0 ? maxAttendees - currentAttendees : -1;
+  int get remainingSpots =>
+      maxAttendees > 0 ? maxAttendees - currentAttendees : -1;
 }

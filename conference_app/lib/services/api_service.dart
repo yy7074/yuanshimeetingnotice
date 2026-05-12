@@ -47,25 +47,37 @@ class ApiService extends GetConnect {
   Future<Response> login(String email, String password) =>
       post('/auth/login', {'email': email, 'password': password});
 
-  Future<Response> register(String email, String password, {String? code, String? nameEn, String? nameZh}) =>
-      () {
-        final body = <String, dynamic>{
-          'email': email,
-          'password': password,
-          'nameEn': nameEn,
-          'nameZh': nameZh,
-        };
-        if (code != null) {
-          body['code'] = code;
-        }
-        return post('/auth/register', body);
-      }();
+  Future<Response> register(
+    String email,
+    String password, {
+    String? code,
+    String? nameEn,
+    String? nameZh,
+  }) => () {
+    final body = <String, dynamic>{
+      'email': email,
+      'password': password,
+      'nameEn': nameEn,
+      'nameZh': nameZh,
+    };
+    if (code != null) {
+      body['code'] = code;
+    }
+    return post('/auth/register', body);
+  }();
 
   Future<Response> forgotPassword(String email) =>
       post('/auth/forgot-password', {'email': email});
 
-  Future<Response> resetPassword(String email, String code, String newPassword) =>
-      post('/auth/reset-password', {'email': email, 'code': code, 'newPassword': newPassword});
+  Future<Response> resetPassword(
+    String email,
+    String code,
+    String newPassword,
+  ) => post('/auth/reset-password', {
+    'email': email,
+    'code': code,
+    'newPassword': newPassword,
+  });
 
   Future<Response> changePassword(String currentPassword, String newPassword) =>
       post('/users/change-password', {
@@ -80,17 +92,22 @@ class ApiService extends GetConnect {
     final params = <String, String>{};
     if (search != null && search.isNotEmpty) params['search'] = search;
     if (status != null) params['status'] = status;
-    final query = params.isNotEmpty ? '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}' : '';
+    final query = params.isNotEmpty
+        ? '?${params.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+        : '';
     return get('/events$query');
   }
 
   Future<Response> getEvent(String id) => get('/events/$id');
   Future<Response> getMyEvents() => get('/events/my');
-  Future<Response> subscribeEvent(String eventId) => post('/events/$eventId/subscribe', {});
-  Future<Response> unsubscribeEvent(String eventId) => delete('/events/$eventId/subscribe');
+  Future<Response> subscribeEvent(String eventId) =>
+      post('/events/$eventId/subscribe', {});
+  Future<Response> unsubscribeEvent(String eventId) =>
+      delete('/events/$eventId/subscribe');
 
   // Sessions
-  Future<Response> getSessions(String eventId) => get('/events/$eventId/sessions');
+  Future<Response> getSessions(String eventId) =>
+      get('/events/$eventId/sessions');
 
   // Speakers
   Future<Response> getSpeakers({String? search}) {
@@ -99,7 +116,8 @@ class ApiService extends GetConnect {
   }
 
   // Materials
-  Future<Response> getMaterials(String eventId) => get('/events/$eventId/materials');
+  Future<Response> getMaterials(String eventId) =>
+      get('/events/$eventId/materials');
   Future<Response> trackDownload(String eventId, String materialId) =>
       post('/events/$eventId/materials/$materialId/download', {});
 
@@ -119,7 +137,8 @@ class ApiService extends GetConnect {
         ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
         : apiBaseUrl;
     final uri = Uri.parse('$base/events/$eventId/materials/$materialId/file');
-    final httpClient = HttpClient()..connectionTimeout = const Duration(seconds: 30);
+    final httpClient = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 30);
     try {
       final req = await httpClient.getUrl(uri);
       req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $token');
@@ -134,8 +153,10 @@ class ApiService extends GetConnect {
       String name = suggestedName.trim();
       final disposition = res.headers.value('content-disposition');
       if (disposition != null) {
-        final match = RegExp(r'filename\*?=(?:UTF-8'')?"?([^;"\r\n]+)"?')
-            .firstMatch(disposition);
+        final match = RegExp(
+          r'filename\*?=(?:UTF-8'
+          ')?"?([^;"\r\n]+)"?',
+        ).firstMatch(disposition);
         if (match != null) {
           name = Uri.decodeFull(match.group(1) ?? name);
         }
@@ -153,20 +174,24 @@ class ApiService extends GetConnect {
   }
 
   // Check-in
-  Future<Response> generateQr(String eventId) => post('/check-in/generate/$eventId', {});
+  Future<Response> generateQr(String eventId) =>
+      post('/check-in/generate/$eventId', {});
   Future<Response> getMyCheckIn(String eventId) => get('/check-in/my/$eventId');
 
   // Notifications
   Future<Response> getNotifications() => get('/notifications');
-  Future<Response> getUnreadNotificationCount() => get('/notifications/unread-count');
+  Future<Response> getUnreadNotificationCount() =>
+      get('/notifications/unread-count');
   Future<Response> markNotificationAsRead(String notificationId) =>
       post('/notifications/$notificationId/read', {});
-  Future<Response> markAllNotificationsAsRead() => post('/notifications/read-all', {});
+  Future<Response> markAllNotificationsAsRead() =>
+      post('/notifications/read-all', {});
   Future<Response> registerPushToken(String token) =>
       put('/notifications/fcm-token', {'token': token});
   Future<Response> updatePushSettings(bool enabled) =>
       put('/notifications/push-settings', {'enabled': enabled});
 
   // Profile
-  Future<Response> updateProfile(Map<String, dynamic> data) => put('/users/profile', data);
+  Future<Response> updateProfile(Map<String, dynamic> data) =>
+      put('/users/profile', data);
 }

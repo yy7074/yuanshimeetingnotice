@@ -38,7 +38,8 @@ class SessionModel {
   });
 
   String get timeRangeStr {
-    String fmt(DateTime dt) => '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    String fmt(DateTime dt) =>
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     return '${fmt(startTime)} - ${fmt(endTime)}';
   }
 

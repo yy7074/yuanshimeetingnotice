@@ -15,12 +15,17 @@ import '../controllers/event_controller.dart';
 class NotificationService extends GetxService {
   // Configure via: flutter run --dart-define=JPUSH_APP_KEY=xxxxx --dart-define=JPUSH_CHANNEL=developer-default
   // (keep parity with android/app/build.gradle.kts manifest placeholders)
-  static const String _jpushAppKey =
-      String.fromEnvironment('JPUSH_APP_KEY', defaultValue: '');
-  static const String _jpushChannel =
-      String.fromEnvironment('JPUSH_CHANNEL', defaultValue: 'developer-default');
+  static const String _jpushAppKey = String.fromEnvironment(
+    'JPUSH_APP_KEY',
+    defaultValue: '',
+  );
+  static const String _jpushChannel = String.fromEnvironment(
+    'JPUSH_CHANNEL',
+    defaultValue: 'developer-default',
+  );
 
-  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
   JPushFlutterInterface? _jpush;
   final unreadCount = 0.obs;
 
@@ -29,7 +34,9 @@ class NotificationService extends GetxService {
       tz_data.initializeTimeZones();
 
       // Initialize local notifications
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
       const iosSettings = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -37,23 +44,34 @@ class NotificationService extends GetxService {
       );
 
       await _localNotifications.initialize(
-        settings: const InitializationSettings(android: androidSettings, iOS: iosSettings),
+        settings: const InitializationSettings(
+          android: androidSettings,
+          iOS: iosSettings,
+        ),
         onDidReceiveNotificationResponse: _onLocalNotificationTap,
       );
 
-      final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-      await androidPlugin?.createNotificationChannel(const AndroidNotificationChannel(
-        'conference_notifications', 'Conference Notifications',
-        description: 'Notifications for conference events',
-        importance: Importance.high,
-      ));
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      await androidPlugin?.createNotificationChannel(
+        const AndroidNotificationChannel(
+          'conference_notifications',
+          'Conference Notifications',
+          description: 'Notifications for conference events',
+          importance: Importance.high,
+        ),
+      );
     } catch (e) {
       debugPrint('Local notifications init failed: $e');
     }
 
-    // Initialize JPush (极光推送) only when an AppKey is provided at build time.
+    // Initialize JPush only when an AppKey is provided at build time.
     if (_jpushAppKey.isEmpty) {
-      debugPrint('JPush disabled: JPUSH_APP_KEY not set (pass via --dart-define).');
+      debugPrint(
+        'JPush disabled: JPUSH_APP_KEY not set (pass via --dart-define).',
+      );
     } else {
       try {
         _jpush = JPush.newJPush();
@@ -100,7 +118,9 @@ class NotificationService extends GetxService {
 
       // Use timeout to prevent hanging when AppKey is invalid
       try {
-        final rid = await jpush.getRegistrationID().timeout(const Duration(seconds: 5));
+        final rid = await jpush.getRegistrationID().timeout(
+          const Duration(seconds: 5),
+        );
         if (rid.isNotEmpty) {
           debugPrint('JPush Registration ID: $rid');
           _registerPushToken(rid);
@@ -138,8 +158,10 @@ class NotificationService extends GetxService {
   Future<void> _handleNotificationTap(Map<String, dynamic> message) async {
     final extras = message['extras'] as Map<String, dynamic>? ?? {};
     final type = extras['type'] as String? ?? message['type'] as String? ?? '';
-    final eventId = extras['eventId'] as String? ?? message['eventId'] as String? ?? '';
-    final targetUrl = extras['targetUrl'] as String? ?? message['targetUrl'] as String? ?? '';
+    final eventId =
+        extras['eventId'] as String? ?? message['eventId'] as String? ?? '';
+    final targetUrl =
+        extras['targetUrl'] as String? ?? message['targetUrl'] as String? ?? '';
     await _navigateByNotification(
       type: type,
       eventId: eventId,
@@ -147,10 +169,7 @@ class NotificationService extends GetxService {
     );
   }
 
-  Future<void> _navigateToEvent(
-    String eventId, {
-    int initialTab = 0,
-  }) async {
+  Future<void> _navigateToEvent(String eventId, {int initialTab = 0}) async {
     try {
       final eventCtrl = Get.find<EventController>();
       if (!eventCtrl.allEvents.any((event) => event.id == eventId)) {
@@ -189,7 +208,8 @@ class NotificationService extends GetxService {
     required String eventId,
     String targetUrl = '',
   }) async {
-    if (targetUrl.isNotEmpty && Get.routeTree.matchRoute(targetUrl).route != null) {
+    if (targetUrl.isNotEmpty &&
+        Get.routeTree.matchRoute(targetUrl).route != null) {
       await Get.toNamed(targetUrl);
       return;
     }
@@ -223,15 +243,21 @@ class NotificationService extends GetxService {
 
   // JPush tag management (for event-based push targeting)
   Future<void> addEventTag(String eventId) async {
-    try { await _jpush?.addTags(['event_$eventId']); } catch (_) {}
+    try {
+      await _jpush?.addTags(['event_$eventId']);
+    } catch (_) {}
   }
 
   Future<void> removeEventTag(String eventId) async {
-    try { await _jpush?.deleteTags(['event_$eventId']); } catch (_) {}
+    try {
+      await _jpush?.deleteTags(['event_$eventId']);
+    } catch (_) {}
   }
 
   Future<void> setAlias(String userId) async {
-    try { await _jpush?.setAlias(userId); } catch (_) {}
+    try {
+      await _jpush?.setAlias(userId);
+    } catch (_) {}
   }
 
   // === Local Notifications ===
@@ -243,14 +269,22 @@ class NotificationService extends GetxService {
   }) async {
     await _localNotifications.show(
       id: DateTime.now().millisecondsSinceEpoch % 100000,
-      title: title, body: body, payload: payload,
+      title: title,
+      body: body,
+      payload: payload,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'conference_notifications', 'Conference Notifications',
-          importance: Importance.high, priority: Priority.high,
+          'conference_notifications',
+          'Conference Notifications',
+          importance: Importance.high,
+          priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
     );
   }
@@ -272,18 +306,24 @@ class NotificationService extends GetxService {
       scheduledDate: tzTime,
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
-          'schedule_reminders', 'Schedule Reminders',
-          importance: Importance.max, priority: Priority.high,
+          'schedule_reminders',
+          'Schedule Reminders',
+          importance: Importance.max,
+          priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       payload: payload,
     );
   }
 
-  /// 议程开始前15分钟本地提醒
+  /// Local reminder 15 minutes before a session starts.
   Future<void> scheduleSessionReminder({
     required String sessionId,
     required String titleEn,
@@ -292,34 +332,39 @@ class NotificationService extends GetxService {
     required String roomZh,
     required DateTime startTime,
   }) async {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     await scheduleNotification(
       id: sessionId.hashCode.abs() % 100000,
-      title: isZh ? '议程即将开始' : 'Session Starting Soon',
+      title: isZh ? 'Session Starting Soon' : 'Session Starting Soon',
       body: isZh
-          ? '"$titleZh" 将于15分钟后在 $roomZh 开始'
+          ? '"$titleEn" starts in 15 minutes at $roomEn'
           : '"$titleEn" starts in 15 minutes at $roomEn',
       scheduledTime: startTime.subtract(const Duration(minutes: 15)),
-      payload: jsonEncode({'type': 'schedule_reminder', 'sessionId': sessionId}),
+      payload: jsonEncode({
+        'type': 'schedule_reminder',
+        'sessionId': sessionId,
+      }),
     );
   }
 
-  /// 每日9:00日程汇总提醒
+  /// Daily schedule summary reminder at 9:00.
   Future<void> scheduleDailyReminder(DateTime date, int sessionCount) async {
-    final isZh = Get.locale?.languageCode == 'zh';
+    final isZh = Get.locale?.languageCode == '__zh_disabled__';
     await scheduleNotification(
       id: date.hashCode.abs() % 100000 + 90000,
-      title: isZh ? '今日会议日程' : "Today's Schedule",
+      title: isZh ? 'Today\'s Schedule' : "Today's Schedule",
       body: isZh
-          ? '您今天有 $sessionCount 场会议，请查看日程详情'
+          ? 'You have $sessionCount sessions today.'
           : 'You have $sessionCount sessions today.',
       scheduledTime: DateTime(date.year, date.month, date.day, 9, 0),
       payload: jsonEncode({'type': 'daily_reminder'}),
     );
   }
 
-  Future<void> cancelNotification(int id) async => _localNotifications.cancel(id: id);
-  Future<void> cancelAllNotifications() async => _localNotifications.cancelAll();
+  Future<void> cancelNotification(int id) async =>
+      _localNotifications.cancel(id: id);
+  Future<void> cancelAllNotifications() async =>
+      _localNotifications.cancelAll();
 
   // === Server sync ===
 
