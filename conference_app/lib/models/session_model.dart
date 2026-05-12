@@ -16,6 +16,9 @@ class SessionModel {
   final String speakerTitleZh;
   final String speakerAvatarUrl;
   final int dayIndex;
+  final String taskRole;
+  final String taskPersonName;
+  final String parentSessionTitle;
 
   const SessionModel({
     required this.id,
@@ -35,6 +38,9 @@ class SessionModel {
     this.speakerTitleZh = '',
     this.speakerAvatarUrl = '',
     this.dayIndex = 0,
+    this.taskRole = '',
+    this.taskPersonName = '',
+    this.parentSessionTitle = '',
   });
 
   String get timeRangeStr {

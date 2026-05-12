@@ -138,6 +138,28 @@ void main() {
       ),
       isTrue,
     );
+    final tasks = await DataService.getProgramTasks(
+      DataService.apscvir2026EventId,
+    );
+    expect(tasks.length, greaterThan(300));
+    expect(
+      tasks.any(
+        (session) =>
+            session.speakerName == 'Ning Ai' &&
+            session.parentSessionTitle ==
+                'Executive Master of Interventional Radiology 3' &&
+            session.roomEn == 'A1-A108',
+      ),
+      isTrue,
+    );
+    expect(
+      tasks.any(
+        (session) =>
+            session.speakerName == 'Chang Liu' &&
+            session.taskRole.toLowerCase().contains('moderator'),
+      ),
+      isTrue,
+    );
 
     await scheduleCtrl.toggleSessionModel(sessions.first);
     expect(

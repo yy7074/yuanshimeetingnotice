@@ -19,6 +19,7 @@ class MyScheduleScreen extends StatefulWidget {
 class _MyScheduleScreenState extends State<MyScheduleScreen> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  final TextEditingController _taskSearchController = TextEditingController();
 
   @override
   void initState() {
@@ -27,6 +28,12 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     // Refresh sessions when screen loads
     final scheduleCtrl = Get.find<ScheduleController>();
     scheduleCtrl.refreshSessions();
+  }
+
+  @override
+  void dispose() {
+    _taskSearchController.dispose();
+    super.dispose();
   }
 
   void _initializeNotifications() async {
@@ -80,7 +87,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
           children: [
             _buildHeader(textColor, primaryColor),
             Obx(() {
-              final days = scheduleCtrl.availableDays;
+              final days = scheduleCtrl.availableTaskDays;
               if (days.isEmpty) {
                 return Expanded(
                   child: _buildEmptyScheduleState(scheduleCtrl, primaryColor),
@@ -89,10 +96,12 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
               return Expanded(
                 child: Column(
                   children: [
+                    _buildTaskSearchField(scheduleCtrl, primaryColor),
                     _buildDateNavigation(primaryColor, scheduleCtrl, days),
                     Expanded(
                       child: Obx(() {
-                        final sessions = scheduleCtrl.sessionsForSelectedDay;
+                        final sessions =
+                            scheduleCtrl.taskSessionsForSelectedDay;
                         final selectedDayIndex =
                             scheduleCtrl.selectedDayIndex.value;
                         if (sessions.isEmpty) {
@@ -102,7 +111,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                             child: Center(
                               key: ValueKey('empty-$selectedDayIndex'),
                               child: Text(
-                                'No saved sessions for this day',
+                                'No assigned tasks for this day',
                                 style: TextStyle(color: Colors.grey.shade500),
                               ),
                             ),
@@ -156,16 +165,17 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     ScheduleController scheduleCtrl,
     Color primaryColor,
   ) {
+    final query = scheduleCtrl.taskSearchQuery.value.trim();
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.calendar_today, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.assignment_ind, size: 58, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text(
-              'No schedule yet',
+              query.isEmpty ? 'No assigned tasks found' : 'No matching tasks',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -174,25 +184,15 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Add APSCVIR 2026 sessions to build your personal agenda.',
+              query.isEmpty
+                  ? 'My Schedule now shows the logged-in expert’s assigned speaker and moderator tasks.'
+                  : 'Try another faculty name, topic, room, or time.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _addApscvirProgram(scheduleCtrl),
-              icon: const Icon(Icons.playlist_add_check, size: 20),
-              label: const Text('Add APSCVIR Program'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(240, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 18),
+            _buildTaskSearchField(scheduleCtrl, primaryColor, compact: true),
+            const SizedBox(height: 14),
             OutlinedButton.icon(
               onPressed: _openApscvirProgram,
               icon: const Icon(Icons.event_note_outlined, size: 18),
@@ -212,24 +212,54 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     );
   }
 
-  Future<void> _addApscvirProgram(ScheduleController scheduleCtrl) async {
-    final success = await scheduleCtrl.addAllSessionsFromEvent(
-      DataService.apscvir2026EventId,
-    );
-    if (success) {
-      _markApscvirEventSubscribed();
-    }
-    if (!mounted) return;
-
-    Get.snackbar(
-      success ? 'Added' : 'No Sessions Available',
-      success
-          ? 'APSCVIR 2026 sessions were added to My Schedule.'
-          : 'The local APSCVIR program could not be loaded.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: success ? AppColors.primary : Colors.orange.shade700,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(16),
+  Widget _buildTaskSearchField(
+    ScheduleController scheduleCtrl,
+    Color primaryColor, {
+    bool compact = false,
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, compact ? 0 : 10, 16, compact ? 0 : 8),
+      child: TextField(
+        controller: _taskSearchController,
+        onChanged: (value) {
+          scheduleCtrl.taskSearchQuery.value = value;
+          scheduleCtrl.selectedDayIndex.value = 0;
+        },
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          hintText: 'Search faculty, topic, room, or time',
+          prefixIcon: Icon(Icons.search, color: primaryColor, size: 20),
+          suffixIcon: scheduleCtrl.taskSearchQuery.value.isEmpty
+              ? null
+              : IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () {
+                    _taskSearchController.clear();
+                    scheduleCtrl.taskSearchQuery.value = '';
+                    scheduleCtrl.selectedDayIndex.value = 0;
+                  },
+                ),
+          filled: true,
+          fillColor: Colors.white,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: primaryColor.withAlpha(35)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: primaryColor.withAlpha(35)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: primaryColor),
+          ),
+        ),
+      ),
     );
   }
 
@@ -246,16 +276,6 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
       '/event_agenda',
       arguments: {'eventId': DataService.apscvir2026EventId, 'initialTab': 1},
     );
-  }
-
-  void _markApscvirEventSubscribed() {
-    if (!Get.isRegistered<EventController>()) return;
-    final eventCtrl = Get.find<EventController>();
-    if (!eventCtrl.subscribedEventIds.contains(
-      DataService.apscvir2026EventId,
-    )) {
-      eventCtrl.subscribedEventIds.add(DataService.apscvir2026EventId);
-    }
   }
 
   Widget _buildHeader(Color textColor, Color primaryColor) {
@@ -281,7 +301,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
             ),
           ),
           Obx(() {
-            if (scheduleCtrl.savedSessionIds.isEmpty) {
+            if (scheduleCtrl.displayedTaskSessions.isEmpty) {
               return const SizedBox(width: 48);
             }
             return GestureDetector(
@@ -470,7 +490,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     final isZh = Get.locale?.languageCode == '__zh_disabled__';
     if (days.isEmpty) return const SizedBox.shrink();
     final day = _selectedDate(ctrl, days);
-    final count = ctrl.sessionsForSelectedDay.length;
+    final count = ctrl.taskSessionsForSelectedDay.length;
 
     final weekDaysEn = [
       'Monday',
@@ -519,7 +539,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            isZh ? '$count FAVORITES' : '$count FAVORITES',
+            isZh ? '$count TASKS' : '$count TASKS',
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -533,7 +553,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
   }
 
   DateTime _selectedDate(ScheduleController ctrl, List<DateTime> days) {
-    final selectedSession = ctrl.mySessions.firstWhereOrNull(
+    final selectedSession = ctrl.displayedTaskSessions.firstWhereOrNull(
       (session) => session.dayIndex == ctrl.selectedDayIndex.value,
     );
     if (selectedSession != null) {
@@ -554,7 +574,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     DateTime day,
     int fallbackIndex,
   ) {
-    final session = ctrl.mySessions.firstWhereOrNull(
+    final session = ctrl.displayedTaskSessions.firstWhereOrNull(
       (item) => _isSameDay(item.startTime, day),
     );
     return session?.dayIndex ?? fallbackIndex;
@@ -573,26 +593,28 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     final isZh = Get.locale?.languageCode == '__zh_disabled__';
     final isKeynote = session.type == SessionType.keynote;
     final locationStr = '${session.roomEn} • ${session.timeRangeStr}';
+    final role = session.taskRole.isEmpty ? 'Task' : session.taskRole;
+    final parentTitle = session.parentSessionTitle;
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: 48,
+            width: 36,
             child: Column(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: isKeynote ? primaryColor : Colors.grey.shade200,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isKeynote ? Icons.schedule : Icons.biotech,
+                    isKeynote ? Icons.schedule : Icons.assignment_ind,
                     color: isKeynote ? Colors.white : Colors.grey.shade600,
-                    size: 20,
+                    size: 16,
                   ),
                 ),
                 if (!isLast)
@@ -613,6 +635,19 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _taskChip(label: role, color: primaryColor),
+                      if (session.speakerName.isNotEmpty)
+                        _taskChip(
+                          label: session.speakerName,
+                          color: AppColors.inkSoft,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -620,10 +655,10 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                         child: Text(
                           session.titleEn,
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: AppColors.ink,
-                            height: 1.2,
+                            height: 1.25,
                           ),
                         ),
                       ),
@@ -646,10 +681,10 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                             child: Icon(
                               Icons.calendar_month,
                               color: primaryColor,
-                              size: 24,
+                              size: 21,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           GestureDetector(
                             onTap: () {
                               _showNotification(
@@ -674,58 +709,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                             child: Icon(
                               Icons.notifications_active,
                               color: primaryColor,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () {
-                              final scheduleCtrl =
-                                  Get.find<ScheduleController>();
-                              Get.dialog(
-                                AlertDialog(
-                                  title: Text(
-                                    isZh ? 'Remove Session' : 'Remove Session',
-                                  ),
-                                  content: Text(
-                                    isZh
-                                        ? 'Remove "${session.titleEn}" from your schedule?'
-                                        : 'Remove "${session.titleEn}" from your schedule?',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Get.back(),
-                                      child: Text(isZh ? 'Cancel' : 'Cancel'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        Get.back();
-                                        scheduleCtrl.toggleSession(session.id);
-                                        Get.snackbar(
-                                          isZh ? 'Removed' : 'Removed',
-                                          isZh
-                                              ? 'Session removed from schedule'
-                                              : 'Session removed from schedule',
-                                          snackPosition: SnackPosition.BOTTOM,
-                                          backgroundColor: primaryColor,
-                                          colorText: Colors.white,
-                                          margin: const EdgeInsets.all(16),
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red.shade400,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: Text(isZh ? 'Remove' : 'Remove'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: Icon(
-                              Icons.delete_outline,
-                              color: Colors.red.shade300,
-                              size: 22,
+                              size: 21,
                             ),
                           ),
                         ],
@@ -753,40 +737,31 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  if (session.speakerAvatarUrl.isNotEmpty)
-                    Row(
-                      children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                            color: Colors.grey.shade100,
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: Image.network(
-                            session.speakerAvatarUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.person,
-                              size: 20,
-                              color: Colors.grey.shade400,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          session.speakerName,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
+                  if (parentTitle.isNotEmpty &&
+                      parentTitle != session.titleEn) ...[
+                    const SizedBox(height: 7),
+                    Text(
+                      parentTitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                        height: 1.35,
+                      ),
                     ),
+                  ],
+                  if (session.speakerTitleEn.isNotEmpty) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      session.speakerTitleEn,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey.shade500,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -796,19 +771,39 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     );
   }
 
+  Widget _taskChip({required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(18),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withAlpha(55)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          height: 1,
+        ),
+      ),
+    );
+  }
+
   void _exportAllToCalendar(
     ScheduleController scheduleCtrl,
     Color primaryColor,
   ) {
     final isZh = Get.locale?.languageCode == '__zh_disabled__';
-    final sessions = scheduleCtrl.allSavedSessions;
+    final sessions = scheduleCtrl.displayedTaskSessions;
 
     if (sessions.isEmpty) {
       Get.snackbar(
         isZh ? 'No Schedule' : 'No Schedule',
         isZh
-            ? 'Please add sessions to your schedule first'
-            : 'Please add sessions to your schedule first',
+            ? 'No assigned tasks are available to export'
+            : 'No assigned tasks are available to export',
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
       );
@@ -881,7 +876,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
               child: OutlinedButton(
                 onPressed: () {
                   Get.back();
-                  final daySessions = scheduleCtrl.sessionsForSelectedDay;
+                  final daySessions = scheduleCtrl.taskSessionsForSelectedDay;
                   _doExportAll(daySessions, primaryColor);
                 },
                 style: OutlinedButton.styleFrom(
@@ -963,7 +958,12 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     for (final session in sessions) {
       final event = Event(
         title: session.titleEn,
-        description: '${session.speakerName} - ${session.speakerTitleEn}',
+        description: [
+          if (session.taskRole.isNotEmpty) session.taskRole,
+          if (session.speakerName.isNotEmpty) session.speakerName,
+          if (session.parentSessionTitle.isNotEmpty) session.parentSessionTitle,
+          if (session.speakerTitleEn.isNotEmpty) session.speakerTitleEn,
+        ].join(' - '),
         location: session.roomEn,
         startDate: session.startTime,
         endDate: session.endTime,

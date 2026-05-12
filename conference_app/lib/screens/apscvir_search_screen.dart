@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
+import '../models/session_model.dart';
 import '../models/site_content_model.dart';
 import '../services/apscvir_site_service.dart';
+import '../services/data_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
 import 'apscvir_content_screen.dart';
@@ -18,7 +20,14 @@ class ApscvirSearchScreen extends StatefulWidget {
 
 class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
   final _controller = TextEditingController();
+  late final Future<_SearchData> _searchDataFuture;
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchDataFuture = _loadSearchData();
+  }
 
   @override
   void dispose() {
@@ -28,18 +37,19 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<SiteManifest>(
-      future: ApscvirSiteService.loadManifest(),
+    return FutureBuilder<_SearchData>(
+      future: _searchDataFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final manifest = snapshot.data!;
+        final data = snapshot.data!;
+        final manifest = data.manifest;
         const primary = AppColors.primary;
         final hideLogin =
             Get.isRegistered<AuthController>() &&
             Get.find<AuthController>().isLoggedIn;
-        final results = _results(manifest, hideLogin: hideLogin);
+        final results = _results(data, hideLogin: hideLogin);
         return Scaffold(
           backgroundColor: AppColors.background,
           body: SafeArea(
@@ -79,8 +89,7 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
                         controller: _controller,
                         onChanged: (value) => setState(() => _query = value),
                         decoration: InputDecoration(
-                          hintText:
-                              'Search program, venue, faculty, registration...',
+                          hintText: 'Search program, venue, faculty, room...',
                           prefixIcon: Icon(Icons.search, color: primary),
                           suffixIcon: _query.isEmpty
                               ? null
@@ -111,31 +120,49 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 10),
                           itemBuilder: (context, index) {
-                            final page = results[index];
+                            final result = results[index];
                             return ListTile(
                               tileColor: Colors.white,
+                              minLeadingWidth: 28,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(color: primary.withAlpha(32)),
                               ),
-                              leading: Icon(Icons.search, color: primary),
+                              leading: Icon(
+                                result.icon,
+                                color: primary,
+                                size: 22,
+                              ),
                               title: Text(
-                                page.title,
+                                result.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  height: 1.25,
                                 ),
                               ),
                               subtitle: Text(
-                                _snippet(page),
+                                result.subtitle,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.35,
+                                ),
                               ),
                               trailing: Icon(
-                                isApscvirVenuePage(page)
+                                result.opensExternal
                                     ? Icons.open_in_new
                                     : Icons.chevron_right,
+                                size: 22,
                               ),
-                              onTap: () => _openSearchResult(page, manifest),
+                              onTap: () => _openSearchResult(result, manifest),
                             );
                           },
                         ),
@@ -148,28 +175,132 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
     );
   }
 
-  List<SitePage> _results(SiteManifest manifest, {required bool hideLogin}) {
+  Future<_SearchData> _loadSearchData() async {
+    final manifest = await ApscvirSiteService.loadManifest();
+    final sessions = await DataService.getDetailedSessions(
+      DataService.apscvir2026EventId,
+    );
+    final tasks = await DataService.getProgramTasks(
+      DataService.apscvir2026EventId,
+    );
+    return _SearchData(manifest: manifest, sessions: sessions, tasks: tasks);
+  }
+
+  List<_SearchResult> _results(_SearchData data, {required bool hideLogin}) {
     final q = _query.trim().toLowerCase();
-    final pages = hideLogin
-        ? manifest.pages.where((page) => !_isLoginPage(page)).toList()
-        : manifest.pages;
-    if (q.isEmpty) return pages;
-    return pages.where((page) {
-      return page.title.toLowerCase().contains(q) ||
-          page.plainText.toLowerCase().contains(q);
+    final pages = _visibleSearchPages(data.manifest, hideLogin: hideLogin);
+    if (q.isEmpty) {
+      return pages.map(_pageResult).toList();
+    }
+
+    final results = <_SearchResult>[];
+    final seen = <String>{};
+    void addResult(_SearchResult result) {
+      if (seen.add(result.key)) results.add(result);
+    }
+
+    for (final task in data.tasks) {
+      if (_matchesSession(task, q)) {
+        addResult(_taskResult(task));
+      }
+      if (results.length >= 80) break;
+    }
+
+    for (final session in data.sessions) {
+      if (_matchesSession(session, q)) {
+        addResult(_sessionResult(session));
+      }
+      if (results.length >= 100) break;
+    }
+
+    for (final page in pages) {
+      if (page.title.toLowerCase().contains(q) ||
+          page.plainText.toLowerCase().contains(q)) {
+        addResult(_pageResult(page));
+      }
+    }
+
+    return results;
+  }
+
+  List<SitePage> _visibleSearchPages(
+    SiteManifest manifest, {
+    required bool hideLogin,
+  }) {
+    return manifest.pages.where((page) {
+      final title = page.title.trim().toLowerCase();
+      if (hideLogin && title == 'log in') return false;
+      if (title == 'registration' || title == 'visa') return false;
+      if (title == 'abstract' || title == 'abstract results') return false;
+      if (title == 'grant application') return false;
+      return true;
     }).toList();
   }
 
-  bool _isLoginPage(SitePage page) {
-    return page.title.trim().toLowerCase() == 'log in';
+  bool _matchesSession(SessionModel session, String query) {
+    return [
+      session.titleEn,
+      session.parentSessionTitle,
+      session.descriptionEn,
+      session.speakerName,
+      session.taskPersonName,
+      session.speakerTitleEn,
+      session.roomEn,
+      session.taskRole,
+      session.timeRangeStr,
+    ].any((value) => value.toLowerCase().contains(query));
   }
 
-  String _snippet(SitePage page) {
+  _SearchResult _pageResult(SitePage page) {
+    return _SearchResult(
+      key: 'page:${page.id}',
+      title: page.title,
+      subtitle: _pageSnippet(page),
+      icon: isApscvirVenuePage(page) ? Icons.open_in_new : Icons.article,
+      page: page,
+      opensExternal: isApscvirVenuePage(page),
+    );
+  }
+
+  _SearchResult _sessionResult(SessionModel session) {
+    return _SearchResult(
+      key: 'session:${session.id}',
+      title: session.titleEn,
+      subtitle: [
+        session.roomEn,
+        session.timeRangeStr,
+        if (session.speakerName.isNotEmpty &&
+            session.speakerName != 'APSCVIR Faculty')
+          session.speakerName,
+      ].join(' · '),
+      icon: Icons.event_note,
+      session: session,
+    );
+  }
+
+  _SearchResult _taskResult(SessionModel session) {
+    final person = session.speakerName.isEmpty ? 'TBD' : session.speakerName;
+    return _SearchResult(
+      key: 'task:${session.id}',
+      title: session.titleEn,
+      subtitle: [
+        session.timeRangeStr,
+        session.roomEn,
+        person,
+        if (session.taskRole.isNotEmpty) session.taskRole,
+        if (session.parentSessionTitle.isNotEmpty) session.parentSessionTitle,
+      ].join(' · '),
+      icon: Icons.assignment_ind,
+      session: session,
+    );
+  }
+
+  String _pageSnippet(SitePage page) {
     final text = page.plainText.trim();
     if (text.isEmpty) {
       return 'Saved locally from the official APSCVIR 2026 site.';
     }
-    return text.length > 140 ? '${text.substring(0, 140)}...' : text;
+    return text.length > 80 ? '${text.substring(0, 80)}...' : text;
   }
 
   void _goBack() {
@@ -181,12 +312,52 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
   }
 }
 
-void _openSearchResult(SitePage page, SiteManifest manifest) {
-  if (isApscvirVenuePage(page)) {
+void _openSearchResult(_SearchResult result, SiteManifest manifest) {
+  final page = result.page;
+  if (page != null && isApscvirVenuePage(page)) {
     openApscvirVenueWebsite();
     return;
   }
-  Get.to(() => ApscvirContentScreen(page: page, manifest: manifest));
+  final session = result.session;
+  if (session != null) {
+    Get.to(() => ApscvirProgramDetailScreen(session: session));
+    return;
+  }
+  if (page != null) {
+    Get.to(() => ApscvirContentScreen(page: page, manifest: manifest));
+  }
+}
+
+class _SearchData {
+  final SiteManifest manifest;
+  final List<SessionModel> sessions;
+  final List<SessionModel> tasks;
+
+  const _SearchData({
+    required this.manifest,
+    required this.sessions,
+    required this.tasks,
+  });
+}
+
+class _SearchResult {
+  final String key;
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final SitePage? page;
+  final SessionModel? session;
+  final bool opensExternal;
+
+  const _SearchResult({
+    required this.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    this.page,
+    this.session,
+    this.opensExternal = false,
+  });
 }
 
 class _SearchEmptyState extends StatelessWidget {

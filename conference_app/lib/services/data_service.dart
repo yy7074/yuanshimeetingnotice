@@ -11,6 +11,7 @@ class DataService {
       'assets/apscvir2026/site/pages/1814797-detailed-program.html';
   static final DateTime _apscvirStartDate = DateTime(2026, 6, 11);
   static List<SessionModel>? _cachedDetailedSessions;
+  static List<SessionModel>? _cachedProgramTasks;
 
   // Local fallback user for offline/dev auth only.
   static const demoUser = UserModel(
@@ -78,6 +79,22 @@ class DataService {
     final fallback = getSessions(eventId);
     _cachedDetailedSessions = fallback;
     return fallback;
+  }
+
+  static Future<List<SessionModel>> getProgramTasks(String eventId) async {
+    if (eventId != apscvir2026EventId) return [];
+    final cached = _cachedProgramTasks;
+    if (cached != null) return cached;
+
+    try {
+      final html = await rootBundle.loadString(_apscvirDetailedProgramAsset);
+      final parsed = _parseDetailedProgramData(html).tasks;
+      _cachedProgramTasks = parsed;
+      return parsed;
+    } catch (_) {
+      _cachedProgramTasks = const [];
+      return const [];
+    }
   }
 
   static final List<SessionModel> _apscvir2026ProgramAtGlanceSessions = [
@@ -212,21 +229,38 @@ class DataService {
   ];
 
   static List<SessionModel> _parseDetailedProgram(String html) {
+    return _parseDetailedProgramData(html).sessions;
+  }
+
+  static _DetailedProgramData _parseDetailedProgramData(String html) {
     final sessions = <SessionModel>[];
+    final tasks = <SessionModel>[];
     var currentDate = _apscvirStartDate;
     var currentRoom = '';
 
-    final markerPattern = RegExp(
-      r'<div class="program-style-time"[\s\S]*?</div>|'
-      r'<div class="program-style-place"[^>]*>[\s\S]*?</div>|'
-      r'<div class="program-style-title[\s\S]*?<div class="program-style-line"',
-    );
+    final markers = <_ProgramMarker>[
+      for (final match in RegExp(
+        r'<div class="program-style-time"[\s\S]*?</div>',
+      ).allMatches(html))
+        _ProgramMarker(match.start, match.end, _ProgramMarkerType.date),
+      for (final match in RegExp(
+        r'<div class="program-style-place"[^>]*>[\s\S]*?</div>',
+      ).allMatches(html))
+        _ProgramMarker(match.start, match.end, _ProgramMarkerType.room),
+      for (final match in RegExp(
+        r'<div class="program-style-title\b[^>]*>',
+      ).allMatches(html))
+        _ProgramMarker(match.start, match.end, _ProgramMarkerType.session),
+    ]..sort((a, b) => a.start.compareTo(b.start));
 
-    for (final match in markerPattern.allMatches(html)) {
-      final marker = match.group(0) ?? '';
+    for (var i = 0; i < markers.length; i += 1) {
+      final marker = markers[i];
+      final markerHtml = html.substring(marker.start, marker.end);
 
-      if (marker.contains('program-style-time')) {
-        final dateMatch = RegExp(r'(\d{4})-(\d{2})-(\d{2})').firstMatch(marker);
+      if (marker.type == _ProgramMarkerType.date) {
+        final dateMatch = RegExp(
+          r'(\d{4})-(\d{2})-(\d{2})',
+        ).firstMatch(markerHtml);
         if (dateMatch != null) {
           currentDate = DateTime(
             int.parse(dateMatch.group(1)!),
@@ -237,16 +271,20 @@ class DataService {
         continue;
       }
 
-      if (marker.contains('program-style-place')) {
-        final room = _cleanHtmlText(marker);
+      if (marker.type == _ProgramMarkerType.room) {
+        final room = _cleanHtmlText(markerHtml);
         if (room.isNotEmpty) currentRoom = room;
         continue;
       }
 
+      final sectionEnd = i + 1 < markers.length
+          ? markers[i + 1].start
+          : html.length;
+      final section = html.substring(marker.start, sectionEnd);
       final timeText = _cleanHtmlText(
         RegExp(
               r'<div class="title-time">\s*([^<]+?)\s*</div>',
-            ).firstMatch(marker)?.group(1) ??
+            ).firstMatch(section)?.group(1) ??
             '',
       );
       final rangeMatch = RegExp(
@@ -257,7 +295,7 @@ class DataService {
       final titleArea =
           RegExp(
             r'<div class="title-name">([\s\S]*?)</div>',
-          ).firstMatch(marker)?.group(1) ??
+          ).firstMatch(section)?.group(1) ??
           '';
       final title = RegExp(r'<p>([\s\S]*?)</p>')
           .allMatches(titleArea)
@@ -272,12 +310,42 @@ class DataService {
         currentDate.month,
         currentDate.day,
       ).difference(_apscvirStartDate).inDays;
+      final sessionId =
+          'apscvir-2026-${_dateId(currentDate)}-${_slug(currentRoom)}-'
+          '${rangeMatch.group(1)!.replaceAll(':', '')}-${_slug(title)}';
+      final people = _parseSessionPeople(section);
+      final contentTasks = _parseContentTasks(
+        section: section,
+        sessionId: sessionId,
+        parentTitle: title,
+        currentRoom: currentRoom,
+        currentDate: currentDate,
+        parentStart: start,
+        parentEnd: end.isAfter(start)
+            ? end
+            : start.add(const Duration(hours: 1)),
+        dayIndex: dayIndex,
+      );
+      final peopleTasks = _buildPeopleTasks(
+        people: people,
+        sessionId: sessionId,
+        parentTitle: title,
+        currentRoom: currentRoom,
+        start: start,
+        end: end.isAfter(start) ? end : start.add(const Duration(hours: 1)),
+        dayIndex: dayIndex,
+      );
+      final facultyNames = <String>{};
+      for (final person in people) {
+        if (person.name.isNotEmpty) facultyNames.add(person.name);
+      }
+      for (final task in contentTasks) {
+        if (task.speakerName.isNotEmpty) facultyNames.add(task.speakerName);
+      }
 
       sessions.add(
         SessionModel(
-          id:
-              'apscvir-2026-${_dateId(currentDate)}-${_slug(currentRoom)}-'
-              '${rangeMatch.group(1)!.replaceAll(':', '')}-${_slug(title)}',
+          id: sessionId,
           eventId: apscvir2026EventId,
           titleEn: title,
           titleZh: title,
@@ -291,14 +359,201 @@ class DataService {
               : start.add(const Duration(hours: 1)),
           type: _sessionTypeFor(title),
           dayIndex: dayIndex,
-          speakerName: 'APSCVIR Faculty',
+          speakerName: facultyNames.isEmpty
+              ? 'APSCVIR Faculty'
+              : facultyNames.join(', '),
           speakerTitleEn: 'APSCVIR 2026',
           speakerTitleZh: 'APSCVIR 2026',
         ),
       );
+      tasks.addAll(peopleTasks);
+      tasks.addAll(contentTasks);
     }
 
-    return sessions;
+    return _DetailedProgramData(sessions: sessions, tasks: tasks);
+  }
+
+  static List<_ProgramPerson> _parseSessionPeople(String section) {
+    final peopleBlock =
+        RegExp(
+          r'<div class="program-style-people">([\s\S]*?)<div class="program-style-line">',
+        ).firstMatch(section)?.group(1) ??
+        '';
+    if (peopleBlock.isEmpty) return const [];
+
+    final result = <_ProgramPerson>[];
+    final pipStarts = RegExp(
+      r'<div class="pip-content"[\s\S]*?>',
+    ).allMatches(peopleBlock).map((match) => match.start).toList();
+    final blocks = pipStarts.isEmpty
+        ? <String>[peopleBlock]
+        : [
+            for (var i = 0; i < pipStarts.length; i += 1)
+              peopleBlock.substring(
+                pipStarts[i],
+                i + 1 < pipStarts.length
+                    ? pipStarts[i + 1]
+                    : peopleBlock.length,
+              ),
+          ];
+
+    for (final block in blocks) {
+      final roleText = _cleanHtmlText(
+        RegExp(
+              r'<span[^>]*>\s*([^<：:]+)[：:]\s*</span>',
+            ).firstMatch(block)?.group(1) ??
+            '',
+      );
+      final role = roleText.isEmpty ? 'Faculty' : roleText;
+      for (final anchorMatch in RegExp(
+        r'<a\b[^>]*>[\s\S]*?</a>',
+      ).allMatches(block)) {
+        final anchor = anchorMatch.group(0) ?? '';
+        final name = _extractAnchorName(anchor);
+        if (name.isEmpty) continue;
+        final fullText = _cleanHtmlText(anchor);
+        final organization = fullText.startsWith(name)
+            ? fullText.substring(name.length).trim()
+            : '';
+        result.add(
+          _ProgramPerson(role: role, name: name, organization: organization),
+        );
+      }
+    }
+
+    return result;
+  }
+
+  static List<SessionModel> _buildPeopleTasks({
+    required List<_ProgramPerson> people,
+    required String sessionId,
+    required String parentTitle,
+    required String currentRoom,
+    required DateTime start,
+    required DateTime end,
+    required int dayIndex,
+  }) {
+    return [
+      for (final person in people)
+        SessionModel(
+          id: '$sessionId-${_slug(person.role)}-${_slug(person.name)}',
+          eventId: apscvir2026EventId,
+          titleEn: parentTitle,
+          titleZh: parentTitle,
+          descriptionEn: parentTitle,
+          descriptionZh: parentTitle,
+          roomEn: currentRoom,
+          roomZh: currentRoom,
+          startTime: start,
+          endTime: end,
+          type: _sessionTypeFor(parentTitle),
+          speakerName: person.name,
+          speakerTitleEn: person.organization,
+          speakerTitleZh: person.organization,
+          dayIndex: dayIndex,
+          taskRole: person.role,
+          taskPersonName: person.name,
+          parentSessionTitle: parentTitle,
+        ),
+    ];
+  }
+
+  static List<SessionModel> _parseContentTasks({
+    required String section,
+    required String sessionId,
+    required String parentTitle,
+    required String currentRoom,
+    required DateTime currentDate,
+    required DateTime parentStart,
+    required DateTime parentEnd,
+    required int dayIndex,
+  }) {
+    final wrapperStarts = RegExp(
+      r'<div class="program-style-content-wrapper">',
+    ).allMatches(section).map((match) => match.start).toList();
+    if (wrapperStarts.isEmpty) return const [];
+
+    final tasks = <SessionModel>[];
+    for (var i = 0; i < wrapperStarts.length; i += 1) {
+      final start = wrapperStarts[i];
+      final end = i + 1 < wrapperStarts.length
+          ? wrapperStarts[i + 1]
+          : section.length;
+      final wrapper = section.substring(start, end);
+      final timeText = _cleanHtmlText(
+        RegExp(
+              r'<div class="time common">([\s\S]*?)</div>',
+            ).firstMatch(wrapper)?.group(1) ??
+            '',
+      );
+      final topic = _cleanHtmlText(
+        RegExp(
+              r'<div class="type">[\s\S]*?<p>([\s\S]*?)</p>',
+            ).firstMatch(wrapper)?.group(1) ??
+            '',
+      );
+      final anchor =
+          RegExp(r'<a\b[^>]*>[\s\S]*?</a>').firstMatch(wrapper)?.group(0) ?? '';
+      final speaker = _extractAnchorName(anchor);
+      final organization = _cleanHtmlText(
+        RegExp(
+              r'<span class="td-org">([\s\S]*?)</span>',
+            ).firstMatch(wrapper)?.group(1) ??
+            '',
+      );
+      if (topic.isEmpty && speaker.isEmpty) continue;
+
+      final range = RegExp(
+        r'(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})',
+      ).firstMatch(timeText);
+      final taskStart = range == null
+          ? parentStart
+          : _timeOnDate(currentDate, range.group(1)!);
+      final parsedEnd = range == null
+          ? parentEnd
+          : _timeOnDate(currentDate, range.group(2)!);
+      final taskEnd = parsedEnd.isAfter(taskStart)
+          ? parsedEnd
+          : taskStart.add(const Duration(minutes: 8));
+      final title = topic.isEmpty ? parentTitle : topic;
+
+      tasks.add(
+        SessionModel(
+          id:
+              '$sessionId-talk-${timeText.replaceAll(':', '').replaceAll('-', '')}-'
+              '${_slug(speaker)}-${_slug(title)}',
+          eventId: apscvir2026EventId,
+          titleEn: title,
+          titleZh: title,
+          descriptionEn: parentTitle,
+          descriptionZh: parentTitle,
+          roomEn: currentRoom,
+          roomZh: currentRoom,
+          startTime: taskStart,
+          endTime: taskEnd,
+          type: _sessionTypeFor(title),
+          speakerName: speaker,
+          speakerTitleEn: organization,
+          speakerTitleZh: organization,
+          dayIndex: dayIndex,
+          taskRole: speaker.isEmpty ? 'Agenda' : 'Speaker',
+          taskPersonName: speaker,
+          parentSessionTitle: parentTitle,
+        ),
+      );
+    }
+
+    return tasks;
+  }
+
+  static String _extractAnchorName(String anchorHtml) {
+    if (anchorHtml.isEmpty) return '';
+    final raw = anchorHtml.replaceAll(RegExp(r'<!--[\s\S]*?-->'), '<!--');
+    final match = RegExp(
+      r'<a\b[^>]*>\s*([^<]+?)\s*(?:<!--|</a>)',
+    ).firstMatch(raw);
+    if (match != null) return _cleanHtmlText(match.group(1) ?? '');
+    return _cleanHtmlText(anchorHtml);
   }
 
   static SessionModel _session({
@@ -368,6 +623,14 @@ class DataService {
         .replaceAll(RegExp(r'<[^>]+>'), ' ')
         .replaceAll('&nbsp;', ' ')
         .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&rsquo;', "'")
+        .replaceAll('&lsquo;', "'")
+        .replaceAll('&ldquo;', '"')
+        .replaceAll('&rdquo;', '"')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
@@ -384,4 +647,33 @@ class DataService {
         .replaceAll(RegExp(r'^-+|-+$'), '');
     return slug.isEmpty ? 'session' : slug;
   }
+}
+
+class _DetailedProgramData {
+  final List<SessionModel> sessions;
+  final List<SessionModel> tasks;
+
+  const _DetailedProgramData({required this.sessions, required this.tasks});
+}
+
+class _ProgramMarker {
+  final int start;
+  final int end;
+  final _ProgramMarkerType type;
+
+  const _ProgramMarker(this.start, this.end, this.type);
+}
+
+enum _ProgramMarkerType { date, room, session }
+
+class _ProgramPerson {
+  final String role;
+  final String name;
+  final String organization;
+
+  const _ProgramPerson({
+    required this.role,
+    required this.name,
+    required this.organization,
+  });
 }

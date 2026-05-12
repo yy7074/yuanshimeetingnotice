@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
 import '../models/session_model.dart';
 import '../services/api_service.dart';
 import '../services/data_service.dart';
@@ -12,6 +13,8 @@ class ScheduleController extends GetxController {
   final savedSessionIds = <String>[].obs;
   final selectedDayIndex = 0.obs;
   final allSessions = <SessionModel>[].obs;
+  final expertTaskSessions = <SessionModel>[].obs;
+  final taskSearchQuery = ''.obs;
 
   @override
   void onInit() {
@@ -21,19 +24,26 @@ class ScheduleController extends GetxController {
   }
 
   Future<void> _initializeSchedule() async {
+    final initialEventIds = _storage.subscribedEventIds.toList();
     await refreshSessions();
-    await syncJoinedEventSchedules();
+    await syncJoinedEventSchedules(eventIds: initialEventIds);
   }
 
   Future<void> refreshSessions() async {
     final storage = Get.find<StorageService>();
-    final eventIds = storage.subscribedEventIds;
+    final eventIds = {
+      DataService.apscvir2026EventId,
+      ...storage.subscribedEventIds,
+    };
     final sessions = <SessionModel>[];
 
     for (final eventId in eventIds) {
       sessions.addAll(await _fetchSessionsForEvent(eventId));
     }
-    allSessions.value = sessions;
+    allSessions.value = _dedupeSessions(sessions);
+    expertTaskSessions.value = await DataService.getProgramTasks(
+      DataService.apscvir2026EventId,
+    );
   }
 
   bool isSaved(String sessionId) => savedSessionIds.contains(sessionId);
@@ -304,6 +314,109 @@ class ScheduleController extends GetxController {
     return list;
   }
 
+  List<SessionModel> get displayedTaskSessions {
+    final query = taskSearchQuery.value.trim();
+    final source = expertTaskSessions.toList();
+    final sessions = query.isEmpty
+        ? _currentUserTaskSessions(source)
+        : source.where((session) => _matchesTaskQuery(session, query)).toList();
+    sessions.sort((a, b) {
+      final timeCompare = a.startTime.compareTo(b.startTime);
+      if (timeCompare != 0) return timeCompare;
+      return a.roomEn.compareTo(b.roomEn);
+    });
+    return sessions;
+  }
+
+  List<SessionModel> get taskSessionsForSelectedDay {
+    final sessions = displayedTaskSessions
+        .where((s) => s.dayIndex == selectedDayIndex.value)
+        .toList();
+    if (sessions.isNotEmpty) {
+      return sessions..sort((a, b) => a.startTime.compareTo(b.startTime));
+    }
+
+    final days = availableTaskDays;
+    final selectedIndex = selectedDayIndex.value;
+    if (selectedIndex >= 0 && selectedIndex < days.length) {
+      final day = days[selectedIndex];
+      return displayedTaskSessions
+          .where(
+            (s) =>
+                s.startTime.year == day.year &&
+                s.startTime.month == day.month &&
+                s.startTime.day == day.day,
+          )
+          .toList()
+        ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    }
+
+    return sessions;
+  }
+
+  List<DateTime> get availableTaskDays {
+    final days = <DateTime>{};
+    for (final session in displayedTaskSessions) {
+      days.add(
+        DateTime(
+          session.startTime.year,
+          session.startTime.month,
+          session.startTime.day,
+        ),
+      );
+    }
+    final list = days.toList()..sort();
+    return list;
+  }
+
+  List<SessionModel> _currentUserTaskSessions(List<SessionModel> source) {
+    if (!Get.isRegistered<AuthController>()) return const [];
+    final user = Get.find<AuthController>().currentUser.value;
+    if (user == null) return const [];
+    final names = [user.nameEn, user.nameZh, user.email.split('@').first]
+        .map(_normalizePersonName)
+        .where((name) => name.length >= 3 && name != 'apscvirdelegate')
+        .toSet();
+    if (names.isEmpty) return const [];
+
+    return source.where((session) {
+      final candidates = [
+        session.taskPersonName,
+        session.speakerName,
+      ].map(_normalizePersonName).where((name) => name.isNotEmpty);
+      return candidates.any(
+        (candidate) => names.any(
+          (name) =>
+              candidate == name ||
+              candidate.contains(name) ||
+              name.contains(candidate),
+        ),
+      );
+    }).toList();
+  }
+
+  bool _matchesTaskQuery(SessionModel session, String query) {
+    final q = query.toLowerCase();
+    return [
+      session.titleEn,
+      session.parentSessionTitle,
+      session.descriptionEn,
+      session.speakerName,
+      session.taskPersonName,
+      session.speakerTitleEn,
+      session.roomEn,
+      session.taskRole,
+      session.timeRangeStr,
+    ].any((value) => value.toLowerCase().contains(q));
+  }
+
+  String _normalizePersonName(String value) {
+    return value.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9\u4e00-\u9fa5]+'),
+      '',
+    );
+  }
+
   Future<void> _scheduleReminder(SessionModel session) async {
     try {
       final notifService = Get.find<NotificationService>();
@@ -339,6 +452,17 @@ class ScheduleController extends GetxController {
       }
     } catch (_) {}
     return DataService.getSessions(eventId);
+  }
+
+  List<SessionModel> _dedupeSessions(List<SessionModel> sessions) {
+    final seen = <String>{};
+    final result = <SessionModel>[];
+    for (final session in sessions) {
+      if (seen.add(session.id)) {
+        result.add(session);
+      }
+    }
+    return result;
   }
 
   Future<void> _scheduleDailyReminders() async {
@@ -390,6 +514,9 @@ class ScheduleController extends GetxController {
       speakerTitleEn: json['speakerTitleEn'] ?? speaker?['titleEn'] ?? '',
       speakerTitleZh: json['speakerTitleZh'] ?? speaker?['titleZh'] ?? '',
       speakerAvatarUrl: json['speakerAvatarUrl'] ?? speaker?['avatarUrl'] ?? '',
+      taskRole: json['taskRole'] ?? '',
+      taskPersonName: json['taskPersonName'] ?? '',
+      parentSessionTitle: json['parentSessionTitle'] ?? '',
     );
   }
 }

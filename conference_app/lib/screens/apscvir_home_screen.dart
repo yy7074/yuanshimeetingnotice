@@ -93,7 +93,7 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 72,
+      height: 64,
       color: AppColors.primary,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
@@ -102,14 +102,14 @@ class _TopBar extends StatelessWidget {
             'APSCVIR 2026',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w900,
               letterSpacing: 0,
             ),
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white, size: 36),
+            icon: const Icon(Icons.menu, color: Colors.white, size: 30),
             onPressed: () => _showSiteMenu(context, manifest),
             tooltip: 'Menu',
           ),
@@ -199,7 +199,7 @@ class _MyScheduleTile extends StatelessWidget {
     return InkWell(
       onTap: () => Get.toNamed('/my_schedule'),
       child: Container(
-        height: 104,
+        height: 90,
         decoration: BoxDecoration(
           color: AppColors.accent,
           borderRadius: BorderRadius.circular(2),
@@ -216,7 +216,7 @@ class _MyScheduleTile extends StatelessWidget {
               child: Icon(
                 Icons.play_arrow_rounded,
                 color: Colors.white.withAlpha(38),
-                size: 84,
+                size: 70,
               ),
             ),
             const Center(
@@ -224,7 +224,7 @@ class _MyScheduleTile extends StatelessWidget {
                 'My Schedule',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 36,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
                   height: 1,
                   letterSpacing: 0,
@@ -274,7 +274,7 @@ class _MenuTile extends StatelessWidget {
                   _WebsiteMenuIcon(
                     iconClass: item.iconClass,
                     title: item.title,
-                    size: 34,
+                    size: 28,
                     color: foreground,
                   ),
                   const SizedBox(width: 8),
@@ -590,6 +590,7 @@ List<SiteMenuItem> _visibleMenuItems(SiteManifest manifest, bool isLoggedIn) {
   return manifest.menu
       .where((item) => !_isRegistrationMenuItem(item))
       .where((item) => !_isVisaMenuItem(item))
+      .where((item) => !_isLowPriorityHomeItem(item))
       .where((item) => !isLoggedIn || !_isLoginMenuItem(item))
       .toList();
 }
@@ -604,6 +605,13 @@ bool _isRegistrationMenuItem(SiteMenuItem item) {
 
 bool _isVisaMenuItem(SiteMenuItem item) {
   return item.title.trim().toLowerCase() == 'visa';
+}
+
+bool _isLowPriorityHomeItem(SiteMenuItem item) {
+  final title = item.title.trim().toLowerCase();
+  return title == 'abstract' ||
+      title == 'abstract results' ||
+      title == 'grant application';
 }
 
 void _goBackToMain() {
@@ -647,9 +655,9 @@ double _fittingFontSize({
 }
 
 double _preferredMenuFontSizeFor(String title) {
-  if (title.length > 22) return 17;
-  if (title.length > 16) return 19;
-  return 22;
+  if (title.length > 22) return 15;
+  if (title.length > 16) return 16.5;
+  return 18;
 }
 
 String _keepMenuWordsTogether(String title) {
