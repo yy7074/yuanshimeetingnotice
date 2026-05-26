@@ -8,6 +8,10 @@ export const qk = {
     stats: () => ['events', 'stats'] as const,
     detail: (id: string) => ['events', 'detail', id] as const,
   },
+  homeBanners: {
+    all: ['home-banners'] as const,
+    list: () => ['home-banners', 'list'] as const,
+  },
   sessions: {
     all: ['sessions'] as const,
     listByEvent: (eventId: string) => ['sessions', 'list', eventId] as const,

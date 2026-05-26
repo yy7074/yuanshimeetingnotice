@@ -25,7 +25,7 @@ export class EmailService {
     return Boolean(this.transporter);
   }
 
-  async sendVerificationCode(email: string, code: string, lang: string = 'zh') {
+  async sendVerificationCode(email: string, code: string, lang: string = 'en') {
     const subject =
       lang === 'zh' ? 'APSCVIR 验证码' : 'APSCVIR Verification Code';
     const html =

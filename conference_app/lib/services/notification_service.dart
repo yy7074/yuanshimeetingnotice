@@ -17,7 +17,7 @@ class NotificationService extends GetxService {
   // (keep parity with android/app/build.gradle.kts manifest placeholders)
   static const String _jpushAppKey = String.fromEnvironment(
     'JPUSH_APP_KEY',
-    defaultValue: '',
+    defaultValue: '02e01a729d7313df5fc5150c',
   );
   static const String _jpushChannel = String.fromEnvironment(
     'JPUSH_CHANNEL',
@@ -27,6 +27,7 @@ class NotificationService extends GetxService {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   JPushFlutterInterface? _jpush;
+  String? _lastRegistrationId;
   final unreadCount = 0.obs;
 
   Future<NotificationService> init() async {
@@ -63,6 +64,7 @@ class NotificationService extends GetxService {
           importance: Importance.high,
         ),
       );
+      await androidPlugin?.requestNotificationsPermission();
     } catch (e) {
       debugPrint('Local notifications init failed: $e');
     }
@@ -122,6 +124,7 @@ class NotificationService extends GetxService {
           const Duration(seconds: 5),
         );
         if (rid.isNotEmpty) {
+          _lastRegistrationId = rid;
           debugPrint('JPush Registration ID: $rid');
           _registerPushToken(rid);
         }
@@ -144,6 +147,12 @@ class NotificationService extends GetxService {
     } catch (_) {}
   }
 
+  Future<void> registerCurrentPushToken() async {
+    final token = _lastRegistrationId;
+    if (token == null || token.isEmpty) return;
+    await _registerPushToken(token);
+  }
+
   Future<void> openNotification(Map<String, dynamic> notification) async {
     final type = notification['type'] as String? ?? '';
     final eventId = notification['eventId'] as String? ?? '';
@@ -156,18 +165,40 @@ class NotificationService extends GetxService {
   }
 
   Future<void> _handleNotificationTap(Map<String, dynamic> message) async {
-    final extras = message['extras'] as Map<String, dynamic>? ?? {};
-    final type = extras['type'] as String? ?? message['type'] as String? ?? '';
-    final eventId =
-        extras['eventId'] as String? ?? message['eventId'] as String? ?? '';
-    final targetUrl =
-        extras['targetUrl'] as String? ?? message['targetUrl'] as String? ?? '';
+    final extras = _toStringKeyMap(message['extras']);
+    final nestedExtras = _toStringKeyMap(extras['cn.jpush.android.EXTRA']);
+    final payload = <String, dynamic>{...extras, ...nestedExtras};
+    final type = _firstNonEmpty(
+      _stringValue(payload, 'type'),
+      _stringValue(message, 'type'),
+    );
+    final eventId = _firstNonEmpty(
+      _stringValue(payload, 'eventId'),
+      _stringValue(message, 'eventId'),
+    );
+    final targetUrl = _firstNonEmpty(
+      _stringValue(payload, 'targetUrl'),
+      _stringValue(message, 'targetUrl'),
+    );
     await _navigateByNotification(
       type: type,
       eventId: eventId,
       targetUrl: targetUrl,
     );
   }
+
+  Map<String, dynamic> _toStringKeyMap(dynamic value) {
+    if (value is! Map) return {};
+    return value.map((key, value) => MapEntry(key.toString(), value));
+  }
+
+  String _stringValue(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    return value == null ? '' : value.toString();
+  }
+
+  String _firstNonEmpty(String primary, String fallback) =>
+      primary.isNotEmpty ? primary : fallback;
 
   Future<void> _navigateToEvent(String eventId, {int initialTab = 0}) async {
     try {

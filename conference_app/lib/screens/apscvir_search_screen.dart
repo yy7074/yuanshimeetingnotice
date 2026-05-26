@@ -8,6 +8,7 @@ import '../services/data_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
 import 'apscvir_content_screen.dart';
+import 'apscvir_maps_screen.dart';
 
 class ApscvirSearchScreen extends StatefulWidget {
   final VoidCallback? onBackToHome;
@@ -315,7 +316,7 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
 void _openSearchResult(_SearchResult result, SiteManifest manifest) {
   final page = result.page;
   if (page != null && isApscvirVenuePage(page)) {
-    openApscvirVenueWebsite();
+    Get.to(() => ApscvirMapsScreen(manifestFuture: Future.value(manifest)));
     return;
   }
   final session = result.session;

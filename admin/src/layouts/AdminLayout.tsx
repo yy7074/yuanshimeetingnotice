@@ -5,6 +5,7 @@ import {
   UserOutlined, LogoutOutlined, GlobalOutlined,
   SoundOutlined, FileTextOutlined, ScheduleOutlined,
   CheckCircleOutlined, ImportOutlined, ExportOutlined, NotificationOutlined,
+  PictureOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,7 @@ export default function AdminLayout() {
 
   const menuItems = [
     { key: '/', icon: <DashboardOutlined />, label: t('menu.dashboard') },
+    { key: '/home-banners', icon: <PictureOutlined />, label: t('menu.homeBanners') },
     { key: '/events', icon: <CalendarOutlined />, label: t('menu.events') },
     { key: '/sessions', icon: <ScheduleOutlined />, label: t('menu.sessions') },
     { key: '/speakers', icon: <SoundOutlined />, label: t('menu.speakers') },

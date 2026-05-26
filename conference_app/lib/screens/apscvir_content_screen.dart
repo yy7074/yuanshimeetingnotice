@@ -2326,6 +2326,7 @@ class _ProgramAtGlanceContentState extends State<_ProgramAtGlanceContent> {
             .where((session) => session.dayIndex == _selectedDayIndex)
             .toList();
         final rooms = _groupSessionsByRoom(daySessions);
+        final importantEvents = _importantProgramEvents(allSessions);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2338,6 +2339,13 @@ class _ProgramAtGlanceContentState extends State<_ProgramAtGlanceContent> {
               },
             ),
             const SizedBox(height: 14),
+            if (importantEvents.isNotEmpty) ...[
+              _ProgramImportantEventsCard(
+                primary: widget.primary,
+                events: importantEvents,
+              ),
+              const SizedBox(height: 14),
+            ],
             if (rooms.isEmpty)
               _ProgramEmptyDayCard(
                 primary: widget.primary,
@@ -2385,6 +2393,21 @@ class _ProgramAtGlanceContentState extends State<_ProgramAtGlanceContent> {
     ];
   }
 
+  List<SessionModel> _importantProgramEvents(List<SessionModel> sessions) {
+    final seen = <String>{};
+    final events = <SessionModel>[];
+    for (final session in sessions) {
+      final title = session.titleEn.trim().toLowerCase();
+      if ((title.contains('opening ceremony') ||
+              title.contains('closing ceremony')) &&
+          seen.add(session.id)) {
+        events.add(session);
+      }
+    }
+    events.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return events;
+  }
+
   String _programSessionKey(SessionModel session) {
     return [
       session.dayIndex,
@@ -2392,6 +2415,159 @@ class _ProgramAtGlanceContentState extends State<_ProgramAtGlanceContent> {
       session.timeRangeStr.replaceAll(' ', ''),
       session.titleEn.trim().toLowerCase(),
     ].join('|');
+  }
+}
+
+class _ProgramImportantEventsCard extends StatelessWidget {
+  final Color primary;
+  final List<SessionModel> events;
+
+  const _ProgramImportantEventsCard({
+    required this.primary,
+    required this.events,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: primary.withAlpha(45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.star_rounded, color: primary, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'Important Events',
+                style: TextStyle(
+                  color: primary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (var i = 0; i < events.length; i++) ...[
+            _ProgramImportantEventRow(primary: primary, session: events[i]),
+            if (i != events.length - 1)
+              Divider(height: 14, color: AppColors.border.withAlpha(150)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgramImportantEventRow extends StatelessWidget {
+  final Color primary;
+  final SessionModel session;
+
+  const _ProgramImportantEventRow({
+    required this.primary,
+    required this.session,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => Get.to(() => ApscvirProgramDetailScreen(session: session)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: primary.withAlpha(14),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      _formatProgramMonth(session.startTime),
+                      style: TextStyle(
+                        color: primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      session.startTime.day.toString(),
+                      style: TextStyle(
+                        color: primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      session.titleEn,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 14,
+                        height: 1.25,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${session.timeRangeStr} · ${session.roomEn}',
+                      style: const TextStyle(
+                        color: AppColors.inkSoft,
+                        fontSize: 12,
+                        height: 1.3,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: primary.withAlpha(180)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatProgramMonth(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[date.month - 1];
   }
 }
 

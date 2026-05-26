@@ -1,15 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'apscvir_home_screen.dart';
-import 'apscvir_maps_screen.dart';
 import 'apscvir_search_screen.dart';
 import 'notification_screen.dart';
 import 'profile_screen.dart';
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
-import '../utils/apscvir_external_links.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -19,26 +15,15 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  static const int _ismioTabIndex = 2;
-
   int _selectedIndex = 0;
 
   void _selectIndex(int index) {
     setState(() => _selectedIndex = index);
   }
 
-  void _handleNavigationTap(int index) {
-    if (index == _ismioTabIndex) {
-      unawaited(openApscvirIsmioWebsite());
-      return;
-    }
-    _selectIndex(index);
-  }
-
   List<Widget> get _screens => [
     const ApscvirHomeScreen(),
     NotificationScreen(onBackToHome: () => _selectIndex(0)),
-    ApscvirMapsScreen(onBackToHome: () => _selectIndex(0)),
     ApscvirSearchScreen(onBackToHome: () => _selectIndex(0)),
     const ProfileScreen(),
   ];
@@ -63,9 +48,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           child: SafeArea(
             child: BottomNavigationBar(
               currentIndex: _selectedIndex,
-              onTap: _handleNavigationTap,
+              onTap: _selectIndex,
               type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.transparent,
+              backgroundColor: AppColors.primary,
               elevation: 0,
               selectedItemColor: Colors.white,
               unselectedItemColor: unselectedColor,
@@ -94,11 +79,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                     () => _AlertIcon(count: notifService.unreadCount.value),
                   ),
                   label: 'Alerts',
-                ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.public_outlined),
-                  activeIcon: Icon(Icons.public),
-                  label: 'ISMIO',
                 ),
                 const BottomNavigationBarItem(
                   icon: Icon(_ApscvirNavIcons.search),

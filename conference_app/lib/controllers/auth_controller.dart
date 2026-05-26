@@ -99,7 +99,9 @@ class AuthController extends GetxController {
         currentUser.value = _parseUser(body['user']);
         // Set JPush alias for targeted push
         try {
-          Get.find<NotificationService>().setAlias(body['user']['id']);
+          final notificationService = Get.find<NotificationService>();
+          await notificationService.setAlias(body['user']['id']);
+          await notificationService.registerCurrentPushToken();
         } catch (_) {}
         isLoading.value = false;
         return true;

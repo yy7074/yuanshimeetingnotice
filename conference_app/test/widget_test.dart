@@ -86,6 +86,9 @@ void main() {
     }
 
     expect(tester.takeException(), isNull);
+    expect(find.text('Conference Address'), findsOneWidget);
+    expect(find.text('Copy Address'), findsOneWidget);
+    expect(find.text('Navigation'), findsOneWidget);
     expect(find.text('Venue Map Image'), findsOneWidget);
     expect(find.text('Download'), findsOneWidget);
   });

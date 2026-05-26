@@ -316,9 +316,12 @@ class ScheduleController extends GetxController {
 
   List<SessionModel> get displayedTaskSessions {
     final query = taskSearchQuery.value.trim();
-    final source = expertTaskSessions.toList();
+    final savedSchedule = allSavedSessions;
+    final source = savedSchedule.isNotEmpty
+        ? savedSchedule
+        : _currentUserTaskSessions(expertTaskSessions.toList());
     final sessions = query.isEmpty
-        ? _currentUserTaskSessions(source)
+        ? source
         : source.where((session) => _matchesTaskQuery(session, query)).toList();
     sessions.sort((a, b) {
       final timeCompare = a.startTime.compareTo(b.startTime);
@@ -369,29 +372,75 @@ class ScheduleController extends GetxController {
     return list;
   }
 
+  /// Last-name token (e.g. "Teng" from "Gaojun Teng") used to auto-filter
+  /// the logged-in expert's personal task list. Null when no user is signed in
+  /// or the English name does not yield a usable surname token.
+  String? get currentUserLastNameKey {
+    if (!Get.isRegistered<AuthController>()) return null;
+    final user = Get.find<AuthController>().currentUser.value;
+    if (user == null) return null;
+    return _lastNameToken(user.nameEn);
+  }
+
+  /// Surname as it appears on screen (e.g. "Teng" \u2014 preserves hyphenation
+  /// and original casing). Falls back to Chinese name when English is empty.
+  String get currentUserLastNameDisplay {
+    if (!Get.isRegistered<AuthController>()) return '';
+    final user = Get.find<AuthController>().currentUser.value;
+    if (user == null) return '';
+    final trimmedEn = user.nameEn.trim();
+    if (trimmedEn.isNotEmpty) {
+      final tokens = trimmedEn.split(RegExp(r'\s+'));
+      if (tokens.isNotEmpty) return tokens.last;
+    }
+    return user.nameZh.trim();
+  }
+
   List<SessionModel> _currentUserTaskSessions(List<SessionModel> source) {
     if (!Get.isRegistered<AuthController>()) return const [];
     final user = Get.find<AuthController>().currentUser.value;
     if (user == null) return const [];
-    final names = [user.nameEn, user.nameZh, user.email.split('@').first]
-        .map(_normalizePersonName)
-        .where((name) => name.length >= 3 && name != 'apscvirdelegate')
-        .toSet();
-    if (names.isEmpty) return const [];
+
+    final lastName = _lastNameToken(user.nameEn);
+    final fullKeys = <String>{
+      _normalizePersonName(user.nameEn),
+      _normalizePersonName(user.email.split('@').first),
+    }..removeWhere((v) => v.length < 3 || v == 'apscvirdelegate');
+    final zhName = user.nameZh.trim();
+
+    if (lastName == null && fullKeys.isEmpty && zhName.isEmpty) return const [];
 
     return source.where((session) {
-      final candidates = [
+      final rawNames = [
         session.taskPersonName,
         session.speakerName,
-      ].map(_normalizePersonName).where((name) => name.isNotEmpty);
-      return candidates.any(
-        (candidate) => names.any(
-          (name) =>
-              candidate == name ||
-              candidate.contains(name) ||
-              name.contains(candidate),
-        ),
-      );
+      ].where((name) => name.trim().isNotEmpty);
+      for (final raw in rawNames) {
+        if (zhName.isNotEmpty && raw.contains(zhName)) return true;
+
+        final tokens = raw
+            .split(RegExp(r'[,\uff0c;\uff1b/]'))
+            .expand((part) => part.split(RegExp(r'\s+')))
+            .map(_normalizePersonName)
+            .where((token) => token.isNotEmpty)
+            .toSet();
+        if (lastName != null && tokens.contains(lastName)) return true;
+
+        // Substring fallback so test/legacy accounts (e.g. only nameEn)
+        // continue to match even when the surname token is unusual.
+        for (final candidate in raw.split(RegExp(r'[,\uff0c;\uff1b/]'))) {
+          final normalized = _normalizePersonName(candidate);
+          if (normalized.isEmpty) continue;
+          for (final key in fullKeys) {
+            if (normalized == key ||
+                normalized.contains(key) ||
+                key.contains(normalized)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     }).toList();
   }
 
@@ -399,15 +448,28 @@ class ScheduleController extends GetxController {
     final q = query.toLowerCase();
     return [
       session.titleEn,
+      session.titleZh,
       session.parentSessionTitle,
       session.descriptionEn,
+      session.descriptionZh,
       session.speakerName,
       session.taskPersonName,
       session.speakerTitleEn,
+      session.speakerTitleZh,
       session.roomEn,
+      session.roomZh,
       session.taskRole,
       session.timeRangeStr,
     ].any((value) => value.toLowerCase().contains(q));
+  }
+
+  String? _lastNameToken(String nameEn) {
+    final trimmed = nameEn.trim();
+    if (trimmed.isEmpty) return null;
+    final tokens = trimmed.split(RegExp(r'\s+'));
+    if (tokens.isEmpty) return null;
+    final last = _normalizePersonName(tokens.last);
+    return last.length >= 2 ? last : null;
   }
 
   String _normalizePersonName(String value) {

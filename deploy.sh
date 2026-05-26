@@ -73,6 +73,11 @@ ADMIN_PORT="${ADMIN_PORT:-}"
 BACKEND_PORT_BASE="${BACKEND_PORT_BASE:-3100}"
 ADMIN_PORT_BASE="${ADMIN_PORT_BASE:-3200}"
 
+# nginx server_name (e.g. admin.apscvir.top). Default "_" matches any host.
+NGINX_SERVER_NAME="${NGINX_SERVER_NAME:-_}"
+# Override CORS origin (e.g. https://admin.apscvir.top). Empty => derived from IP:ADMIN_PORT.
+CORS_ORIGIN="${CORS_ORIGIN:-}"
+
 SSH_OPTS=(
   -p "$SSH_PORT"
   -o ConnectTimeout=10
@@ -249,12 +254,29 @@ SMTP_FROM=${SMTP_FROM:-noreply@example.com}
 SMTP_FROM_NAME=${SMTP_FROM_NAME:-APSCVIR}
 JPUSH_APP_KEY=${JPUSH_APP_KEY:-}
 JPUSH_MASTER_SECRET=${JPUSH_MASTER_SECRET:-}
-APP_DOWNLOAD_URL=${APP_DOWNLOAD_URL:-https://apscvir.org/download}
+APP_DOWNLOAD_URL=${APP_DOWNLOAD_URL:-https://app.apscvir.top}
 AUTH_SIMULATE_VERIFICATION=${AUTH_SIMULATE_VERIFICATION:-false}
 AUTH_SIMULATED_CODE=${AUTH_SIMULATED_CODE:-0000}
 SCHEDULE_TIMEZONE=${SCHEDULE_TIMEZONE:-Asia/Shanghai}
-CORS_ORIGIN=http://${SERVER_IP}:${ADMIN_PORT}
+CORS_ORIGIN=${CORS_ORIGIN:-http://${SERVER_IP}:${ADMIN_PORT}}
 EOF"
+}
+
+# 首次部署时把本地已建好 schema 的 sqlite 库作为初始数据库上传。
+# 生产 synchronize=false 不会自动建表，缺少该步骤后端启动会因无表而崩溃。
+# 仅当远端尚无数据库文件时上传，避免覆盖线上数据。
+seed_initial_db() {
+  local local_db="${ROOT_DIR}/server/conference.db"
+  if [[ ! -f "$local_db" ]]; then
+    log "本地无 server/conference.db，跳过初始数据库注入"
+    return 0
+  fi
+  if ssh_cmd "test -s '${REMOTE_DATA_DIR}/conference.db'"; then
+    log "远端已存在数据库，保留线上数据，跳过初始库上传"
+    return 0
+  fi
+  log "上传初始 sqlite 数据库到 ${REMOTE_DATA_DIR}/conference.db"
+  ssh_cmd "cat > '${REMOTE_DATA_DIR}/conference.db'" < "$local_db"
 }
 
 build_remote() {
@@ -275,15 +297,36 @@ build_remote() {
 
 install_nginx_site() {
   local nginx_conf
+  local tls_available=false
   nginx_conf="$(mktemp -t "${APP_NAME}.nginx.XXXXXX")"
 
-  cat > "$nginx_conf" <<EOF
+  if [[ "$NGINX_SERVER_NAME" != "_" ]] && ssh_cmd "test -s '/etc/letsencrypt/live/${NGINX_SERVER_NAME}/fullchain.pem' && test -s '/etc/letsencrypt/live/${NGINX_SERVER_NAME}/privkey.pem' && test -s /etc/letsencrypt/options-ssl-nginx.conf && test -s /etc/letsencrypt/ssl-dhparams.pem"; then
+    tls_available=true
+  fi
+
+  if [[ "$tls_available" == "true" ]]; then
+    cat > "$nginx_conf" <<EOF
 server {
     listen ${ADMIN_PORT};
-    server_name _;
+    listen [::]:${ADMIN_PORT};
+    server_name ${NGINX_SERVER_NAME};
+
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name ${NGINX_SERVER_NAME};
+
+    ssl_certificate /etc/letsencrypt/live/${NGINX_SERVER_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${NGINX_SERVER_NAME}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
     root ${REMOTE_ADMIN_DIR}/dist;
     index index.html;
+    client_max_body_size 50m;
 
     location ^~ /api/ {
         proxy_pass http://127.0.0.1:${BACKEND_PORT};
@@ -308,12 +351,56 @@ server {
     }
 }
 EOF
+  else
+    cat > "$nginx_conf" <<EOF
+server {
+    listen ${ADMIN_PORT};
+    listen [::]:${ADMIN_PORT};
+    server_name ${NGINX_SERVER_NAME};
 
-  ssh_cmd "mkdir -p '/www/server/panel/vhost/nginx'"
-  cat "$nginx_conf" | ssh_cmd "cat > '/www/server/panel/vhost/nginx/${APP_NAME}.conf'"
+    root ${REMOTE_ADMIN_DIR}/dist;
+    index index.html;
+    client_max_body_size 50m;
+
+    location ^~ /api/ {
+        proxy_pass http://127.0.0.1:${BACKEND_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location ^~ /uploads/ {
+        proxy_pass http://127.0.0.1:${BACKEND_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+}
+EOF
+  fi
+
+  cat "$nginx_conf" | ssh_cmd "cat > '/tmp/${APP_NAME}.nginx.conf'"
   rm -f "$nginx_conf"
 
+  # 宝塔面板: 放到 vhost 目录; 系统 nginx (apt): 放到 conf.d 并停用默认站点。
   ssh_cmd "set -e
+if [ -d /www/server/panel/vhost/nginx ]; then
+  cp '/tmp/${APP_NAME}.nginx.conf' '/www/server/panel/vhost/nginx/${APP_NAME}.conf'
+else
+  mkdir -p /etc/nginx/conf.d
+  cp '/tmp/${APP_NAME}.nginx.conf' '/etc/nginx/conf.d/${APP_NAME}.conf'
+  rm -f /etc/nginx/sites-enabled/default
+fi
+rm -f '/tmp/${APP_NAME}.nginx.conf'
+
 if [ -x /www/server/nginx/sbin/nginx ] && [ -f /www/server/nginx/conf/nginx.conf ]; then
   /www/server/nginx/sbin/nginx -t -c /www/server/nginx/conf/nginx.conf
   /www/server/nginx/sbin/nginx -s reload -c /www/server/nginx/conf/nginx.conf
@@ -330,6 +417,9 @@ fi"
 open_admin_port() {
   ssh_cmd "if command -v ufw >/dev/null 2>&1 && ufw status | grep -q 'Status: active'; then
   ufw allow '${ADMIN_PORT}/tcp'
+  if [ '${NGINX_SERVER_NAME}' != '_' ] && [ -s '/etc/letsencrypt/live/${NGINX_SERVER_NAME}/fullchain.pem' ]; then
+    ufw allow '443/tcp'
+  fi
 fi"
 }
 
@@ -395,7 +485,10 @@ verify_remote() {
   log "校验后端与 nginx"
   if ! ssh_cmd "sleep 3
     curl -fIsS --max-time 8 'http://127.0.0.1:${BACKEND_PORT}/api/docs' >/dev/null
-    curl -fIsS --max-time 8 'http://127.0.0.1:${ADMIN_PORT}/' >/dev/null"
+    curl -fIsS --max-time 8 'http://127.0.0.1:${ADMIN_PORT}/' >/dev/null
+    if [ '${NGINX_SERVER_NAME}' != '_' ] && [ -s '/etc/letsencrypt/live/${NGINX_SERVER_NAME}/fullchain.pem' ]; then
+      curl -fsS --max-time 8 --resolve '${NGINX_SERVER_NAME}:443:127.0.0.1' 'https://${NGINX_SERVER_NAME}/api/v1/health' >/dev/null
+    fi"
   then
     tail_remote_server_log
     die '远端服务校验失败'
@@ -428,6 +521,7 @@ main() {
   upload_sources
   write_server_env
   build_remote
+  seed_initial_db
   install_nginx_site
   open_admin_port
   restart_server

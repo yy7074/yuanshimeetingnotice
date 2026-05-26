@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
@@ -17,6 +21,10 @@ class MyScheduleScreen extends StatefulWidget {
 }
 
 class _MyScheduleScreenState extends State<MyScheduleScreen> {
+  static const MethodChannel _calendarPermissionChannel = MethodChannel(
+    'apscvir/calendar_permission',
+  );
+
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final TextEditingController _taskSearchController = TextEditingController();
@@ -27,6 +35,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     _initializeNotifications();
     // Refresh sessions when screen loads
     final scheduleCtrl = Get.find<ScheduleController>();
+    scheduleCtrl.taskSearchQuery.value = '';
     scheduleCtrl.refreshSessions();
   }
 
@@ -96,6 +105,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
               return Expanded(
                 child: Column(
                   children: [
+                    _buildAssignedToBanner(scheduleCtrl, primaryColor),
                     _buildTaskSearchField(scheduleCtrl, primaryColor),
                     _buildDateNavigation(primaryColor, scheduleCtrl, days),
                     Expanded(
@@ -166,6 +176,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     Color primaryColor,
   ) {
     final query = scheduleCtrl.taskSearchQuery.value.trim();
+    final hasSavedSchedule = scheduleCtrl.allSavedSessions.isNotEmpty;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -185,8 +196,10 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
             const SizedBox(height: 8),
             Text(
               query.isEmpty
-                  ? 'My Schedule now shows the logged-in expert’s assigned speaker and moderator tasks.'
-                  : 'Try another faculty name, topic, room, or time.',
+                  ? (hasSavedSchedule
+                        ? 'No sessions are available for the selected day.'
+                        : 'No followed schedule or saved sessions yet.')
+                  : 'Try another topic, speaker, room, or time.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
             ),
@@ -212,6 +225,66 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     );
   }
 
+  Widget _buildAssignedToBanner(
+    ScheduleController scheduleCtrl,
+    Color primaryColor,
+  ) {
+    final hasSavedSchedule = scheduleCtrl.allSavedSessions.isNotEmpty;
+    final lastName = scheduleCtrl.currentUserLastNameDisplay;
+    if (!hasSavedSchedule && lastName.isEmpty) return const SizedBox.shrink();
+    final taskCount = scheduleCtrl.displayedTaskSessions.length;
+    final title = hasSavedSchedule
+        ? 'Followed Schedule'
+        : 'Personal Tasks · matched by last name "$lastName"';
+    final summary = hasSavedSchedule
+        ? '$taskCount saved session${taskCount == 1 ? '' : 's'} from your followed schedule.'
+        : taskCount == 0
+        ? 'No tasks matched in the APSCVIR 2026 program yet.'
+        : '$taskCount assigned task${taskCount == 1 ? '' : 's'} found across the program.';
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: primaryColor.withAlpha(20),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: primaryColor.withAlpha(55)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.assignment_ind, color: primaryColor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: primaryColor,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  summary,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade700,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTaskSearchField(
     ScheduleController scheduleCtrl,
     Color primaryColor, {
@@ -220,25 +293,29 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     return Padding(
       padding: EdgeInsets.fromLTRB(16, compact ? 0 : 10, 16, compact ? 0 : 8),
       child: TextField(
+        key: const ValueKey('my-schedule-task-search'),
         controller: _taskSearchController,
-        onChanged: (value) {
-          scheduleCtrl.taskSearchQuery.value = value;
-          scheduleCtrl.selectedDayIndex.value = 0;
-        },
+        onSubmitted: (_) => _applyTaskSearch(scheduleCtrl),
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          hintText: 'Search faculty, topic, room, or time',
+          hintText: 'Search topic, speaker, room, or time',
           prefixIcon: Icon(Icons.search, color: primaryColor, size: 20),
-          suffixIcon: scheduleCtrl.taskSearchQuery.value.isEmpty
-              ? null
-              : IconButton(
-                  icon: const Icon(Icons.clear, size: 18),
-                  onPressed: () {
-                    _taskSearchController.clear();
-                    scheduleCtrl.taskSearchQuery.value = '';
-                    scheduleCtrl.selectedDayIndex.value = 0;
-                  },
-                ),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Clear',
+                icon: const Icon(Icons.clear, size: 18),
+                onPressed: () => _clearTaskSearch(scheduleCtrl),
+              ),
+              IconButton(
+                tooltip: 'Search',
+                icon: const Icon(Icons.search, size: 19),
+                onPressed: () => _applyTaskSearch(scheduleCtrl),
+              ),
+            ],
+          ),
+          suffixIconConstraints: const BoxConstraints(minWidth: 48),
           filled: true,
           fillColor: Colors.white,
           isDense: true,
@@ -261,6 +338,25 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
         ),
       ),
     );
+  }
+
+  void _applyTaskSearch(ScheduleController scheduleCtrl) {
+    final query = _taskSearchController.text.trim();
+    if (scheduleCtrl.taskSearchQuery.value == query) {
+      return;
+    }
+    scheduleCtrl.taskSearchQuery.value = query;
+    scheduleCtrl.selectedDayIndex.value = 0;
+    setState(() {});
+  }
+
+  void _clearTaskSearch(ScheduleController scheduleCtrl) {
+    _taskSearchController.clear();
+    if (scheduleCtrl.taskSearchQuery.value.isNotEmpty) {
+      scheduleCtrl.taskSearchQuery.value = '';
+      scheduleCtrl.selectedDayIndex.value = 0;
+    }
+    setState(() {});
   }
 
   Future<void> _openApscvirProgram() async {
@@ -336,113 +432,116 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     final weekDaysEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final weekDaysZh = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    return Container(
-      color: Colors.white,
-      height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: days.length,
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-        itemBuilder: (context, index) {
-          final day = days[index];
-          final dayIndex = _dayIndexForDate(ctrl, day, index);
-          final isSelected = _isSameDay(_selectedDate(ctrl, days), day);
-          final dayName = isZh
-              ? weekDaysZh[day.weekday - 1]
-              : weekDaysEn[day.weekday - 1];
-          final dateStr = isZh
-              ? '${day.month}/${day.day}'
-              : '${_monthName(day.month)} ${day.day}';
+    return Obx(() {
+      final selectedDate = _selectedDate(ctrl, days);
+      return Container(
+        color: Colors.white,
+        height: 80,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: days.length,
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          itemBuilder: (context, index) {
+            final day = days[index];
+            final dayIndex = _dayIndexForDate(ctrl, day, index);
+            final isSelected = _isSameDay(selectedDate, day);
+            final dayName = isZh
+                ? weekDaysZh[day.weekday - 1]
+                : weekDaysEn[day.weekday - 1];
+            final dateStr = isZh
+                ? '${day.month}/${day.day}'
+                : '${_monthName(day.month)} ${day.day}';
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              child: InkWell(
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Material(
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
-                onTap: () {
-                  if (ctrl.selectedDayIndex.value != dayIndex) {
-                    ctrl.selectedDayIndex.value = dayIndex;
-                  }
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  width: 80,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? primaryColor.withAlpha(22)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    if (ctrl.selectedDayIndex.value != dayIndex) {
+                      ctrl.selectedDayIndex.value = dayIndex;
+                    }
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    width: 80,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
                       color: isSelected
-                          ? primaryColor.withAlpha(90)
+                          ? primaryColor.withAlpha(22)
                           : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? primaryColor.withAlpha(90)
+                            : Colors.transparent,
+                      ),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: primaryColor.withAlpha(18),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : const [],
                     ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: primaryColor.withAlpha(18),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : const [],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeOutCubic,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.w800
-                              : FontWeight.w500,
-                          color: isSelected
-                              ? primaryColor
-                              : Colors.grey.shade500,
-                          letterSpacing: 0,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w500,
+                            color: isSelected
+                                ? primaryColor
+                                : Colors.grey.shade500,
+                            letterSpacing: 0,
+                          ),
+                          child: Text(dayName),
                         ),
-                        child: Text(dayName),
-                      ),
-                      const SizedBox(height: 4),
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 180),
-                        curve: Curves.easeOutCubic,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected
-                              ? primaryColor
-                              : Colors.grey.shade800,
-                          letterSpacing: 0,
+                        const SizedBox(height: 4),
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOutCubic,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? primaryColor
+                                : Colors.grey.shade800,
+                            letterSpacing: 0,
+                          ),
+                          child: Text(dateStr),
                         ),
-                        child: Text(dateStr),
-                      ),
-                      const SizedBox(height: 7),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        curve: Curves.easeOutCubic,
-                        width: isSelected ? 28 : 0,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: primaryColor,
-                          borderRadius: BorderRadius.circular(99),
+                        const SizedBox(height: 7),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          width: isSelected ? 28 : 0,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
-    );
+            );
+          },
+        ),
+      );
+    });
   }
 
   Widget _daySwitchTransition(Widget child, Animation<double> animation) {
@@ -665,19 +764,10 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
                       Row(
                         children: [
                           GestureDetector(
-                            onTap: () {
-                              final event = Event(
-                                title: session.titleEn,
-                                description: 'Medical conference session',
-                                location: session.roomEn,
-                                startDate: session.startTime,
-                                endDate: session.endTime,
-                                iosParams: const IOSParams(
-                                  reminder: Duration(minutes: 30),
-                                ),
-                              );
-                              Add2Calendar.addEvent2Cal(event);
-                            },
+                            onTap: () => _addSessionToCalendar(
+                              session,
+                              reminder: const Duration(minutes: 30),
+                            ),
                             child: Icon(
                               Icons.calendar_month,
                               color: primaryColor,
@@ -956,20 +1046,13 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     final isZh = Get.locale?.languageCode == '__zh_disabled__';
     int count = 0;
     for (final session in sessions) {
-      final event = Event(
-        title: session.titleEn,
-        description: [
-          if (session.taskRole.isNotEmpty) session.taskRole,
-          if (session.speakerName.isNotEmpty) session.speakerName,
-          if (session.parentSessionTitle.isNotEmpty) session.parentSessionTitle,
-          if (session.speakerTitleEn.isNotEmpty) session.speakerTitleEn,
-        ].join(' - '),
-        location: session.roomEn,
-        startDate: session.startTime,
-        endDate: session.endTime,
-        iosParams: const IOSParams(reminder: Duration(minutes: 15)),
+      unawaited(
+        _addSessionToCalendar(
+          session,
+          reminder: const Duration(minutes: 15),
+          showPermissionMessage: count == 0,
+        ),
       );
-      Add2Calendar.addEvent2Cal(event);
       count++;
     }
     Get.snackbar(
@@ -982,5 +1065,64 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
       colorText: Colors.white,
       margin: const EdgeInsets.all(16),
     );
+  }
+
+  Future<void> _addSessionToCalendar(
+    SessionModel session, {
+    required Duration reminder,
+    bool showPermissionMessage = true,
+  }) async {
+    final canOpenCalendar = await _ensureCalendarAccess(
+      showMessage: showPermissionMessage,
+    );
+    if (!canOpenCalendar) return;
+
+    final event = Event(
+      title: session.titleEn,
+      description: _calendarDescription(session),
+      location: session.roomEn.trim().isEmpty ? null : session.roomEn.trim(),
+      startDate: session.startTime,
+      endDate: session.endTime,
+      timeZone: 'Asia/Shanghai',
+      iosParams: IOSParams(reminder: reminder),
+    );
+    unawaited(Add2Calendar.addEvent2Cal(event));
+  }
+
+  Future<bool> _ensureCalendarAccess({required bool showMessage}) async {
+    if (!Platform.isIOS) return true;
+    try {
+      final granted = await _calendarPermissionChannel.invokeMethod<bool>(
+        'requestCalendarAccess',
+      );
+      if (granted == true) return true;
+    } catch (_) {
+      return true;
+    }
+
+    if (showMessage) {
+      final isZh = Get.locale?.languageCode == '__zh_disabled__';
+      Get.snackbar(
+        isZh ? 'Calendar Permission Required' : 'Calendar Permission Required',
+        isZh
+            ? 'Please allow calendar access in iOS Settings.'
+            : 'Please allow calendar access in iOS Settings.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade400,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+    return false;
+  }
+
+  String _calendarDescription(SessionModel session) {
+    final parts = [
+      if (session.taskRole.isNotEmpty) session.taskRole,
+      if (session.speakerName.isNotEmpty) session.speakerName,
+      if (session.parentSessionTitle.isNotEmpty) session.parentSessionTitle,
+      if (session.speakerTitleEn.isNotEmpty) session.speakerTitleEn,
+    ];
+    return parts.isEmpty ? 'APSCVIR 2026 session' : parts.join(' - ');
   }
 }

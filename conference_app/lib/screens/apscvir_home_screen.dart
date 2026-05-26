@@ -1,13 +1,28 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../controllers/auth_controller.dart';
+import '../models/home_banner_model.dart';
 import '../models/site_content_model.dart';
+import '../services/api_service.dart';
 import '../services/apscvir_site_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
 import 'apscvir_content_screen.dart';
+import 'apscvir_maps_screen.dart';
 import 'event_portal_screen.dart';
 import 'speakers_screen.dart';
+
+final SiteMenuItem _ismioHomeMenuItem = SiteMenuItem(
+  id: '__ismio_external__',
+  title: 'ISMIO',
+  url: apscvirIsmioExternalUrl,
+  iconClass: '',
+  color: AppColors.primary,
+  children: const [],
+);
 
 class ApscvirHomeScreen extends StatelessWidget {
   const ApscvirHomeScreen({super.key});
@@ -119,22 +134,128 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _HeroBanner extends StatelessWidget {
+class _HeroBanner extends StatefulWidget {
   final SiteManifest manifest;
 
   const _HeroBanner({required this.manifest});
 
   @override
+  State<_HeroBanner> createState() => _HeroBannerState();
+}
+
+class _HeroBannerState extends State<_HeroBanner> {
+  final PageController _pageController = PageController();
+  List<HomeBannerModel> _banners = const [];
+  int _currentIndex = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBanners();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadBanners() async {
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.getHomeBanners();
+      if (res.statusCode == 200 && res.body is List) {
+        final banners =
+            (res.body as List)
+                .whereType<Map>()
+                .map(
+                  (item) =>
+                      HomeBannerModel.fromJson(Map<String, dynamic>.from(item)),
+                )
+                .where((banner) => banner.imageUrl.trim().isNotEmpty)
+                .toList()
+              ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+        if (!mounted) return;
+        setState(() => _banners = banners);
+        _startAutoPlay();
+      }
+    } catch (_) {}
+  }
+
+  void _startAutoPlay() {
+    _timer?.cancel();
+    if (_banners.length < 2) return;
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_pageController.hasClients) return;
+      final next = (_currentIndex + 1) % _banners.length;
+      _pageController.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final image = manifest.homeImages.isNotEmpty
-        ? manifest.homeImages.first.asset
+    if (_banners.isNotEmpty) {
+      return ColoredBox(
+        color: AppColors.primaryDark,
+        child: AspectRatio(
+          aspectRatio: 3600 / 1998,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              PageView.builder(
+                controller: _pageController,
+                itemCount: _banners.length,
+                onPageChanged: (index) => setState(() => _currentIndex = index),
+                itemBuilder: (context, index) {
+                  final banner = _banners[index];
+                  return _NetworkBannerSlide(banner: banner);
+                },
+              ),
+              if (_banners.length > 1)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 10,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_banners.length, (index) {
+                      final selected = index == _currentIndex;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: selected ? 18 : 7,
+                        height: 7,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Colors.white
+                              : Colors.white.withAlpha(150),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final image = widget.manifest.homeImages.isNotEmpty
+        ? widget.manifest.homeImages.first.asset
         : '';
     if (image.isEmpty) {
       return SizedBox(
         height: 132,
         child: ColoredBox(
           color: AppColors.primaryDark,
-          child: _BannerFallback(manifest: manifest),
+          child: _BannerFallback(manifest: widget.manifest),
         ),
       );
     }
@@ -148,11 +269,94 @@ class _HeroBanner extends StatelessWidget {
           fit: BoxFit.contain,
           alignment: Alignment.center,
           errorBuilder: (context, error, stackTrace) =>
-              _BannerFallback(manifest: manifest),
+              _BannerFallback(manifest: widget.manifest),
         ),
       ),
     );
   }
+}
+
+class _NetworkBannerSlide extends StatelessWidget {
+  final HomeBannerModel banner;
+
+  const _NetworkBannerSlide({required this.banner});
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = _absoluteImageUrl(banner.imageUrl);
+    final title = banner.title.trim();
+    final subtitle = banner.subtitle.trim();
+    final slide = Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          errorBuilder: (context, error, stackTrace) =>
+              const ColoredBox(color: AppColors.primaryDark),
+        ),
+        if (title.isNotEmpty || subtitle.isNotEmpty)
+          Positioned(
+            left: 18,
+            right: 18,
+            bottom: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (title.isNotEmpty)
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+
+    if (banner.linkUrl.trim().isEmpty) return slide;
+    return InkWell(onTap: () => _openBannerLink(banner.linkUrl), child: slide);
+  }
+}
+
+String _absoluteImageUrl(String url) {
+  final trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  if (!trimmed.startsWith('/')) return trimmed;
+  final base = ApiService.apiBaseUrl.replaceFirst(RegExp(r'/api/v1/?$'), '');
+  return '$base$trimmed';
+}
+
+Future<void> _openBannerLink(String url) async {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || !uri.hasScheme) return;
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
 class _BannerFallback extends StatelessWidget {
@@ -559,6 +763,10 @@ void _showSiteMenu(BuildContext context, SiteManifest manifest) {
 }
 
 void _openMenuItem(SiteMenuItem item, SiteManifest manifest) {
+  if (_isIsmioMenuItem(item)) {
+    unawaited(openApscvirIsmioWebsite());
+    return;
+  }
   if (_isLoginMenuItem(item)) {
     final isLoggedIn =
         Get.isRegistered<AuthController>() &&
@@ -580,19 +788,28 @@ void _openMenuItem(SiteMenuItem item, SiteManifest manifest) {
 
 void _openSitePage(SitePage page, SiteManifest manifest) {
   if (isApscvirVenuePage(page)) {
-    openApscvirVenueWebsite();
+    Get.to(() => ApscvirMapsScreen(manifestFuture: Future.value(manifest)));
     return;
   }
   Get.to(() => ApscvirContentScreen(page: page, manifest: manifest));
 }
 
 List<SiteMenuItem> _visibleMenuItems(SiteManifest manifest, bool isLoggedIn) {
-  return manifest.menu
+  final menu = manifest.menu
       .where((item) => !_isRegistrationMenuItem(item))
       .where((item) => !_isVisaMenuItem(item))
       .where((item) => !_isLowPriorityHomeItem(item))
       .where((item) => !isLoggedIn || !_isLoginMenuItem(item))
       .toList();
+  if (!menu.any(_isIsmioMenuItem)) {
+    menu.add(_ismioHomeMenuItem);
+  }
+  return menu;
+}
+
+bool _isIsmioMenuItem(SiteMenuItem item) {
+  return item.id == _ismioHomeMenuItem.id ||
+      item.title.trim().toLowerCase() == 'ismio';
 }
 
 bool _isLoginMenuItem(SiteMenuItem item) {
@@ -731,6 +948,7 @@ double _measureMenuTextLine({
 
 IconData _iconForTitle(String title) {
   final lower = title.toLowerCase();
+  if (lower.contains('ismio')) return Icons.public_outlined;
   if (lower.contains('program')) return Icons.event_note_outlined;
   if (lower.contains('faculty') || lower.contains('committee')) {
     return Icons.groups_outlined;

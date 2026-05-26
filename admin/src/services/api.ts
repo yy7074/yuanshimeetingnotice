@@ -56,6 +56,14 @@ export const eventsApi = {
   stats: () => api.get('/events/stats'),
 };
 
+// Home Banners
+export const homeBannersApi = {
+  listAdmin: () => api.get('/home-banners/admin'),
+  create: (data: any) => api.post('/home-banners', data),
+  update: (id: string, data: any) => api.put(`/home-banners/${id}`, data),
+  delete: (id: string) => api.delete(`/home-banners/${id}`),
+};
+
 // Sessions
 export const sessionsApi = {
   list: (eventId: string) => api.get(`/events/${eventId}/sessions`),

@@ -9,6 +9,7 @@ const resources = {
 
       // Menu
       'menu.dashboard': 'Dashboard',
+      'menu.homeBanners': 'Home Carousel',
       'menu.events': 'Events',
       'menu.sessions': 'Sessions',
       'menu.speakers': 'Speakers',
@@ -311,6 +312,7 @@ const resources = {
 
       // Menu
       'menu.dashboard': '仪表盘',
+      'menu.homeBanners': '首页轮播图',
       'menu.events': '会议管理',
       'menu.sessions': '议程管理',
       'menu.speakers': '嘉宾管理',

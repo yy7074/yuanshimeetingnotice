@@ -6,7 +6,7 @@ import 'storage_service.dart';
 class ApiService extends GetConnect {
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://139.129.23.105:3201/api/v1',
+    defaultValue: 'https://admin.apscvir.top/api/v1',
   );
   // Override with --dart-define=API_BASE_URL=... for device/prod builds.
 
@@ -86,6 +86,9 @@ class ApiService extends GetConnect {
       });
 
   Future<Response> getProfile() => get('/auth/profile');
+
+  // Home banners
+  Future<Response> getHomeBanners() => get('/home-banners');
 
   // Events
   Future<Response> getEvents({String? search, String? status}) {

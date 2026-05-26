@@ -43,7 +43,7 @@ class DataService {
       locationZh:
           'Suzhou International Expo Centre, 688 E. Suzhou Avenue, Suzhou Industrial Park, Suzhou, Jiangsu Province, China',
       imageUrl:
-          'http://139.129.23.105:3201/uploads/events/apscvir-2026-meeting.png',
+          'https://admin.apscvir.top/uploads/events/apscvir-2026-meeting.png',
       startDate: DateTime(2026, 6, 11),
       endDate: DateTime(2026, 6, 14),
       organizerEn: 'APSCVIR 2026 Organizing Committee',

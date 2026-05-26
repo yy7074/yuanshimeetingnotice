@@ -9,6 +9,7 @@ import './locales/i18n';
 const Login = lazy(() => import('./pages/Login'));
 const ChangePassword = lazy(() => import('./pages/ChangePassword'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const HomeBanners = lazy(() => import('./pages/HomeBanners'));
 const Events = lazy(() => import('./pages/Events'));
 const Speakers = lazy(() => import('./pages/Speakers'));
 const Users = lazy(() => import('./pages/Users'));
@@ -52,6 +53,7 @@ export default function App() {
             />
             <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
+              <Route path="home-banners" element={<HomeBanners />} />
               <Route path="events" element={<Events />} />
               <Route path="sessions" element={<Sessions />} />
               <Route path="speakers" element={<Speakers />} />

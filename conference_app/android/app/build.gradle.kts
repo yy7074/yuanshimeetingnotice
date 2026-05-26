@@ -8,11 +8,12 @@ plugins {
 val jpushAppKey =
     (project.findProperty("JPUSH_APPKEY") as String?)
         ?.takeIf { it.isNotBlank() }
-        ?: "000000000000000000000000"
+        ?: "02e01a729d7313df5fc5150c"
 val jpushChannel =
     (project.findProperty("JPUSH_CHANNEL") as String?)
         ?.takeIf { it.isNotBlank() }
         ?: "developer-default"
+val androidApplicationId = "com.example.conferenceApp123"
 
 android {
     namespace = "com.example.conference_app"
@@ -31,17 +32,16 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.conference_app"
+        applicationId = androidApplicationId
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders += mapOf(
-            "JPUSH_APPKEY" to jpushAppKey,
-            "JPUSH_CHANNEL" to jpushChannel,
-        )
+        manifestPlaceholders["JPUSH_PKGNAME"] = androidApplicationId
+        manifestPlaceholders["JPUSH_APPKEY"] = jpushAppKey
+        manifestPlaceholders["JPUSH_CHANNEL"] = jpushChannel
     }
 
     buildTypes {
@@ -59,4 +59,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    implementation("cn.jiguang.sdk:jpush:6.0.1")
 }

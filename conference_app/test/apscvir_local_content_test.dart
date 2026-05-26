@@ -42,6 +42,10 @@ void main() {
       'assets/apscvir2026/images/apscvir-venue-map.png',
     );
     expect(mapBytes.lengthInBytes, greaterThan(0));
+    final googleMapPreviewBytes = await rootBundle.load(
+      'assets/apscvir2026/images/venue-google-map-preview.jpeg',
+    );
+    expect(googleMapPreviewBytes.lengthInBytes, greaterThan(0));
 
     const downloadCenterAssets = [
       'assets/apscvir2026/images/download-center-01-2026012114135281027954163-85d88862d0.png',
@@ -135,6 +139,13 @@ void main() {
       sessions.any(
         (session) =>
             session.dayIndex == 1 && session.titleEn == 'Opening Ceremony',
+      ),
+      isTrue,
+    );
+    expect(
+      sessions.any(
+        (session) =>
+            session.titleEn == 'Closing Ceremony' && session.roomEn.isNotEmpty,
       ),
       isTrue,
     );
