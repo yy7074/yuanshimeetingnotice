@@ -106,8 +106,7 @@ class AuthController extends GetxController {
         isLoading.value = false;
         return true;
       } else {
-        final msg = res.body?['message'] ?? 'Login failed';
-        errorMessage.value = msg;
+        errorMessage.value = _messageFromResponse(res.body, 'Login failed');
         isLoading.value = false;
         return false;
       }
@@ -171,5 +170,21 @@ class AuthController extends GetxController {
       ),
       mustChangePassword: json['mustChangePassword'] == true,
     );
+  }
+
+  String _messageFromResponse(dynamic body, String fallback) {
+    if (body is Map) {
+      final message = body['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message;
+      }
+      if (message is List && message.isNotEmpty) {
+        return message.map((item) => item.toString()).join('\n');
+      }
+    }
+    if (body is String && body.trim().isNotEmpty) {
+      return body;
+    }
+    return fallback;
   }
 }

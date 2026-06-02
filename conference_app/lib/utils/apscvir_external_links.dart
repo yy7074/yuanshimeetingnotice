@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -91,7 +92,7 @@ Future<void> showApscvirVenueMapChooser({Color? primary}) async {
               color: accent,
               onTap: openApscvirVenueAmap,
             ),
-            if (Platform.isIOS)
+            if (!kIsWeb && Platform.isIOS)
               _MapChoiceTile(
                 icon: Icons.map_outlined,
                 title: 'Apple Maps',
@@ -126,6 +127,11 @@ Future<void> showApscvirVenueMapChooser({Color? primary}) async {
 
 Future<void> openApscvirVenueAmap() async {
   _closeMapChooser();
+  if (kIsWeb) {
+    await _openApscvirVenueAmapWeb();
+    return;
+  }
+
   final appUri = Platform.isIOS
       ? Uri(
           scheme: 'iosamap',
@@ -158,6 +164,10 @@ Future<void> openApscvirVenueAmap() async {
   );
   if (launched) return;
 
+  await _openApscvirVenueAmapWeb();
+}
+
+Future<void> _openApscvirVenueAmapWeb() async {
   final webUri = Uri.https('uri.amap.com', '/navigation', {
     'to': '$apscvirVenueLongitude,$apscvirVenueLatitude,$apscvirVenueNameEn',
     'mode': 'car',

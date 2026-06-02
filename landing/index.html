@@ -2,24 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>APSCVIR 2026 App Download</title>
-  <meta name="description" content="Download the APSCVIR 2026 conference app for iOS and Android. Browse the program, build your schedule, access venue maps, and receive conference alerts.">
-  <meta property="og:title" content="APSCVIR 2026 App">
-  <meta property="og:description" content="The official mobile app for APSCVIR 2026.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>APSCVIR 2026 H5 Portal</title>
+  <meta name="description" content="APSCVIR 2026 mobile H5 portal for program, faculty, venue, registration, downloads, and app access.">
+  <meta property="og:title" content="APSCVIR 2026 H5 Portal">
+  <meta property="og:description" content="Mobile access to APSCVIR 2026 program, venue, faculty, downloads, and app links.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="/assets/apscvir-hero.jpg">
+  <meta name="theme-color" content="#0a92a2">
   <link rel="icon" href="/assets/app-icon.png">
   <style>
     :root {
       --brand: #0a92a2;
-      --brand-dark: #087887;
+      --brand-dark: #056977;
       --ink: #10202b;
       --muted: #61727e;
-      --line: #d7e8ec;
-      --paper: #f3fbfd;
-      --accent: #d99543;
+      --line: #d8e9ed;
+      --paper: #f6fbfc;
+      --gold: #d99543;
+      --green: #18856f;
+      --danger: #b54848;
       --white: #ffffff;
+      --shadow: 0 18px 42px rgba(17, 47, 64, 0.12);
     }
 
     * {
@@ -33,7 +37,7 @@
     body {
       margin: 0;
       color: var(--ink);
-      background: var(--white);
+      background: var(--paper);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       letter-spacing: 0;
     }
@@ -43,90 +47,137 @@
       text-decoration: none;
     }
 
+    button,
+    input {
+      font: inherit;
+      letter-spacing: 0;
+    }
+
     img {
-      max-width: 100%;
       display: block;
+      max-width: 100%;
     }
 
     .shell {
-      width: min(1120px, calc(100% - 40px));
+      width: min(1080px, calc(100% - 32px));
       margin: 0 auto;
     }
 
-    .nav {
+    .topbar {
       position: sticky;
       top: 0;
-      z-index: 10;
-      background: rgba(255, 255, 255, 0.9);
-      border-bottom: 1px solid rgba(215, 232, 236, 0.75);
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid rgba(216, 233, 237, 0.9);
       backdrop-filter: blur(16px);
     }
 
-    .nav-inner {
-      height: 64px;
+    .topbar-inner {
+      min-height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
+      gap: 14px;
+      padding: env(safe-area-inset-top) 0 0;
     }
 
     .brand {
+      min-width: 0;
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-weight: 900;
-      color: var(--brand-dark);
+      gap: 10px;
     }
 
     .brand img {
       width: 38px;
       height: 38px;
-      border-radius: 10px;
-      box-shadow: 0 10px 24px rgba(8, 120, 135, 0.18);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(10, 146, 162, 0.2);
     }
 
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 22px;
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      overflow: hidden;
+      color: var(--brand-dark);
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      margin-top: 3px;
       color: var(--muted);
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    .hero {
-      background:
-        linear-gradient(90deg, rgba(5, 51, 61, 0.88), rgba(5, 51, 61, 0.44)),
-        url("/assets/apscvir-hero.webp") center / cover;
-      color: white;
-    }
-
-    .hero-inner {
-      min-height: 680px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-      align-items: center;
-      gap: 48px;
-      padding: 84px 0 72px;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-      padding: 8px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.92);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
+      line-height: 1;
       text-transform: uppercase;
     }
 
-    .pulse {
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .icon-button {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--brand-dark);
+      box-shadow: 0 8px 20px rgba(16, 32, 43, 0.06);
+    }
+
+    .icon-button svg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .hero {
+      color: var(--white);
+      background:
+        linear-gradient(90deg, rgba(6, 49, 58, 0.9), rgba(6, 49, 58, 0.5)),
+        url("/assets/apscvir-hero.webp") center / cover;
+    }
+
+    .hero-inner {
+      min-height: min(640px, calc(100vh - 64px));
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      align-items: center;
+      gap: 36px;
+      padding: 58px 0 44px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      padding: 8px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .dot {
       width: 8px;
       height: 8px;
+      flex: 0 0 auto;
       border-radius: 50%;
       background: #7ee4cf;
       box-shadow: 0 0 0 6px rgba(126, 228, 207, 0.18);
@@ -134,333 +185,736 @@
 
     h1 {
       max-width: 760px;
-      margin: 22px 0 20px;
-      font-size: clamp(48px, 8vw, 88px);
-      line-height: 0.95;
+      margin: 20px 0 16px;
+      font-size: clamp(40px, 8vw, 78px);
+      line-height: 0.98;
       letter-spacing: 0;
     }
 
     .lead {
-      max-width: 620px;
+      max-width: 640px;
       margin: 0;
-      color: rgba(255, 255, 255, 0.84);
-      font-size: 19px;
-      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 18px;
       font-weight: 520;
+      line-height: 1.58;
     }
 
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-top: 34px;
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 28px;
+      max-width: 680px;
     }
 
-    .button {
-      min-height: 60px;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 18px;
+    .meta-tile {
+      min-height: 78px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
-      font-weight: 900;
-      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(12px);
     }
 
-    .button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.18);
-    }
-
-    .button-primary {
-      background: var(--accent);
-      color: #221100;
-    }
-
-    .button-dark {
-      background: #111827;
-      color: white;
-    }
-
-    .button small {
-      display: block;
+    .meta-label {
+      color: rgba(255, 255, 255, 0.68);
       font-size: 11px;
+      font-weight: 900;
       line-height: 1.15;
-      opacity: 0.76;
       text-transform: uppercase;
     }
 
-    .button span {
-      display: block;
-      font-size: 17px;
-      line-height: 1.15;
+    .meta-value {
+      margin-top: 7px;
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.2;
     }
 
-    .icon {
-      width: 28px;
-      height: 28px;
-      flex: 0 0 auto;
+    .hero-panel {
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(14px);
     }
 
-    .meta {
-      margin-top: 18px;
-      color: rgba(255, 255, 255, 0.66);
-      font-size: 13px;
-      line-height: 1.6;
+    .search-wrap {
+      position: relative;
     }
 
-    .phone-wrap {
-      display: flex;
+    .search-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      width: 20px;
+      height: 20px;
+      color: #70808c;
+      transform: translateY(-50%);
+    }
+
+    .search-input {
+      width: 100%;
+      min-height: 54px;
+      padding: 14px 14px 14px 44px;
+      border: 0;
+      border-radius: 8px;
+      outline: none;
+      background: var(--white);
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .primary-links {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .portal-button {
+      min-height: 58px;
+      display: inline-flex;
+      align-items: center;
       justify-content: center;
-    }
-
-    .phone {
-      width: min(340px, 82vw);
-      aspect-ratio: 960 / 2048;
-      overflow: hidden;
-      border-radius: 28px;
-      background: #eaf7ff;
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
-    }
-
-    .phone picture {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .app-screenshot {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .section {
-      padding: 86px 0;
-    }
-
-    .section-muted {
-      background: var(--paper);
-    }
-
-    .section-heading {
-      max-width: 700px;
-      margin: 0 auto 38px;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.15;
       text-align: center;
     }
 
-    .section-heading p {
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 17px;
-      line-height: 1.55;
+    .portal-button svg {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 auto;
+      color: var(--brand);
+    }
+
+    .portal-button.gold svg {
+      color: var(--gold);
+    }
+
+    .portal-note {
+      margin: 14px 2px 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.5;
+    }
+
+    .section {
+      padding: 34px 0;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
     }
 
     h2 {
       margin: 0;
       color: var(--ink);
-      font-size: clamp(32px, 5vw, 52px);
-      line-height: 1.05;
+      font-size: clamp(24px, 5vw, 38px);
+      line-height: 1.08;
       letter-spacing: 0;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .feature {
-      min-height: 190px;
-      padding: 22px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: white;
-    }
-
-    .feature strong {
-      display: block;
-      margin-bottom: 10px;
-      font-size: 18px;
-    }
-
-    .feature p {
+    .section-header p {
+      max-width: 520px;
       margin: 0;
       color: var(--muted);
       font-size: 14px;
-      line-height: 1.55;
-      font-weight: 520;
+      font-weight: 620;
+      line-height: 1.5;
     }
 
-    .download-panel {
-      display: block;
-      padding: 30px;
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .quick-card {
+      min-height: 138px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: white;
-      box-shadow: 0 20px 50px rgba(8, 120, 135, 0.12);
+      background: var(--white);
+      box-shadow: 0 10px 26px rgba(16, 32, 43, 0.06);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
     }
 
-    .download-panel h2 {
-      font-size: clamp(30px, 4vw, 46px);
+    .quick-card:hover {
+      border-color: rgba(10, 146, 162, 0.45);
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
     }
 
-    .download-panel p {
+    .quick-card[hidden] {
+      display: none;
+    }
+
+    .quick-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .quick-icon {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #eaf7fa;
+      color: var(--brand);
+    }
+
+    .quick-icon svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .quick-card.gold .quick-icon {
+      background: #fbf0df;
+      color: #9b641f;
+    }
+
+    .quick-card.green .quick-icon {
+      background: #e5f5ef;
+      color: var(--green);
+    }
+
+    .quick-card.red .quick-icon {
+      background: #faecec;
+      color: var(--danger);
+    }
+
+    .arrow {
+      color: #8ba0aa;
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .quick-title {
+      margin-top: 14px;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.18;
+    }
+
+    .quick-desc {
+      margin-top: 6px;
       color: var(--muted);
-      line-height: 1.65;
+      font-size: 13px;
+      font-weight: 620;
+      line-height: 1.38;
+    }
+
+    .schedule-strip {
+      overflow-x: auto;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(238px, 1fr);
+      gap: 12px;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    .day-card {
+      min-height: 184px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      box-shadow: 0 10px 26px rgba(16, 32, 43, 0.06);
+    }
+
+    .day-date {
+      display: inline-flex;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #eaf7fa;
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .day-card h3 {
+      margin: 14px 0 8px;
+      color: var(--ink);
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .day-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 620;
+      line-height: 1.48;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 14px;
+    }
+
+    .info-band,
+    .download-band {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--white);
+      box-shadow: 0 10px 26px rgba(16, 32, 43, 0.06);
+    }
+
+    .info-band {
+      min-height: 230px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .venue-image {
+      min-height: 230px;
+      background: url("/assets/apscvir-hero.webp") center / cover;
+    }
+
+    .venue-copy {
+      padding: 22px;
+    }
+
+    .venue-copy h2,
+    .download-band h2 {
+      font-size: clamp(24px, 4vw, 34px);
+    }
+
+    .venue-copy p,
+    .download-band p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 620;
+      line-height: 1.55;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .solid-button,
+    .outline-button {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .solid-button {
+      border: 1px solid var(--brand);
+      background: var(--brand);
+      color: var(--white);
+    }
+
+    .outline-button {
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: var(--ink);
+    }
+
+    .solid-button svg,
+    .outline-button svg {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 auto;
+    }
+
+    .download-band {
+      padding: 22px;
+    }
+
+    .ios-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #fff4e7;
+      color: #8a5314;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
     }
 
     footer {
-      padding: 34px 0;
-      border-top: 1px solid var(--line);
+      padding: 24px 0 calc(24px + env(safe-area-inset-bottom));
       color: var(--muted);
       font-size: 13px;
+      font-weight: 650;
+      line-height: 1.5;
     }
 
     @media (max-width: 920px) {
       .hero-inner,
-      .hero-inner {
+      .split,
+      .info-band {
         grid-template-columns: 1fr;
       }
 
-      .phone-wrap {
-        justify-content: flex-start;
+      .hero-inner {
+        min-height: auto;
       }
 
-      .grid {
+      .quick-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .venue-image {
+        min-height: 180px;
       }
     }
 
     @media (max-width: 640px) {
       .shell {
-        width: min(100% - 28px, 1120px);
+        width: min(100% - 24px, 1080px);
       }
 
-      .nav-links a:not(.download-nav) {
+      .topbar-inner {
+        min-height: 60px;
+      }
+
+      .brand-title {
+        font-size: 14px;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .nav-actions .icon-button:first-child {
         display: none;
       }
 
       .hero-inner {
-        min-height: auto;
-        padding: 56px 0 48px;
+        gap: 24px;
+        padding: 34px 0 28px;
       }
 
-      .grid {
+      .lead {
+        font-size: 16px;
+      }
+
+      .hero-meta {
         grid-template-columns: 1fr;
       }
 
-      .button {
-        width: 100%;
-        justify-content: center;
+      .primary-links,
+      .quick-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .quick-card {
+        min-height: 132px;
+        padding: 14px;
+      }
+
+      .quick-title {
+        font-size: 16px;
+      }
+
+      .quick-desc {
+        font-size: 12px;
+      }
+
+      .section {
+        padding: 26px 0;
+      }
+
+      .section-header {
+        display: block;
+      }
+
+      .section-header p {
+        margin-top: 8px;
+      }
+
+      .button-row > a {
+        flex: 1 1 100%;
       }
     }
   </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="shell nav-inner">
-      <a class="brand" href="#top">
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="#top" aria-label="APSCVIR 2026 H5 Portal">
         <img src="/assets/app-icon.png" alt="APSCVIR app icon">
-        <span>APSCVIR 2026 App</span>
+        <span class="brand-text">
+          <span class="brand-title">APSCVIR 2026</span>
+          <span class="brand-subtitle">Mobile H5 Portal</span>
+        </span>
       </a>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#download" class="download-nav">Download</a>
-      </div>
-    </div>
-  </nav>
-
-  <header id="top" class="hero">
-    <div class="shell hero-inner">
-      <div>
-        <div class="eyebrow"><span class="pulse"></span> Official conference app</div>
-        <h1>APSCVIR 2026 in your pocket.</h1>
-        <p class="lead">
-          Browse the scientific program, build your personal schedule, access venue information,
-          receive conference alerts, and keep essential meeting tools ready throughout the event.
-        </p>
-        <div class="actions">
-          <a class="button button-primary" href="/downloads/apscvir-conference-latest.apk" download>
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-              <path d="M12 4v11m0 0 4-4m-4 4-4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span><small>Android direct install</small><span>Download APK</span></span>
-          </a>
-          <a class="button button-dark" href="https://apps.apple.com/search?term=APSCVIR" target="_blank" rel="noopener">
-            <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09M12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
-            <span><small>Open in Apple</small><span>App Store</span></span>
-          </a>
-        </div>
-        <div class="meta">
-          Android direct download · iOS App Store access.
-        </div>
-      </div>
-
-      <div class="phone-wrap" aria-hidden="true">
-        <div class="phone">
-          <picture>
-            <source srcset="/assets/app-screenshot.webp" type="image/webp">
-            <img class="app-screenshot" src="/assets/app-screenshot.jpg" alt="APSCVIR 2026 app home screen">
-          </picture>
-        </div>
+      <div class="nav-actions">
+        <a class="icon-button" href="#portal" aria-label="Open portal links" title="Portal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+            <path d="M4 5h16M4 12h16M4 19h16" stroke-linecap="round"/>
+          </svg>
+        </a>
+        <a class="icon-button" href="/downloads/apscvir-conference-latest.apk" download aria-label="Download Android APK" title="Download APK">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+            <path d="M12 4v10m0 0 4-4m-4 4-4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
       </div>
     </div>
   </header>
 
-  <main>
-    <section id="features" class="section">
-      <div class="shell">
-        <div class="section-heading">
-          <h2>Built for the on-site conference workflow.</h2>
-          <p>Fast access to the agenda, venue, alerts, and attendee tools from one mobile app.</p>
+  <main id="top">
+    <section class="hero">
+      <div class="shell hero-inner">
+        <div>
+          <div class="status"><span class="dot"></span> H5 backup active</div>
+          <h1>APSCVIR 2026 mobile access.</h1>
+          <p class="lead">
+            Program, faculty, venue, registration, downloads, and app access for the 20th Annual Scientific Meeting of APSCVIR.
+          </p>
+          <div class="hero-meta" aria-label="Meeting summary">
+            <div class="meta-tile">
+              <div class="meta-label">Dates</div>
+              <div class="meta-value">June 11-14, 2026</div>
+            </div>
+            <div class="meta-tile">
+              <div class="meta-label">Venue</div>
+              <div class="meta-value">Suzhou International Expo Centre</div>
+            </div>
+            <div class="meta-tile">
+              <div class="meta-label">Access</div>
+              <div class="meta-value">H5, Android, iOS review</div>
+            </div>
+          </div>
         </div>
-        <div class="grid">
-          <article class="feature">
-            <strong>Program Browser</strong>
-            <p>View conference sessions by date, room, and topic. Open session details quickly while moving between venues.</p>
-          </article>
-          <article class="feature">
-            <strong>My Schedule</strong>
-            <p>Save important sessions and keep a personal agenda ready for the full APSCVIR 2026 program.</p>
-          </article>
-          <article class="feature">
-            <strong>Venue Maps</strong>
-            <p>Open venue details and map navigation for Suzhou International Expo Centre directly from the app.</p>
-          </article>
-          <article class="feature">
-            <strong>Alerts</strong>
-            <p>Receive conference notifications, schedule updates, material notices, and important operational reminders.</p>
-          </article>
+
+        <div class="hero-panel" id="portal">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+              <path d="m21 21-4.3-4.3M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" stroke-linecap="round"/>
+            </svg>
+            <input class="search-input" id="portalSearch" type="search" placeholder="Search program, faculty, venue..." autocomplete="off">
+          </div>
+          <div class="primary-links">
+            <a class="portal-button" href="/apscvir2026/pages/1814797-detailed-program.html">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke-linecap="round"/>
+              </svg>
+              Detailed Program
+            </a>
+            <a class="portal-button gold" href="/apscvir2026/pages/1520613-venue.html">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+                <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><path d="M12 10.5h.01" stroke-linecap="round"/>
+              </svg>
+              Venue
+            </a>
+          </div>
+          <div class="portal-note">iOS App Store listing is being expedited. This H5 entry stays available for on-site access.</div>
         </div>
       </div>
     </section>
 
-    <section id="download" class="section section-muted">
+    <section class="section">
       <div class="shell">
-        <div class="download-panel">
-          <div>
-            <h2>Download APSCVIR 2026 App</h2>
-            <p>
-              Android users can install the APK directly. iPhone users can open the App Store link;
-              replace the link with the official App Store listing when it becomes available.
-            </p>
-            <div class="actions">
-              <a class="button button-primary" href="/downloads/apscvir-conference-latest.apk" download>
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path d="M12 4v11m0 0 4-4m-4 4-4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span><small>Android</small><span>Download APK</span></span>
+        <div class="section-header">
+          <h2>Fast Entry</h2>
+          <p>Core conference pages are mirrored locally under this domain, with official-site links kept available as a backup.</p>
+        </div>
+        <div class="quick-grid" id="quickGrid">
+          <a class="quick-card" data-keywords="program agenda schedule detailed timetable sessions" href="/apscvir2026/pages/1814797-detailed-program.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke-linecap="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Detailed Program</span>
+              <span class="quick-desc">Full session list by date, room, and time.</span>
+            </span>
+          </a>
+          <a class="quick-card green" data-keywords="program at a glance overview rooms dates" href="/apscvir2026/pages/1814796-program-at-a-glance.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M4 5h16v5H4zM4 14h7v5H4zM15 14h5v5h-5z" stroke-linejoin="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Program at a Glance</span>
+              <span class="quick-desc">Compact overview for quick planning.</span>
+            </span>
+          </a>
+          <a class="quick-card gold" data-keywords="faculty speakers experts presenters" href="/apscvir2026/pages/1411179-faculty.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M16 11a4 4 0 1 0-8 0M4 21a8 8 0 0 1 16 0" stroke-linecap="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Faculty</span>
+              <span class="quick-desc">Speaker profiles and meeting faculty.</span>
+            </span>
+          </a>
+          <a class="quick-card" data-keywords="venue map location expo centre suzhou" href="/apscvir2026/pages/1520613-venue.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><path d="M12 10.5h.01" stroke-linecap="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Venue</span>
+              <span class="quick-desc">Venue information and local navigation.</span>
+            </span>
+          </a>
+          <a class="quick-card green" data-keywords="registration register fee payment" href="/apscvir2026/pages/1548786-registration.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v16H4V6a2 2 0 0 1 2-2h2"/><path d="M8 2h8v4H8zM8 11h8M8 16h5" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Registration</span>
+              <span class="quick-desc">Registration information and attendee access.</span>
+            </span>
+          </a>
+          <a class="quick-card gold" data-keywords="transportation traffic travel taxi metro" href="/apscvir2026/pages/1520615-transportation.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M6 17h12l1-5H5l1 5Z"/><path d="M8 17v2M16 17v2M7 12l1.5-5h7L17 12" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Transportation</span>
+              <span class="quick-desc">Airport, rail, and city transfer information.</span>
+            </span>
+          </a>
+          <a class="quick-card" data-keywords="download center files material abstract" href="/apscvir2026/pages/1411172-download-center.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Download Center</span>
+              <span class="quick-desc">Meeting documents and related files.</span>
+            </span>
+          </a>
+          <a class="quick-card red" data-keywords="contact support secretariat help email" href="/apscvir2026/pages/1411157-contact-us.html">
+            <span class="quick-top">
+              <span class="quick-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span class="arrow">›</span>
+            </span>
+            <span>
+              <span class="quick-title">Contact Us</span>
+              <span class="quick-desc">Secretariat and meeting support.</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell">
+        <div class="section-header">
+          <h2>Program Days</h2>
+          <p>Direct day planning entry for the June 11-14 scientific meeting.</p>
+        </div>
+        <div class="schedule-strip" aria-label="Program days">
+          <a class="day-card" href="/apscvir2026/pages/1814797-detailed-program.html">
+            <span class="day-date">Jun 11, Thu</span>
+            <h3>Opening Day Sessions</h3>
+            <p>EVAR, TEVAR, advisory board, executive master workshops, and committee sessions.</p>
+          </a>
+          <a class="day-card" href="/apscvir2026/pages/1814797-detailed-program.html">
+            <span class="day-date">Jun 12, Fri</span>
+            <h3>Scientific Program</h3>
+            <p>Parallel scientific tracks, faculty talks, and meeting-room based sessions.</p>
+          </a>
+          <a class="day-card" href="/apscvir2026/pages/1814797-detailed-program.html">
+            <span class="day-date">Jun 13, Sat</span>
+            <h3>Core Conference Day</h3>
+            <p>Major program blocks across interventional radiology topics and faculty panels.</p>
+          </a>
+          <a class="day-card" href="/apscvir2026/pages/1814797-detailed-program.html">
+            <span class="day-date">Jun 14, Sun</span>
+            <h3>Final Day Program</h3>
+            <p>Closing-day sessions and late program items for on-site attendees.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="shell split">
+        <div class="info-band">
+          <div class="venue-image" aria-hidden="true"></div>
+          <div class="venue-copy">
+            <h2>Suzhou International Expo Centre</h2>
+            <p>688 E. Suzhou Avenue, Suzhou Industrial Park, Suzhou, Jiangsu Province, China.</p>
+            <div class="button-row">
+              <a class="solid-button" href="https://uri.amap.com/navigation?to=120.7059,31.3238,Suzhou%20International%20Expo%20Centre&mode=car&policy=1&src=APSCVIR&coordinate=gaode&callnative=1" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><path d="M12 10.5h.01" stroke-linecap="round"/></svg>
+                Amap
               </a>
-              <a class="button button-dark" href="https://apps.apple.com/search?term=APSCVIR" target="_blank" rel="noopener">
-                <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09M12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                </svg>
-                <span><small>iOS</small><span>Open App Store</span></span>
+              <a class="outline-button" href="https://maps.apple.com/?daddr=31.3238,120.7059&q=Suzhou%20International%20Expo%20Centre&dirflg=d" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M3 6.5 9 4l6 2.5 6-2.5v15.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v15.5M15 6.5V22" stroke-linecap="round"/></svg>
+                Apple Maps
+              </a>
+              <a class="outline-button" href="https://www.google.com/maps/search/?api=1&query=Suzhou%20International%20Expo%20Centre%2C%20688%20E.%20Suzhou%20Avenue%2C%20Suzhou%20Industrial%20Park%2C%20Suzhou%2C%20Jiangsu%20Province%2C%20China" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"/><path d="M12 10.5h.01" stroke-linecap="round"/></svg>
+                Google Maps
               </a>
             </div>
+          </div>
+        </div>
+
+        <div class="download-band" id="app">
+          <h2>App Access</h2>
+          <p>Android users can install the APK directly. iPhone users can use this H5 portal while the App Store review is being expedited.</p>
+          <span class="ios-status"><span class="dot"></span> iOS review in progress</span>
+          <div class="button-row">
+            <a class="solid-button" href="/downloads/apscvir-conference-latest.apk" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Android APK
+            </a>
+            <a class="outline-button" href="https://apps.apple.com/search?term=APSCVIR" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09M12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+              App Store
+            </a>
+            <a class="outline-button" href="https://www.apscvir2026.com/en/minisite/index/29839" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3c2.2 2.4 3.2 5.4 3.2 9s-1 6.6-3.2 9M12 3C9.8 5.4 8.8 8.4 8.8 12s1 6.6 3.2 9" stroke-linecap="round"/></svg>
+              Official Site
+            </a>
           </div>
         </div>
       </div>
@@ -469,8 +923,21 @@
 
   <footer>
     <div class="shell">
-      APSCVIR 2026 App · Suzhou International Expo Centre · <a href="mailto:secretariat@apscvir.com">secretariat@apscvir.com</a>
+      APSCVIR 2026 · June 11-14, 2026 · Suzhou International Expo Centre · <a href="mailto:secretariat@apscvir.com">secretariat@apscvir.com</a>
     </div>
   </footer>
+
+  <script>
+    const search = document.getElementById('portalSearch');
+    const cards = Array.from(document.querySelectorAll('.quick-card'));
+
+    search.addEventListener('input', () => {
+      const term = search.value.trim().toLowerCase();
+      cards.forEach((card) => {
+        const text = `${card.textContent} ${card.dataset.keywords || ''}`.toLowerCase();
+        card.hidden = term.length > 0 && !text.includes(term);
+      });
+    });
+  </script>
 </body>
 </html>

@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'storage_service.dart';
 
@@ -44,8 +47,42 @@ class ApiService extends GetConnect {
   }
 
   // Auth
-  Future<Response> login(String email, String password) =>
-      post('/auth/login', {'email': email, 'password': password});
+  Future<Response> login(String email, String password) {
+    if (kIsWeb) {
+      return _webJsonPost('/auth/login', {
+        'email': email,
+        'password': password,
+      });
+    }
+    return post('/auth/login', {'email': email, 'password': password});
+  }
+
+  Future<Response> _webJsonPost(String path, Map<String, dynamic> body) async {
+    final storage = Get.find<StorageService>();
+    final token = storage.authToken;
+    final uri = Uri.parse(
+      '${apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl}$path',
+    );
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+    final res = await http
+        .post(uri, headers: headers, body: jsonEncode(body))
+        .timeout(httpClient.timeout);
+    dynamic decoded;
+    try {
+      decoded = res.body.isEmpty ? null : jsonDecode(res.body);
+    } catch (_) {
+      decoded = res.body;
+    }
+    return Response(
+      statusCode: res.statusCode,
+      body: decoded,
+      bodyString: res.body,
+      headers: res.headers,
+    );
+  }
 
   Future<Response> register(
     String email,
