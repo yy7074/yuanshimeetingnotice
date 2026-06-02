@@ -28,6 +28,16 @@ class StorageService extends GetxService {
     await _prefs.remove('auth_token');
   }
 
+  Future<void> clearAccountData() async {
+    await _prefs.remove('auth_token');
+    await _prefs.remove('saved_email');
+    await _prefs.remove('remember_me');
+    await _prefs.remove('subscribed_events');
+    await _prefs.remove('saved_sessions');
+    await _prefs.remove('hydrated_schedule_events');
+    await _prefs.remove('push_enabled');
+  }
+
   // Subscribed Events
   List<String> get subscribedEventIds {
     final raw = _prefs.getString('subscribed_events');
@@ -111,5 +121,20 @@ class StorageService extends GetxService {
 
   Future<void> setPushEnabled(bool enabled) async {
     await _prefs.setBool('push_enabled', enabled);
+  }
+
+  // APSCVIR synced content cache
+  String? get apscvirManifestCache =>
+      _prefs.getString('apscvir_content_manifest');
+
+  Future<void> saveApscvirManifestCache(String raw) async {
+    await _prefs.setString('apscvir_content_manifest', raw);
+  }
+
+  String? apscvirHtmlCache(String assetPath) =>
+      _prefs.getString('apscvir_content_html::$assetPath');
+
+  Future<void> saveApscvirHtmlCache(String assetPath, String raw) async {
+    await _prefs.setString('apscvir_content_html::$assetPath', raw);
   }
 }

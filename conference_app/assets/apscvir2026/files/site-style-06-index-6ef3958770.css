@@ -1,0 +1,43 @@
+.huiyi-list > ul {
+  margin-left: 1rem;
+  margin-bottom: 1rem;
+  margin-right: 1rem;
+}
+.huiyi-list > ul > li {
+  background: url("../images/item-bg.png") top center no-repeat;
+  background-size: 100% 100%;
+  width: calc((100% - 0.8rem) / 2);
+  height: 3rem;
+  margin-right: 0.8rem;
+  margin-top: 0.8rem;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  box-shadow: rgba(96, 98, 100, 0.15) 0 10px 10px;
+}
+.huiyi-list > ul > li:nth-child(2n) {
+  margin-right: 0;
+}
+.huiyi-list > ul > li > a {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+}
+.huiyi-list > ul > li > a > i {
+  color: #fff;
+  max-width: 1.1rem;
+  max-height: 1.1rem;
+  font-size: 1.1rem;
+}
+.huiyi-list > ul > li > a > p {
+  margin-left: 0.4rem;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  width: calc(100% - 1.1rem);
+  text-align: center;
+  font-size: 0.7rem;
+}
+/*# sourceMappingURL=index.css.map */

@@ -5,6 +5,8 @@ import { User, UserRole } from './entities/user.entity';
 import { EmailService } from '../common/email.service';
 import { Notification } from '../notifications/entities/notification.entity';
 import { CheckIn } from '../check-in/entities/check-in.entity';
+import { Material } from '../materials/entities/material.entity';
+import * as bcryptjs from 'bcryptjs';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -15,6 +17,9 @@ describe('UsersService', () => {
     createQueryBuilder: jest.Mock;
     count: jest.Mock;
     find: jest.Mock;
+    manager: {
+      transaction: jest.Mock;
+    };
   };
   let notifRepo: {
     find: jest.Mock;
@@ -33,6 +38,9 @@ describe('UsersService', () => {
       createQueryBuilder: jest.fn(),
       count: jest.fn(),
       find: jest.fn(),
+      manager: {
+        transaction: jest.fn(),
+      },
     };
     notifRepo = {
       find: jest.fn(),
@@ -89,9 +97,7 @@ describe('UsersService', () => {
       fcmToken: null,
     } as User;
 
-    repo.findOne
-      .mockResolvedValueOnce(user)
-      .mockResolvedValueOnce(null);
+    repo.findOne.mockResolvedValueOnce(user).mockResolvedValueOnce(null);
     repo.save.mockImplementation(async (value) => value);
 
     const result = await service.updateByAdmin('u1', {
@@ -129,7 +135,9 @@ describe('UsersService', () => {
     expect(result.language).toBe('en');
     expect(result.isActive).toBe(false);
     expect(result.pushEnabled).toBe(false);
-    expect((repo.save.mock.calls[0][0] as User).password).not.toBe('Welcome2026!');
+    expect((repo.save.mock.calls[0][0] as User).password).not.toBe(
+      'Welcome2026!',
+    );
   });
 
   it('blocks deactivating the current admin account', async () => {
@@ -146,7 +154,11 @@ describe('UsersService', () => {
     repo.find.mockResolvedValueOnce(users);
     repo.save.mockImplementation(async (value) => value);
 
-    const result = await service.updateActiveBatch(['u1', 'u2'], false, 'admin');
+    const result = await service.updateActiveBatch(
+      ['u1', 'u2'],
+      false,
+      'admin',
+    );
 
     expect(result).toEqual({ updated: 2, isActive: false });
     expect(users[0].isActive).toBe(false);
@@ -162,7 +174,11 @@ describe('UsersService', () => {
     repo.find.mockResolvedValueOnce(users);
     repo.save.mockImplementation(async (value) => value);
 
-    const result = await service.updateRoleBatch(['u1', 'u2'], UserRole.SPEAKER, 'admin');
+    const result = await service.updateRoleBatch(
+      ['u1', 'u2'],
+      UserRole.SPEAKER,
+      'admin',
+    );
 
     expect(result).toEqual({ updated: 2, role: UserRole.SPEAKER });
     expect(users[0].role).toBe(UserRole.SPEAKER);
@@ -173,7 +189,9 @@ describe('UsersService', () => {
   it('blocks batch demotion of the current admin account', async () => {
     await expect(
       service.updateRoleBatch(['admin'], UserRole.SPEAKER, 'admin'),
-    ).rejects.toThrow('Cannot change the current admin account to a non-admin role');
+    ).rejects.toThrow(
+      'Cannot change the current admin account to a non-admin role',
+    );
   });
 
   it('resets a user password with a new hash', async () => {
@@ -190,6 +208,65 @@ describe('UsersService', () => {
     expect(result.message).toBe('Password reset successfully.');
     expect(user.password).not.toBe('NewPassw0rd123');
     expect(repo.save).toHaveBeenCalledWith(user);
+  });
+
+  it('deletes the current user account and associated records', async () => {
+    const user = {
+      id: 'u1',
+      email: 'user@example.com',
+      password: await bcryptjs.hash('CurrentPassw0rd123', 10),
+      role: UserRole.ATTENDEE,
+      subscribedEvents: [{ id: 'e1' }],
+    } as User;
+    const material = {
+      id: 'm1',
+      visibleUserIds: ['u1', 'u2'],
+    } as Material;
+
+    const userRepo = {
+      findOne: jest.fn().mockResolvedValue(user),
+      delete: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+    const notifRepository = {
+      delete: jest.fn().mockResolvedValue({ affected: 2 }),
+    };
+    const checkInRepository = {
+      delete: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+    const materialRepository = {
+      find: jest.fn().mockResolvedValue([material]),
+      save: jest.fn().mockResolvedValue([material]),
+    };
+    const removeSubscriptions = jest.fn().mockResolvedValue(undefined);
+    const manager = {
+      getRepository: jest.fn((entity) => {
+        if (entity === User) return userRepo;
+        if (entity === Notification) return notifRepository;
+        if (entity === CheckIn) return checkInRepository;
+        if (entity === Material) return materialRepository;
+        throw new Error('Unexpected repository');
+      }),
+      createQueryBuilder: jest.fn(() => ({
+        relation: jest.fn(() => ({
+          of: jest.fn(() => ({
+            remove: removeSubscriptions,
+          })),
+        })),
+      })),
+    };
+    repo.manager.transaction.mockImplementation(async (callback) =>
+      callback(manager),
+    );
+
+    const result = await service.deleteOwnAccount('u1', 'CurrentPassw0rd123');
+
+    expect(result).toEqual({ message: 'Account deleted successfully.' });
+    expect(removeSubscriptions).toHaveBeenCalledWith(user.subscribedEvents);
+    expect(notifRepository.delete).toHaveBeenCalledWith({ userId: 'u1' });
+    expect(checkInRepository.delete).toHaveBeenCalledWith({ userId: 'u1' });
+    expect(material.visibleUserIds).toEqual(['u2']);
+    expect(materialRepository.save).toHaveBeenCalledWith([material]);
+    expect(userRepo.delete).toHaveBeenCalledWith('u1');
   });
 
   it('returns overview stats with total check-ins instead of recent list length', async () => {

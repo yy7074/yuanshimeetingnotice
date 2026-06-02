@@ -58,4 +58,8 @@ Thumbs.db
 账号.txt
 **/serviceAccountKey.json
 **/firebase-service-account*.json
+*.cer
+*.p12
+*.certSigningRequest
+*.mobileprovision
 /server/node_modules

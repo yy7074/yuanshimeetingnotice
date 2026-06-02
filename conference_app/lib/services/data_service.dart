@@ -1,14 +1,11 @@
-import 'package:flutter/services.dart';
-
 import '../models/event_model.dart';
 import '../models/session_model.dart';
 import '../models/speaker_model.dart';
 import '../models/user_model.dart';
+import 'apscvir_site_service.dart';
 
 class DataService {
   static const apscvir2026EventId = '20262026-0611-4614-8614-000000029839';
-  static const _apscvirDetailedProgramAsset =
-      'assets/apscvir2026/site/pages/1814797-detailed-program.html';
   static final DateTime _apscvirStartDate = DateTime(2026, 6, 11);
   static List<SessionModel>? _cachedDetailedSessions;
   static List<SessionModel>? _cachedProgramTasks;
@@ -68,7 +65,9 @@ class DataService {
     if (cached != null) return cached;
 
     try {
-      final html = await rootBundle.loadString(_apscvirDetailedProgramAsset);
+      final html = await ApscvirSiteService.loadAssetString(
+        ApscvirSiteService.detailedProgramAsset,
+      );
       final parsed = _parseDetailedProgram(html);
       if (parsed.isNotEmpty) {
         _cachedDetailedSessions = parsed;
@@ -87,7 +86,9 @@ class DataService {
     if (cached != null) return cached;
 
     try {
-      final html = await rootBundle.loadString(_apscvirDetailedProgramAsset);
+      final html = await ApscvirSiteService.loadAssetString(
+        ApscvirSiteService.detailedProgramAsset,
+      );
       final parsed = _parseDetailedProgramData(html).tasks;
       _cachedProgramTasks = parsed;
       return parsed;

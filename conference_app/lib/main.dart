@@ -8,6 +8,7 @@ import 'controllers/event_controller.dart';
 import 'controllers/schedule_controller.dart';
 import 'controllers/speaker_controller.dart';
 import 'services/api_service.dart';
+import 'services/apscvir_site_service.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/main_navigation_screen.dart';
@@ -34,6 +35,7 @@ void main() async {
 
   // Initialize API service
   Get.put(ApiService());
+  unawaited(ApscvirSiteService.refreshRemoteContent());
 
   // Register notification service (init lazily, don't block app startup)
   final notificationService = NotificationService();

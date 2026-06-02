@@ -122,10 +122,27 @@ class ApiService extends GetConnect {
         'newPassword': newPassword,
       });
 
+  Future<Response> deleteAccount(String password) =>
+      post('/users/delete-account', {'password': password});
+
   Future<Response> getProfile() => get('/auth/profile');
 
   // Home banners
   Future<Response> getHomeBanners() => get('/home-banners');
+
+  // APSCVIR source-site content
+  Future<Response> getApscvirContentManifest() =>
+      get('/apscvir-content/manifest');
+
+  Future<Response> getApscvirContentFile(String assetPath) =>
+      get('/apscvir-content/file?path=${Uri.encodeQueryComponent(assetPath)}');
+
+  String apscvirContentFileUrl(String assetPath) {
+    final base = apiBaseUrl.endsWith('/')
+        ? apiBaseUrl.substring(0, apiBaseUrl.length - 1)
+        : apiBaseUrl;
+    return '$base/apscvir-content/file?path=${Uri.encodeQueryComponent(assetPath)}';
+  }
 
   // Events
   Future<Response> getEvents({String? search, String? status}) {

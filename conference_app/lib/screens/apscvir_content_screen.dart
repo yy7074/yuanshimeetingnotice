@@ -11,8 +11,10 @@ import '../controllers/event_controller.dart';
 import '../controllers/schedule_controller.dart';
 import '../models/session_model.dart';
 import '../models/site_content_model.dart';
+import '../services/apscvir_site_service.dart';
 import '../services/data_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/apscvir_asset_image.dart';
 
 class ApscvirContentScreen extends StatelessWidget {
   final SitePage page;
@@ -207,8 +209,8 @@ class _ContentBlock extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             child: ColoredBox(
               color: Colors.white,
-              child: Image.asset(
-                block.asset,
+              child: ApscvirAssetImage(
+                assetPath: block.asset,
                 fit: BoxFit.contain,
                 width: double.infinity,
                 errorBuilder: (context, error, stackTrace) =>
@@ -742,8 +744,8 @@ class _FacultyAvatar extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: member.avatarAsset.isEmpty
           ? _FacultyInitial(member: member, primary: primary)
-          : Image.asset(
-              member.avatarAsset,
+          : ApscvirAssetImage(
+              assetPath: member.avatarAsset,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) =>
                   _FacultyInitial(member: member, primary: primary),
@@ -999,7 +1001,7 @@ class _FacultyListRow {
 
 Future<List<_FacultyMember>> _loadFacultyMembers(SitePage page) async {
   try {
-    final html = await rootBundle.loadString(page.htmlAsset);
+    final html = await ApscvirSiteService.loadAssetString(page.htmlAsset);
     return _parseFacultyMembers(html, page.images);
   } catch (_) {
     return const [];
@@ -1584,7 +1586,7 @@ class _HotelLineItem {
 
 Future<List<_HotelReservation>> _loadHotelReservations(SitePage page) async {
   try {
-    final html = await rootBundle.loadString(page.htmlAsset);
+    final html = await ApscvirSiteService.loadAssetString(page.htmlAsset);
     return _parseHotelReservations(html);
   } catch (_) {
     return const [];
@@ -2200,8 +2202,8 @@ class _OrganizingChairCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ClipOval(
-                  child: Image.asset(
-                    portraitAsset,
+                  child: ApscvirAssetImage(
+                    assetPath: portraitAsset,
                     width: 106,
                     height: 106,
                     fit: BoxFit.cover,
@@ -2260,8 +2262,8 @@ class _CommitteeBullet extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 7),
-            child: Image.asset(
-              bulletAsset,
+            child: ApscvirAssetImage(
+              assetPath: bulletAsset,
               width: 8,
               height: 8,
               fit: BoxFit.cover,
@@ -3495,8 +3497,8 @@ Future<List<_ProgramDetailAgendaItem>> _loadProgramDetailAgenda(
   SessionModel session,
 ) async {
   try {
-    final html = await rootBundle.loadString(
-      'assets/apscvir2026/site/pages/1814797-detailed-program.html',
+    final html = await ApscvirSiteService.loadAssetString(
+      ApscvirSiteService.detailedProgramAsset,
     );
     return _parseProgramDetailAgenda(html, session);
   } catch (_) {
@@ -3630,6 +3632,14 @@ Future<void> _shareLocalAsset({
   required String label,
 }) async {
   try {
+    final remoteUrl = ApscvirSiteService.remoteAssetUrl(assetPath);
+    if (remoteUrl != null) {
+      final uri = Uri.tryParse(remoteUrl);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    }
     final data = await rootBundle.load(assetPath);
     final bytes = data.buffer.asUint8List(
       data.offsetInBytes,
@@ -3773,8 +3783,8 @@ class _DownloadCenterTile extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  item.thumbnailAsset,
+                child: ApscvirAssetImage(
+                  assetPath: item.thumbnailAsset,
                   width: 76,
                   height: 76,
                   fit: BoxFit.cover,
@@ -3879,7 +3889,9 @@ class _DownloadsCard extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               subtitle: Text(
-                'Saved locally - ${_safeFileName(item.asset)}',
+                ApscvirSiteService.remoteAssetUrl(item.asset) == null
+                    ? 'Saved locally - ${_safeFileName(item.asset)}'
+                    : 'Available online - ${_safeFileName(item.asset)}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

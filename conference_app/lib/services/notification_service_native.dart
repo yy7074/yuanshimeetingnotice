@@ -29,6 +29,7 @@ class NotificationService extends GetxService {
   JPushFlutterInterface? _jpush;
   String? _lastRegistrationId;
   final unreadCount = 0.obs;
+  static const Duration _jpushOperationTimeout = Duration(seconds: 3);
 
   Future<NotificationService> init() async {
     try {
@@ -150,7 +151,7 @@ class NotificationService extends GetxService {
   Future<void> registerCurrentPushToken() async {
     final token = _lastRegistrationId;
     if (token == null || token.isEmpty) return;
-    await _registerPushToken(token);
+    await _registerPushToken(token).timeout(_jpushOperationTimeout);
   }
 
   Future<void> openNotification(Map<String, dynamic> notification) async {
@@ -286,9 +287,14 @@ class NotificationService extends GetxService {
   }
 
   Future<void> setAlias(String userId) async {
+    if (userId.isEmpty) return;
+    final jpush = _jpush;
+    if (jpush == null) return;
     try {
-      await _jpush?.setAlias(userId);
-    } catch (_) {}
+      await jpush.setAlias(userId).timeout(_jpushOperationTimeout);
+    } catch (e) {
+      debugPrint('JPush setAlias skipped: $e');
+    }
   }
 
   // === Local Notifications ===

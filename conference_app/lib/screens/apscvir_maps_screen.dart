@@ -5,11 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/site_content_model.dart';
 import '../services/apscvir_site_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
+import '../widgets/apscvir_asset_image.dart';
 import 'apscvir_content_screen.dart' deferred as apscvir_content_screen;
 
 const _venueMapAsset = 'assets/apscvir2026/images/apscvir-venue-map.png';
@@ -195,8 +197,8 @@ class _VenueAddressCard extends StatelessWidget {
             height: 214,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                _googleMapPreviewAsset,
+              child: ApscvirAssetImage(
+                assetPath: _googleMapPreviewAsset,
                 width: double.infinity,
                 fit: BoxFit.cover,
                 alignment: Alignment.center,
@@ -323,8 +325,8 @@ class _VenueMapCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
               child: ColoredBox(
                 color: primary.withAlpha(10),
-                child: Image.asset(
-                  _venueMapAsset,
+                child: ApscvirAssetImage(
+                  assetPath: _venueMapAsset,
                   fit: BoxFit.contain,
                   width: double.infinity,
                   height: double.infinity,
@@ -397,6 +399,14 @@ class _VenueMapCard extends StatelessWidget {
 
   Future<void> _shareMapImage() async {
     try {
+      final remoteUrl = ApscvirSiteService.remoteAssetUrl(_venueMapAsset);
+      if (remoteUrl != null) {
+        final uri = Uri.tryParse(remoteUrl);
+        if (uri != null) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
       final data = await rootBundle.load(_venueMapAsset);
       final bytes = data.buffer.asUint8List(
         data.offsetInBytes,

@@ -8,15 +8,15 @@ plugins {
 val jpushAppKey =
     (project.findProperty("JPUSH_APPKEY") as String?)
         ?.takeIf { it.isNotBlank() }
-        ?: "02e01a729d7313df5fc5150c"
+        ?: "e5356d716465563b23ffc03f"
 val jpushChannel =
     (project.findProperty("JPUSH_CHANNEL") as String?)
         ?.takeIf { it.isNotBlank() }
         ?: "developer-default"
-val androidApplicationId = "com.example.conferenceApp123"
+val androidApplicationId = "com.apscvir.conference"
 
 android {
-    namespace = "com.example.conference_app"
+    namespace = "com.apscvir.conference"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

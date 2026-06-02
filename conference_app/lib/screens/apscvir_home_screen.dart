@@ -10,6 +10,7 @@ import '../services/api_service.dart';
 import '../services/apscvir_site_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
+import '../widgets/apscvir_asset_image.dart';
 import 'apscvir_content_screen.dart' deferred as apscvir_content_screen;
 import 'apscvir_maps_screen.dart' deferred as apscvir_maps_screen;
 import 'event_portal_screen.dart' deferred as event_portal_screen;
@@ -263,8 +264,8 @@ class _HeroBannerState extends State<_HeroBanner> {
       color: AppColors.primaryDark,
       child: AspectRatio(
         aspectRatio: 3600 / 1998,
-        child: Image.asset(
-          image,
+        child: ApscvirAssetImage(
+          assetPath: image,
           width: double.infinity,
           fit: BoxFit.contain,
           alignment: Alignment.center,

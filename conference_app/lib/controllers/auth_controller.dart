@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/user_model.dart';
@@ -14,6 +16,7 @@ class AuthController extends GetxController {
   final obscurePassword = true.obs;
   final rememberMe = true.obs;
   final isLoading = false.obs;
+  final isDeletingAccount = false.obs;
   final isReady = false.obs;
   final errorMessage = ''.obs;
 
@@ -96,13 +99,9 @@ class AuthController extends GetxController {
         final token = body['token'] as String;
         await _storage.saveAuthToken(token);
         await _storage.saveLoginInfo(email, rememberMe.value);
-        currentUser.value = _parseUser(body['user']);
-        // Set JPush alias for targeted push
-        try {
-          final notificationService = Get.find<NotificationService>();
-          await notificationService.setAlias(body['user']['id']);
-          await notificationService.registerCurrentPushToken();
-        } catch (_) {}
+        final userJson = body['user'] as Map<String, dynamic>;
+        currentUser.value = _parseUser(userJson);
+        unawaited(_bindPushAfterLogin(userJson['id']?.toString() ?? ''));
         isLoading.value = false;
         return true;
       } else {
@@ -118,12 +117,68 @@ class AuthController extends GetxController {
     }
   }
 
+  Future<void> _bindPushAfterLogin(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      final notificationService = Get.find<NotificationService>();
+      await notificationService
+          .setAlias(userId)
+          .timeout(const Duration(seconds: 3));
+      await notificationService.registerCurrentPushToken().timeout(
+        const Duration(seconds: 3),
+      );
+    } catch (e) {
+      debugPrint('Push binding after login skipped: $e');
+    }
+  }
+
   Future<void> logout() async {
     currentUser.value = null;
     isReady.value = true;
     passwordController.clear();
     await _storage.clearAuth();
     Get.offAllNamed('/login');
+  }
+
+  Future<bool> deleteAccount(String password) async {
+    errorMessage.value = '';
+    if (password.isEmpty) {
+      errorMessage.value = 'Please enter your password';
+      return false;
+    }
+    if (password.length < 8) {
+      errorMessage.value = 'Password must be at least 8 characters';
+      return false;
+    }
+
+    isDeletingAccount.value = true;
+    try {
+      final api = Get.find<ApiService>();
+      final res = await api.deleteAccount(password);
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        currentUser.value = null;
+        isReady.value = true;
+        passwordController.clear();
+        await _storage.clearAccountData();
+        if (Get.isDialogOpen == true) {
+          Get.back();
+        }
+        Get.offAllNamed('/login');
+        return true;
+      }
+
+      final message = res.body?['message'];
+      errorMessage.value = message is List
+          ? message.join('\n')
+          : message?.toString() ?? 'Failed to delete account';
+      return false;
+    } catch (_) {
+      errorMessage.value =
+          'Network error. Please check your connection and try again';
+      return false;
+    } finally {
+      isDeletingAccount.value = false;
+    }
   }
 
   bool get mustChangePassword => currentUser.value?.mustChangePassword == true;

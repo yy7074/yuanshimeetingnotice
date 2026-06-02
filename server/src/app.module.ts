@@ -14,6 +14,7 @@ import { MaterialsModule } from './materials/materials.module';
 import { CheckInModule } from './check-in/check-in.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CommonModule } from './common/common.module';
+import { ApscvirContentModule } from './apscvir-content/apscvir-content.module';
 import { seedDatabase } from './database/seed';
 
 @Module({
@@ -74,6 +75,7 @@ import { seedDatabase } from './database/seed';
     MaterialsModule,
     CheckInModule,
     NotificationsModule,
+    ApscvirContentModule,
   ],
   providers: [
     {

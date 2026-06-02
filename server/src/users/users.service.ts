@@ -13,6 +13,7 @@ import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
 import { Notification } from '../notifications/entities/notification.entity';
 import { CheckIn } from '../check-in/entities/check-in.entity';
+import { Material } from '../materials/entities/material.entity';
 
 @Injectable()
 export class UsersService {
@@ -33,7 +34,9 @@ export class UsersService {
     }
 
     const nextLanguage =
-      typeof data.language === 'string' ? data.language.trim().toLowerCase() : '';
+      typeof data.language === 'string'
+        ? data.language.trim().toLowerCase()
+        : '';
     if (nextLanguage && nextLanguage !== 'zh' && nextLanguage !== 'en') {
       throw new BadRequestException('Invalid language');
     }
@@ -123,26 +126,25 @@ export class UsersService {
       recentCheckIns,
       unreadNotificationCount,
       totalCheckInCount,
-    ] =
-      await Promise.all([
-        this.notifRepo.find({
-          where: { userId: id },
-          order: { createdAt: 'DESC' },
-          take: 10,
-        }),
-        this.checkInRepo.find({
-          where: { userId: id, checkedIn: true },
-          relations: ['event'],
-          order: { checkedInAt: 'DESC' },
-          take: 10,
-        }),
-        this.notifRepo.count({
-          where: { userId: id, isRead: false },
-        }),
-        this.checkInRepo.count({
-          where: { userId: id, checkedIn: true },
-        }),
-      ]);
+    ] = await Promise.all([
+      this.notifRepo.find({
+        where: { userId: id },
+        order: { createdAt: 'DESC' },
+        take: 10,
+      }),
+      this.checkInRepo.find({
+        where: { userId: id, checkedIn: true },
+        relations: ['event'],
+        order: { checkedInAt: 'DESC' },
+        take: 10,
+      }),
+      this.notifRepo.count({
+        where: { userId: id, isRead: false },
+      }),
+      this.checkInRepo.count({
+        where: { userId: id, checkedIn: true },
+      }),
+    ]);
 
     return {
       user: this.sanitizeUser(user),
@@ -182,14 +184,18 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     const nextLanguage =
-      typeof data.language === 'string' ? data.language.trim().toLowerCase() : '';
+      typeof data.language === 'string'
+        ? data.language.trim().toLowerCase()
+        : '';
     if (nextLanguage && nextLanguage !== 'zh' && nextLanguage !== 'en') {
       throw new BadRequestException('Invalid language');
     }
 
     const safeData = {
-      nameEn: typeof data.nameEn === 'string' ? data.nameEn.trim() : user.nameEn,
-      nameZh: typeof data.nameZh === 'string' ? data.nameZh.trim() : user.nameZh,
+      nameEn:
+        typeof data.nameEn === 'string' ? data.nameEn.trim() : user.nameEn,
+      nameZh:
+        typeof data.nameZh === 'string' ? data.nameZh.trim() : user.nameZh,
       titleEn:
         typeof data.titleEn === 'string' ? data.titleEn.trim() : user.titleEn,
       titleZh:
@@ -206,8 +212,7 @@ export class UsersService {
         typeof data.avatarUrl === 'string'
           ? data.avatarUrl.trim()
           : user.avatarUrl,
-      language:
-        nextLanguage || user.language,
+      language: nextLanguage || user.language,
     };
 
     Object.assign(user, safeData);
@@ -238,7 +243,9 @@ export class UsersService {
       throw new BadRequestException('Invalid role');
     }
     if (operatorId && userIds.includes(operatorId) && role !== UserRole.ADMIN) {
-      throw new BadRequestException('Cannot change the current admin account to a non-admin role');
+      throw new BadRequestException(
+        'Cannot change the current admin account to a non-admin role',
+      );
     }
 
     const users = await this.userRepo.find({
@@ -260,26 +267,36 @@ export class UsersService {
     if (!user) throw new NotFoundException('User not found');
 
     const nextEmail =
-      typeof data.email === 'string' ? data.email.trim().toLowerCase() : user.email;
+      typeof data.email === 'string'
+        ? data.email.trim().toLowerCase()
+        : user.email;
     if (nextEmail !== user.email) {
-      const existing = await this.userRepo.findOne({ where: { email: nextEmail } });
+      const existing = await this.userRepo.findOne({
+        where: { email: nextEmail },
+      });
       if (existing && existing.id !== id) {
         throw new ConflictException('Email already registered');
       }
     }
 
     const nextLanguage =
-      typeof data.language === 'string' ? data.language.trim().toLowerCase() : '';
+      typeof data.language === 'string'
+        ? data.language.trim().toLowerCase()
+        : '';
     if (nextLanguage && nextLanguage !== 'zh' && nextLanguage !== 'en') {
       throw new BadRequestException('Invalid language');
     }
 
     const safeData = {
       email: nextEmail,
-      nameEn: typeof data.nameEn === 'string' ? data.nameEn.trim() : user.nameEn,
-      nameZh: typeof data.nameZh === 'string' ? data.nameZh.trim() : user.nameZh,
-      titleEn: typeof data.titleEn === 'string' ? data.titleEn.trim() : user.titleEn,
-      titleZh: typeof data.titleZh === 'string' ? data.titleZh.trim() : user.titleZh,
+      nameEn:
+        typeof data.nameEn === 'string' ? data.nameEn.trim() : user.nameEn,
+      nameZh:
+        typeof data.nameZh === 'string' ? data.nameZh.trim() : user.nameZh,
+      titleEn:
+        typeof data.titleEn === 'string' ? data.titleEn.trim() : user.titleEn,
+      titleZh:
+        typeof data.titleZh === 'string' ? data.titleZh.trim() : user.titleZh,
       organizationEn:
         typeof data.organizationEn === 'string'
           ? data.organizationEn.trim()
@@ -289,7 +306,9 @@ export class UsersService {
           ? data.organizationZh.trim()
           : user.organizationZh,
       avatarUrl:
-        typeof data.avatarUrl === 'string' ? data.avatarUrl.trim() : user.avatarUrl,
+        typeof data.avatarUrl === 'string'
+          ? data.avatarUrl.trim()
+          : user.avatarUrl,
       language: nextLanguage || user.language,
       pushEnabled:
         typeof data.pushEnabled === 'boolean'
@@ -307,7 +326,9 @@ export class UsersService {
       throw new BadRequestException('Invalid active status');
     }
     if (operatorId && operatorId === id && !isActive) {
-      throw new BadRequestException('Cannot deactivate the current admin account');
+      throw new BadRequestException(
+        'Cannot deactivate the current admin account',
+      );
     }
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
@@ -328,7 +349,9 @@ export class UsersService {
       throw new BadRequestException('Invalid active status');
     }
     if (operatorId && userIds.includes(operatorId) && !isActive) {
-      throw new BadRequestException('Cannot deactivate the current admin account');
+      throw new BadRequestException(
+        'Cannot deactivate the current admin account',
+      );
     }
 
     const users = await this.userRepo.find({
@@ -376,6 +399,67 @@ export class UsersService {
     user.mustChangePassword = false;
     await this.userRepo.save(user);
     return { message: 'Password changed successfully.' };
+  }
+
+  async deleteOwnAccount(id: string, password: string) {
+    if (typeof password !== 'string' || password.length < 8) {
+      throw new BadRequestException('Password is required');
+    }
+
+    return this.userRepo.manager.transaction(async (manager) => {
+      const userRepo = manager.getRepository(User);
+      const user = await userRepo.findOne({
+        where: { id },
+        relations: ['subscribedEvents'],
+      });
+      if (!user) throw new NotFoundException('User not found');
+
+      const matches = await bcryptjs.compare(password, user.password);
+      if (!matches) {
+        throw new BadRequestException('Password is incorrect');
+      }
+
+      if (user.role === UserRole.ADMIN) {
+        const activeAdminCount = await userRepo.count({
+          where: { role: UserRole.ADMIN, isActive: true },
+        });
+        if (activeAdminCount <= 1) {
+          throw new BadRequestException(
+            'Cannot delete the last active admin account',
+          );
+        }
+      }
+
+      if (user.subscribedEvents?.length) {
+        await manager
+          .createQueryBuilder()
+          .relation(User, 'subscribedEvents')
+          .of(user)
+          .remove(user.subscribedEvents);
+      }
+
+      await manager.getRepository(Notification).delete({ userId: id });
+      await manager.getRepository(CheckIn).delete({ userId: id });
+
+      const materialRepo = manager.getRepository(Material);
+      const materials = await materialRepo.find();
+      const changedMaterials = materials
+        .map((material) => {
+          const visibleUserIds = material.visibleUserIds || [];
+          if (!visibleUserIds.includes(id)) return null;
+          material.visibleUserIds = visibleUserIds.filter(
+            (userId) => userId !== id,
+          );
+          return material;
+        })
+        .filter((material): material is Material => material !== null);
+      if (changedMaterials.length > 0) {
+        await materialRepo.save(changedMaterials);
+      }
+
+      await userRepo.delete(id);
+      return { message: 'Account deleted successfully.' };
+    });
   }
 
   async getStats() {

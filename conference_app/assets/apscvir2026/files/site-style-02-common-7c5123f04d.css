@@ -1,0 +1,62 @@
+/*
+ * @Author: MEDCON 
+ * @Date: 2021-04-15 13:56:39 
+ * @Last Modified by: MEDCON美迪康会务通学术会议服务平台
+ * @Last Modified time: 2022-02-15 10:22:59
+ */
+body {
+  max-width: 768px;
+  margin: 0 auto;
+}
+.tg-lang {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  height: 28px;
+  line-height: 26px;
+  font-size: 13px;
+  text-align: center;
+  width: 80px;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9;
+  border-radius: 3px;
+}
+.tg-lang a {
+  float: left;
+  display: block;
+  width: 48%;
+  color: #fff;
+  border: 1px solid #fff;
+}
+.tg-lang a:first-child {
+  border-radius: 3px 0 0 3px;
+}
+.tg-lang a:last-child {
+  border-radius: 0px 3px 3px 0px;
+  border-left: none;
+}
+.tg-lang a.on {
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
+}
+img {
+  max-width: 100%;
+}
+.sub-nav-box {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100%;
+  overflow: initial!important;
+}
+.wrapper {
+  display: flex;
+  flex-direction: column;
+}
+.mobile-view-content {
+  flex: 1;
+  margin-bottom: 0.33rem;
+}

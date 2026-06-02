@@ -212,6 +212,18 @@ upload_sources() {
   ssh_cmd "tar -xzf '${REMOTE_BASE_DIR}/src.tgz' -C '${REMOTE_BASE_DIR}' && rm -f '${REMOTE_BASE_DIR}/src.tgz'"
 }
 
+upload_apscvir_content_seed() {
+  local local_content="${ROOT_DIR}/conference_app/assets/apscvir2026"
+  if [[ ! -d "$local_content" ]]; then
+    log "本地无 APSCVIR 内容资源，跳过内容种子上传"
+    return 0
+  fi
+
+  log "上传 APSCVIR 内容种子到后端 uploads/apscvir2026"
+  COPYFILE_DISABLE=1 tar -czf - -C "$local_content" . \
+    | ssh_cmd "mkdir -p '${REMOTE_SERVER_DIR}/uploads/apscvir2026' && tar -xzf - -C '${REMOTE_SERVER_DIR}/uploads/apscvir2026'"
+}
+
 load_local_env_defaults() {
   # 当 shell 没显式 export 时，从本地 server/.env 读取常用配置兜底，
   # 防止部署把生产 SMTP / JPUSH 等敏感字段写空。
@@ -259,6 +271,7 @@ AUTH_SIMULATE_VERIFICATION=${AUTH_SIMULATE_VERIFICATION:-false}
 AUTH_SIMULATED_CODE=${AUTH_SIMULATED_CODE:-0000}
 SCHEDULE_TIMEZONE=${SCHEDULE_TIMEZONE:-Asia/Shanghai}
 CORS_ORIGIN=${CORS_ORIGIN:-http://${SERVER_IP}:${ADMIN_PORT}}
+APSCVIR_CONTENT_DIR=${REMOTE_SERVER_DIR}/uploads/apscvir2026
 EOF"
 }
 
@@ -424,6 +437,7 @@ fi"
 }
 
 restart_server() {
+  log "重启后端服务"
   ssh_cmd "cat > '${REMOTE_RUN_DIR}/start-server.py' <<'PY'
 import os
 from pathlib import Path
@@ -464,11 +478,9 @@ StandardError=append:${REMOTE_LOG_DIR}/server.log
 WantedBy=multi-user.target
 EOF
 
+old_pid=''
 if [ -f '${REMOTE_RUN_DIR}/server.pid' ]; then
   old_pid=\$(cat '${REMOTE_RUN_DIR}/server.pid' 2>/dev/null || true)
-  if [ -n \"\$old_pid\" ]; then
-    kill \"\$old_pid\" 2>/dev/null || true
-  fi
 fi
 
 systemctl daemon-reload
@@ -478,12 +490,16 @@ sleep 5
 systemctl is-active --quiet '${APP_NAME}.service'
 PID=\$(systemctl show -p MainPID --value '${APP_NAME}.service')
 echo \"\$PID\" > '${REMOTE_RUN_DIR}/server.pid'
+if [ -n \"\$old_pid\" ] && [ \"\$old_pid\" != \"\$PID\" ]; then
+  kill \"\$old_pid\" 2>/dev/null || true
+fi
 kill -0 \"\$PID\""
 }
 
 verify_remote() {
   log "校验后端与 nginx"
-  if ! ssh_cmd "sleep 3
+  if ! ssh_cmd "set -e
+    sleep 3
     curl -fIsS --max-time 8 'http://127.0.0.1:${BACKEND_PORT}/api/docs' >/dev/null
     curl -fIsS --max-time 8 'http://127.0.0.1:${ADMIN_PORT}/' >/dev/null
     if [ '${NGINX_SERVER_NAME}' != '_' ] && [ -s '/etc/letsencrypt/live/${NGINX_SERVER_NAME}/fullchain.pem' ]; then
@@ -519,6 +535,7 @@ main() {
 
   prepare_remote_dirs
   upload_sources
+  upload_apscvir_content_seed
   write_server_env
   build_remote
   seed_initial_db

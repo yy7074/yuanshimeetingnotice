@@ -27,6 +27,7 @@ import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { UpdateUserAdminDto } from './dto/update-user-admin.dto';
 import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -111,8 +112,7 @@ export class UsersController {
     return this.usersService.findAll({
       search,
       role,
-      isActive:
-        isActive === undefined ? undefined : isActive === 'true',
+      isActive: isActive === undefined ? undefined : isActive === 'true',
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
     });
@@ -192,7 +192,11 @@ export class UsersController {
     },
   })
   updateRoleBatch(@Body() data: BatchUpdateUserRoleDto, @Request() req) {
-    return this.usersService.updateRoleBatch(data.userIds, data.role, req.user.id);
+    return this.usersService.updateRoleBatch(
+      data.userIds,
+      data.role,
+      req.user.id,
+    );
   }
 
   @Get(':id/overview')
@@ -286,6 +290,23 @@ export class UsersController {
     );
   }
 
+  @Post('delete-account')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete current user account',
+    description:
+      'Deletes the signed-in user account and associated personal app data after password confirmation.',
+  })
+  @ApiBody({ type: DeleteAccountDto })
+  @ApiOkResponse({
+    description: 'Account deleted',
+    schema: { example: { message: 'Account deleted successfully.' } },
+  })
+  deleteOwnAccount(@Request() req, @Body() data: DeleteAccountDto) {
+    return this.usersService.deleteOwnAccount(req.user.id, data.password);
+  }
+
   @Put(':id/role')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -314,10 +335,7 @@ export class UsersController {
       },
     },
   })
-  updateByAdmin(
-    @Param('id') id: string,
-    @Body() data: UpdateUserAdminDto,
-  ) {
+  updateByAdmin(@Param('id') id: string, @Body() data: UpdateUserAdminDto) {
     return this.usersService.updateByAdmin(id, data);
   }
 
@@ -400,7 +418,8 @@ export class UsersController {
         },
         content: {
           type: 'string',
-          example: 'Your registration has been approved. Please sign in to the app to view your agenda.',
+          example:
+            'Your registration has been approved. Please sign in to the app to view your agenda.',
         },
       },
     },

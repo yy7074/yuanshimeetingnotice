@@ -158,7 +158,7 @@ void main() {
         (session) =>
             session.speakerName == 'Ning Ai' &&
             session.parentSessionTitle ==
-                'Executive Master of Interventional Radiology 3' &&
+                'Executive Master of Interventional Radiology 4' &&
             session.roomEn == 'A1-A108',
       ),
       isTrue,

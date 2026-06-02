@@ -11,6 +11,7 @@ import { User } from '../../users/entities/user.entity';
 // Stripped of API_PREFIX in canonical matchers.
 const ALLOWED = [
   { method: 'POST', path: /^\/users\/change-password\/?$/ },
+  { method: 'POST', path: /^\/users\/delete-account\/?$/ },
   { method: 'GET', path: /^\/users\/me\/?$/ },
   { method: 'GET', path: /^\/auth\/profile\/?$/ },
   { method: 'POST', path: /^\/auth\/logout\/?$/ },
@@ -25,7 +26,10 @@ export class PasswordChangeRequiredGuard implements CanActivate {
     if (!user || !user.mustChangePassword) {
       return true;
     }
-    const prefix = (process.env.API_PREFIX || 'api/v1').replace(/^\/+|\/+$/g, '');
+    const prefix = (process.env.API_PREFIX || 'api/v1').replace(
+      /^\/+|\/+$/g,
+      '',
+    );
     const fullPath = req.path || req.originalUrl || '';
     const stripped = fullPath
       .replace(new RegExp(`^/?${prefix}`), '')

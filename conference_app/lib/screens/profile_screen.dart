@@ -60,6 +60,8 @@ class ProfileScreen extends StatelessWidget {
                       surfaceLowColor,
                     ),
                     const SizedBox(height: 32),
+                    _buildDeleteAccountButton(),
+                    const SizedBox(height: 12),
                     _buildLogoutButton(primaryColor),
                     const SizedBox(height: 40),
                   ],
@@ -697,6 +699,129 @@ class ProfileScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _buildDeleteAccountButton() {
+    final auth = Get.find<AuthController>();
+    return Obx(() {
+      if (!auth.isLoggedIn) {
+        return const SizedBox.shrink();
+      }
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: auth.isDeletingAccount.value
+              ? null
+              : () => _showDeleteAccountDialog(),
+          icon: const Icon(Icons.delete_outline, color: Colors.red),
+          label: const Text(
+            'Delete Account',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+          ),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            side: BorderSide(color: Colors.red.shade700),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  void _showDeleteAccountDialog() {
+    final auth = Get.find<AuthController>();
+    final passwordController = TextEditingController();
+    var obscurePassword = true;
+
+    Get.dialog<void>(
+      StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: const Text('Delete Account'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'This will permanently delete your account and associated personal data. This action cannot be undone.',
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Current Password',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Obx(() {
+                    final error = auth.errorMessage.value;
+                    if (error.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        error,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            actions: [
+              Obx(
+                () => TextButton(
+                  onPressed: auth.isDeletingAccount.value
+                      ? null
+                      : () {
+                          auth.errorMessage.value = '';
+                          Get.back();
+                        },
+                  child: const Text('Cancel'),
+                ),
+              ),
+              Obx(
+                () => ElevatedButton(
+                  onPressed: auth.isDeletingAccount.value
+                      ? null
+                      : () => auth.deleteAccount(passwordController.text),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: auth.isDeletingAccount.value
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Delete Account'),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+      barrierDismissible: false,
+    ).whenComplete(passwordController.dispose);
   }
 
   Widget _buildPreferenceItem({
