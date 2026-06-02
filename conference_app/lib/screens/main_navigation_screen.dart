@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'apscvir_home_screen.dart';
-import 'apscvir_search_screen.dart';
-import 'notification_screen.dart';
-import 'profile_screen.dart';
+import 'apscvir_search_screen.dart' deferred as apscvir_search_screen;
+import 'notification_screen.dart' deferred as notification_screen;
+import 'profile_screen.dart' deferred as profile_screen;
 import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/deferred_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -23,9 +24,28 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   List<Widget> get _screens => [
     const ApscvirHomeScreen(),
-    NotificationScreen(onBackToHome: () => _selectIndex(0)),
-    ApscvirSearchScreen(onBackToHome: () => _selectIndex(0)),
-    const ProfileScreen(),
+    DeferredScreen(
+      load: () async {
+        await notification_screen.loadLibrary();
+        return notification_screen.NotificationScreen(
+          onBackToHome: () => _selectIndex(0),
+        );
+      },
+    ),
+    DeferredScreen(
+      load: () async {
+        await apscvir_search_screen.loadLibrary();
+        return apscvir_search_screen.ApscvirSearchScreen(
+          onBackToHome: () => _selectIndex(0),
+        );
+      },
+    ),
+    DeferredScreen(
+      load: () async {
+        await profile_screen.loadLibrary();
+        return profile_screen.ProfileScreen();
+      },
+    ),
   ];
 
   @override

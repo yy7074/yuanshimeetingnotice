@@ -10,10 +10,10 @@ import '../services/api_service.dart';
 import '../services/apscvir_site_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
-import 'apscvir_content_screen.dart';
-import 'apscvir_maps_screen.dart';
-import 'event_portal_screen.dart';
-import 'speakers_screen.dart';
+import 'apscvir_content_screen.dart' deferred as apscvir_content_screen;
+import 'apscvir_maps_screen.dart' deferred as apscvir_maps_screen;
+import 'event_portal_screen.dart' deferred as event_portal_screen;
+import 'speakers_screen.dart' deferred as speakers_screen;
 
 final SiteMenuItem _ismioHomeMenuItem = SiteMenuItem(
   id: '__ismio_external__',
@@ -741,12 +741,18 @@ void _showSiteMenu(BuildContext context, SiteManifest manifest) {
               _ActionRow(
                 icon: Icons.event_available_outlined,
                 title: 'Conference List',
-                onTap: () => Get.to(() => const EventPortalScreen()),
+                onTap: () async {
+                  await event_portal_screen.loadLibrary();
+                  Get.to(() => event_portal_screen.EventPortalScreen());
+                },
               ),
               _ActionRow(
                 icon: Icons.groups_outlined,
                 title: 'Speaker Directory',
-                onTap: () => Get.to(() => const SpeakersScreen()),
+                onTap: () async {
+                  await speakers_screen.loadLibrary();
+                  Get.to(() => speakers_screen.SpeakersScreen());
+                },
               ),
               if (!auth.isLoggedIn)
                 _ActionRow(
@@ -762,7 +768,7 @@ void _showSiteMenu(BuildContext context, SiteManifest manifest) {
   );
 }
 
-void _openMenuItem(SiteMenuItem item, SiteManifest manifest) {
+Future<void> _openMenuItem(SiteMenuItem item, SiteManifest manifest) async {
   if (_isIsmioMenuItem(item)) {
     unawaited(openApscvirIsmioWebsite());
     return;
@@ -782,16 +788,27 @@ void _openMenuItem(SiteMenuItem item, SiteManifest manifest) {
   }
   final page = manifest.pageById[item.id];
   if (page != null) {
-    _openSitePage(page, manifest);
+    await _openSitePage(page, manifest);
   }
 }
 
-void _openSitePage(SitePage page, SiteManifest manifest) {
+Future<void> _openSitePage(SitePage page, SiteManifest manifest) async {
   if (isApscvirVenuePage(page)) {
-    Get.to(() => ApscvirMapsScreen(manifestFuture: Future.value(manifest)));
+    await apscvir_maps_screen.loadLibrary();
+    Get.to(
+      () => apscvir_maps_screen.ApscvirMapsScreen(
+        manifestFuture: Future.value(manifest),
+      ),
+    );
     return;
   }
-  Get.to(() => ApscvirContentScreen(page: page, manifest: manifest));
+  await apscvir_content_screen.loadLibrary();
+  Get.to(
+    () => apscvir_content_screen.ApscvirContentScreen(
+      page: page,
+      manifest: manifest,
+    ),
+  );
 }
 
 List<SiteMenuItem> _visibleMenuItems(SiteManifest manifest, bool isLoggedIn) {
@@ -1018,7 +1035,7 @@ const Map<String, IconData> _fontelloIcons = {
 class _ActionRow extends StatelessWidget {
   final IconData icon;
   final String title;
-  final VoidCallback onTap;
+  final FutureOr<void> Function() onTap;
 
   const _ActionRow({
     required this.icon,

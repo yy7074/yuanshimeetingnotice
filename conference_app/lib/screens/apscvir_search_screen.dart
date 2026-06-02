@@ -7,8 +7,8 @@ import '../services/apscvir_site_service.dart';
 import '../services/data_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
-import 'apscvir_content_screen.dart';
-import 'apscvir_maps_screen.dart';
+import 'apscvir_content_screen.dart' deferred as apscvir_content_screen;
+import 'apscvir_maps_screen.dart' deferred as apscvir_maps_screen;
 
 class ApscvirSearchScreen extends StatefulWidget {
   final VoidCallback? onBackToHome;
@@ -313,19 +313,38 @@ class _ApscvirSearchScreenState extends State<ApscvirSearchScreen> {
   }
 }
 
-void _openSearchResult(_SearchResult result, SiteManifest manifest) {
+Future<void> _openSearchResult(
+  _SearchResult result,
+  SiteManifest manifest,
+) async {
   final page = result.page;
   if (page != null && isApscvirVenuePage(page)) {
-    Get.to(() => ApscvirMapsScreen(manifestFuture: Future.value(manifest)));
+    await apscvir_maps_screen.loadLibrary();
+    Get.to(
+      () => apscvir_maps_screen.ApscvirMapsScreen(
+        manifestFuture: Future.value(manifest),
+      ),
+    );
     return;
   }
   final session = result.session;
   if (session != null) {
-    Get.to(() => ApscvirProgramDetailScreen(session: session));
+    await apscvir_content_screen.loadLibrary();
+    Get.to(
+      () => apscvir_content_screen.ApscvirProgramDetailScreen(
+        session: session,
+      ),
+    );
     return;
   }
   if (page != null) {
-    Get.to(() => ApscvirContentScreen(page: page, manifest: manifest));
+    await apscvir_content_screen.loadLibrary();
+    Get.to(
+      () => apscvir_content_screen.ApscvirContentScreen(
+        page: page,
+        manifest: manifest,
+      ),
+    );
   }
 }
 

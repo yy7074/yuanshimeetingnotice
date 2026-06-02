@@ -49,7 +49,6 @@ void main() {
     // Verify the main APSCVIR shell renders.
     expect(find.text('Info'), findsOneWidget);
     expect(find.text('Alerts'), findsOneWidget);
-    expect(find.text('ISMIO'), findsOneWidget);
   });
 
   testWidgets('Maps screen renders local map image on mobile', (

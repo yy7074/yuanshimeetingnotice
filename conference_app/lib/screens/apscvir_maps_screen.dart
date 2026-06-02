@@ -10,7 +10,7 @@ import '../models/site_content_model.dart';
 import '../services/apscvir_site_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/apscvir_external_links.dart';
-import 'apscvir_content_screen.dart';
+import 'apscvir_content_screen.dart' deferred as apscvir_content_screen;
 
 const _venueMapAsset = 'assets/apscvir2026/images/apscvir-venue-map.png';
 const _googleMapPreviewAsset =
@@ -122,12 +122,18 @@ class ApscvirMapsScreen extends StatelessWidget {
   }
 }
 
-void _openMapPage(SitePage page, SiteManifest manifest) {
+Future<void> _openMapPage(SitePage page, SiteManifest manifest) async {
   if (isApscvirVenuePage(page)) {
     openApscvirVenueWebsite();
     return;
   }
-  Get.to(() => ApscvirContentScreen(page: page, manifest: manifest));
+  await apscvir_content_screen.loadLibrary();
+  Get.to(
+    () => apscvir_content_screen.ApscvirContentScreen(
+      page: page,
+      manifest: manifest,
+    ),
+  );
 }
 
 class _VenueAddressCard extends StatelessWidget {
