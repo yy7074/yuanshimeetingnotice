@@ -17,36 +17,51 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
+  final Set<int> _loadedTabIndexes = {0};
+  late final List<Widget> _screens;
 
-  void _selectIndex(int index) {
-    setState(() => _selectedIndex = index);
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      const ApscvirHomeScreen(key: ValueKey('main-tab-info')),
+      DeferredScreen(
+        key: const ValueKey('main-tab-alerts'),
+        load: () async {
+          await notification_screen.loadLibrary();
+          return notification_screen.NotificationScreen(
+            onBackToHome: () => _selectIndex(0),
+          );
+        },
+      ),
+      DeferredScreen(
+        key: const ValueKey('main-tab-search'),
+        load: () async {
+          await apscvir_search_screen.loadLibrary();
+          return apscvir_search_screen.ApscvirSearchScreen(
+            onBackToHome: () => _selectIndex(0),
+          );
+        },
+      ),
+      DeferredScreen(
+        key: const ValueKey('main-tab-settings'),
+        load: () async {
+          await profile_screen.loadLibrary();
+          return profile_screen.ProfileScreen();
+        },
+      ),
+    ];
   }
 
-  List<Widget> get _screens => [
-    const ApscvirHomeScreen(),
-    DeferredScreen(
-      load: () async {
-        await notification_screen.loadLibrary();
-        return notification_screen.NotificationScreen(
-          onBackToHome: () => _selectIndex(0),
-        );
-      },
-    ),
-    DeferredScreen(
-      load: () async {
-        await apscvir_search_screen.loadLibrary();
-        return apscvir_search_screen.ApscvirSearchScreen(
-          onBackToHome: () => _selectIndex(0),
-        );
-      },
-    ),
-    DeferredScreen(
-      load: () async {
-        await profile_screen.loadLibrary();
-        return profile_screen.ProfileScreen();
-      },
-    ),
-  ];
+  void _selectIndex(int index) {
+    if (index < 0 || index >= _screens.length || index == _selectedIndex) {
+      return;
+    }
+    setState(() {
+      _selectedIndex = index;
+      _loadedTabIndexes.add(index);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +77,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         }
       },
       child: Scaffold(
-        body: _screens[_selectedIndex],
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: List.generate(
+            _screens.length,
+            (index) => _loadedTabIndexes.contains(index)
+                ? _screens[index]
+                : const SizedBox.shrink(),
+          ),
+        ),
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(color: AppColors.primary),
           child: SafeArea(

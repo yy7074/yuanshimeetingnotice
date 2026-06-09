@@ -51,6 +51,43 @@ void main() {
     expect(find.text('Alerts'), findsOneWidget);
   });
 
+  testWidgets('bottom navigation switches between deferred tabs', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    Get.testMode = true;
+    Get.reset();
+
+    final storage = await StorageService().init();
+    Get.put(storage);
+    Get.put(ApiService());
+    Get.put(NotificationService());
+    Get.put(AuthController());
+    Get.put(EventController());
+    Get.put(ScheduleController());
+    Get.put(SpeakerController());
+    addTearDown(Get.reset);
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        translations: AppTranslations(),
+        locale: const Locale('en', 'US'),
+        fallbackLocale: const Locale('en', 'US'),
+        theme: AppTheme.light,
+        home: const MainNavigationScreen(),
+      ),
+    );
+    await _pumpUntil(tester, find.text('Alerts'));
+
+    await tester.tap(find.text('Alerts'));
+    await _pumpUntil(tester, find.text('Notifications'));
+    expect(find.text('Notifications'), findsOneWidget);
+
+    await tester.tap(find.text('Settings'));
+    await _pumpUntil(tester, find.text('Profile'));
+    expect(find.text('Profile'), findsOneWidget);
+  });
+
   testWidgets('Maps screen renders local map image on mobile', (
     WidgetTester tester,
   ) async {
@@ -223,6 +260,16 @@ void main() {
     expect(find.text('PowerPoint Templates Download'), findsOneWidget);
     expect(find.text('Download PPTX'), findsNWidgets(2));
   });
+}
+
+Future<void> _pumpUntil(
+  WidgetTester tester,
+  Finder finder, {
+  int attempts = 40,
+}) async {
+  for (var i = 0; i < attempts && !tester.any(finder); i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 SiteManifest _testManifest({List<SitePage> pages = const []}) {
