@@ -411,7 +411,7 @@ class DataService {
       ).allMatches(block)) {
         final anchor = anchorMatch.group(0) ?? '';
         final name = _extractAnchorName(anchor);
-        if (name.isEmpty) continue;
+        if (!_isProgramPersonName(name)) continue;
         final fullText = _cleanHtmlText(anchor);
         final organization = fullText.startsWith(name)
             ? fullText.substring(name.length).trim()
@@ -495,7 +495,8 @@ class DataService {
       );
       final anchor =
           RegExp(r'<a\b[^>]*>[\s\S]*?</a>').firstMatch(wrapper)?.group(0) ?? '';
-      final speaker = _extractAnchorName(anchor);
+      final rawSpeaker = _extractAnchorName(anchor);
+      final speaker = _isProgramPersonName(rawSpeaker) ? rawSpeaker : '';
       final organization = _cleanHtmlText(
         RegExp(
               r'<span class="td-org">([\s\S]*?)</span>',
@@ -555,6 +556,15 @@ class DataService {
     ).firstMatch(raw);
     if (match != null) return _cleanHtmlText(match.group(1) ?? '');
     return _cleanHtmlText(anchorHtml);
+  }
+
+  static bool _isProgramPersonName(String value) {
+    final normalized = value.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9\u4e00-\u9fa5]+'),
+      '',
+    );
+    if (normalized.isEmpty) return false;
+    return normalized != 'all';
   }
 
   static SessionModel _session({

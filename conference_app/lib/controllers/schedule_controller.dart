@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../models/session_model.dart';
+import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/data_service.dart';
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 class ScheduleController extends GetxController {
+  static const _bulkImportedScheduleThreshold = 50;
+
   final StorageService _storage = Get.find<StorageService>();
 
   final savedSessionIds = <String>[].obs;
@@ -41,6 +44,7 @@ class ScheduleController extends GetxController {
       sessions.addAll(await _fetchSessionsForEvent(eventId));
     }
     allSessions.value = _dedupeSessions(sessions);
+    await _removeLegacyBulkImportedSchedule();
     expertTaskSessions.value = await DataService.getProgramTasks(
       DataService.apscvir2026EventId,
     );
@@ -164,6 +168,11 @@ class ScheduleController extends GetxController {
   }
 
   Future<bool> addAllSessionsFromEvent(String eventId) async {
+    if (eventId == DataService.apscvir2026EventId) {
+      await refreshSessions();
+      return false;
+    }
+
     final sessions = await _fetchSessionsForEvent(eventId);
     if (sessions.isEmpty) {
       return false;
@@ -199,42 +208,10 @@ class ScheduleController extends GetxController {
   }
 
   Future<void> syncJoinedEventSchedules({Iterable<String>? eventIds}) async {
-    final targetEventIds = (eventIds ?? _storage.subscribedEventIds).toList();
-    final hydratedIds = _storage.hydratedScheduleEventIds.toSet();
-    final updatedIds = savedSessionIds.toList();
-    final updatedIdSet = updatedIds.toSet();
-    final sessionsToSchedule = <SessionModel>[];
-    var changed = false;
-
-    for (final eventId in targetEventIds) {
-      if (hydratedIds.contains(eventId)) {
-        continue;
+    for (final eventId in eventIds ?? _storage.subscribedEventIds) {
+      if (eventId == DataService.apscvir2026EventId) {
+        await _storage.unmarkScheduleEventHydrated(eventId);
       }
-
-      final sessions = await _fetchSessionsForEvent(eventId);
-      if (sessions.isEmpty) {
-        continue;
-      }
-
-      for (final session in sessions) {
-        if (updatedIdSet.add(session.id)) {
-          updatedIds.add(session.id);
-          sessionsToSchedule.add(session);
-          changed = true;
-        }
-      }
-
-      await _storage.markScheduleEventHydrated(eventId);
-    }
-
-    if (changed) {
-      savedSessionIds.value = updatedIds;
-      await _storage.setSavedSessionIds(updatedIds);
-      for (final session in sessionsToSchedule) {
-        await _scheduleReminder(session);
-      }
-      await refreshSessions();
-      await _scheduleDailyReminders();
     }
   }
 
@@ -279,6 +256,19 @@ class ScheduleController extends GetxController {
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
   }
 
+  List<SessionModel> get savedTaskSessions {
+    final sessions = allSavedSessions;
+    return _looksLikeBulkImportedApscvirSchedule(sessions) ? [] : sessions;
+  }
+
+  List<SessionModel> get personalTaskSessions {
+    final sessions = _currentUserTaskSessions(
+      expertTaskSessions.toList(),
+    ).toList();
+    sessions.sort((a, b) => a.startTime.compareTo(b.startTime));
+    return sessions;
+  }
+
   List<SessionModel> get sessionsForSelectedDay {
     final sessions = mySessions
         .where((s) => s.dayIndex == selectedDayIndex.value)
@@ -316,10 +306,10 @@ class ScheduleController extends GetxController {
 
   List<SessionModel> get displayedTaskSessions {
     final query = taskSearchQuery.value.trim();
-    final savedSchedule = allSavedSessions;
-    final source = savedSchedule.isNotEmpty
-        ? savedSchedule
-        : _currentUserTaskSessions(expertTaskSessions.toList());
+    final source = _dedupeSessions([
+      ...personalTaskSessions,
+      ...savedTaskSessions,
+    ]);
     final sessions = query.isEmpty
         ? source
         : source.where((session) => _matchesTaskQuery(session, query)).toList();
@@ -372,28 +362,15 @@ class ScheduleController extends GetxController {
     return list;
   }
 
-  /// Last-name token (e.g. "Teng" from "Gaojun Teng") used to auto-filter
-  /// the logged-in expert's personal task list. Null when no user is signed in
-  /// or the English name does not yield a usable surname token.
-  String? get currentUserLastNameKey {
-    if (!Get.isRegistered<AuthController>()) return null;
-    final user = Get.find<AuthController>().currentUser.value;
-    if (user == null) return null;
-    return _lastNameToken(user.nameEn);
-  }
-
-  /// Surname as it appears on screen (e.g. "Teng" \u2014 preserves hyphenation
-  /// and original casing). Falls back to Chinese name when English is empty.
-  String get currentUserLastNameDisplay {
+  String get currentUserNameDisplay {
     if (!Get.isRegistered<AuthController>()) return '';
     final user = Get.find<AuthController>().currentUser.value;
     if (user == null) return '';
     final trimmedEn = user.nameEn.trim();
-    if (trimmedEn.isNotEmpty) {
-      final tokens = trimmedEn.split(RegExp(r'\s+'));
-      if (tokens.isNotEmpty) return tokens.last;
-    }
-    return user.nameZh.trim();
+    if (trimmedEn.isNotEmpty) return trimmedEn;
+    final trimmedZh = user.nameZh.trim();
+    if (trimmedZh.isNotEmpty) return trimmedZh;
+    return user.email.split('@').first.trim();
   }
 
   List<SessionModel> _currentUserTaskSessions(List<SessionModel> source) {
@@ -401,14 +378,9 @@ class ScheduleController extends GetxController {
     final user = Get.find<AuthController>().currentUser.value;
     if (user == null) return const [];
 
-    final lastName = _lastNameToken(user.nameEn);
-    final fullKeys = <String>{
-      _normalizePersonName(user.nameEn),
-      _normalizePersonName(user.email.split('@').first),
-    }..removeWhere((v) => v.length < 3 || v == 'apscvirdelegate');
-    final zhName = user.nameZh.trim();
+    final fullKeys = _personMatchKeysForCurrentUser(user);
 
-    if (lastName == null && fullKeys.isEmpty && zhName.isEmpty) return const [];
+    if (fullKeys.isEmpty) return const [];
 
     return source.where((session) {
       final rawNames = [
@@ -416,28 +388,10 @@ class ScheduleController extends GetxController {
         session.speakerName,
       ].where((name) => name.trim().isNotEmpty);
       for (final raw in rawNames) {
-        if (zhName.isNotEmpty && raw.contains(zhName)) return true;
-
-        final tokens = raw
-            .split(RegExp(r'[,\uff0c;\uff1b/]'))
-            .expand((part) => part.split(RegExp(r'\s+')))
-            .map(_normalizePersonName)
-            .where((token) => token.isNotEmpty)
-            .toSet();
-        if (lastName != null && tokens.contains(lastName)) return true;
-
-        // Substring fallback so test/legacy accounts (e.g. only nameEn)
-        // continue to match even when the surname token is unusual.
         for (final candidate in raw.split(RegExp(r'[,\uff0c;\uff1b/]'))) {
           final normalized = _normalizePersonName(candidate);
           if (normalized.isEmpty) continue;
-          for (final key in fullKeys) {
-            if (normalized == key ||
-                normalized.contains(key) ||
-                key.contains(normalized)) {
-              return true;
-            }
-          }
+          if (fullKeys.contains(normalized)) return true;
         }
       }
       return false;
@@ -463,13 +417,62 @@ class ScheduleController extends GetxController {
     ].any((value) => value.toLowerCase().contains(q));
   }
 
-  String? _lastNameToken(String nameEn) {
-    final trimmed = nameEn.trim();
-    if (trimmed.isEmpty) return null;
-    final tokens = trimmed.split(RegExp(r'\s+'));
-    if (tokens.isEmpty) return null;
-    final last = _normalizePersonName(tokens.last);
-    return last.length >= 2 ? last : null;
+  Set<String> _personMatchKeysForCurrentUser(UserModel user) {
+    final keys = <String>{};
+    _addProfileNameKeys(keys, user.nameEn);
+    _addProfileNameKeys(keys, user.nameZh);
+    _addEmailNameKeys(keys, user.email);
+    keys.removeWhere(_shouldIgnorePersonMatchKey);
+    return keys;
+  }
+
+  void _addProfileNameKeys(Set<String> keys, String value) {
+    final cjkNames = RegExp(r'[\u4e00-\u9fa5]+')
+        .allMatches(value)
+        .map((match) => match.group(0) ?? '')
+        .where((name) => name.length >= 2);
+    keys.addAll(cjkNames);
+
+    _addLatinNameKeys(keys, value.split(RegExp(r'[\s,\uff0c;\uff1b/._]+')));
+  }
+
+  void _addEmailNameKeys(Set<String> keys, String email) {
+    final prefix = email.split('@').first;
+    _addLatinNameKeys(keys, prefix.split(RegExp(r'[^a-zA-Z0-9]+')));
+  }
+
+  void _addLatinNameKeys(Set<String> keys, Iterable<String> rawParts) {
+    final parts = rawParts
+        .map(_normalizePersonName)
+        .where((part) => part.length > 1 && !_isHonorificNamePart(part))
+        .toList();
+    if (parts.length < 2) return;
+
+    keys.add(parts.join());
+    keys.add('${parts.last}${parts.take(parts.length - 1).join()}');
+  }
+
+  bool _isHonorificNamePart(String value) {
+    return const {
+      'dr',
+      'prof',
+      'professor',
+      'mr',
+      'mrs',
+      'ms',
+      'miss',
+    }.contains(value);
+  }
+
+  bool _shouldIgnorePersonMatchKey(String key) {
+    if (key.isEmpty || key == 'apscvirdelegate' || key == 'all') {
+      return true;
+    }
+    final hasCjk = RegExp(r'[\u4e00-\u9fa5]').hasMatch(key);
+    if (hasCjk) {
+      return RegExp(r'[\u4e00-\u9fa5]').allMatches(key).length < 2;
+    }
+    return key.length < 4;
   }
 
   String _normalizePersonName(String value) {
@@ -477,6 +480,34 @@ class ScheduleController extends GetxController {
       RegExp(r'[^a-z0-9\u4e00-\u9fa5]+'),
       '',
     );
+  }
+
+  bool _looksLikeBulkImportedApscvirSchedule(List<SessionModel> sessions) {
+    final apscvirSavedCount = sessions
+        .where((session) => session.eventId == DataService.apscvir2026EventId)
+        .length;
+    return apscvirSavedCount >= _bulkImportedScheduleThreshold;
+  }
+
+  Future<void> _removeLegacyBulkImportedSchedule() async {
+    final savedApscvirSessionIds = allSessions
+        .where(
+          (session) =>
+              session.eventId == DataService.apscvir2026EventId &&
+              savedSessionIds.contains(session.id),
+        )
+        .map((session) => session.id)
+        .toSet();
+    if (savedApscvirSessionIds.length < _bulkImportedScheduleThreshold) {
+      return;
+    }
+
+    final remainingIds = savedSessionIds
+        .where((id) => !savedApscvirSessionIds.contains(id))
+        .toList();
+    savedSessionIds.value = remainingIds;
+    await _storage.setSavedSessionIds(remainingIds);
+    await _storage.unmarkScheduleEventHydrated(DataService.apscvir2026EventId);
   }
 
   Future<void> _scheduleReminder(SessionModel session) async {

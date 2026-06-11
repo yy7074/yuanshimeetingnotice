@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:conference_app/controllers/auth_controller.dart';
 import 'package:conference_app/controllers/schedule_controller.dart';
+import 'package:conference_app/models/user_model.dart';
 import 'package:conference_app/services/apscvir_site_service.dart';
 import 'package:conference_app/services/data_service.dart';
 import 'package:conference_app/services/storage_service.dart';
@@ -180,14 +182,113 @@ void main() {
     expect(storage.savedSessionIds, contains(sessions.first.id));
     expect(storage.hydratedScheduleEventIds, isEmpty);
 
-    final added = await scheduleCtrl.addAllSessionsFromEvent(
-      DataService.apscvir2026EventId,
+    await scheduleCtrl.syncJoinedEventSchedules(
+      eventIds: [DataService.apscvir2026EventId],
     );
-    expect(added, isTrue);
-    expect(
-      storage.hydratedScheduleEventIds,
-      contains(DataService.apscvir2026EventId),
-    );
-    expect(storage.savedSessionIds.length, uniqueSessionIds.length);
+    expect(storage.hydratedScheduleEventIds, isEmpty);
+    expect(storage.savedSessionIds, contains(sessions.first.id));
   });
+
+  test('APSCVIR personal tasks match full name instead of surname', () async {
+    SharedPreferences.setMockInitialValues({});
+    Get.testMode = true;
+    Get.reset();
+    addTearDown(Get.reset);
+
+    final storage = await StorageService().init();
+    Get.put(storage);
+    final auth = Get.put(AuthController());
+    auth.currentUser.value = const UserModel(
+      id: 'jian-lu',
+      email: 'jian.lu@example.com',
+      nameEn: 'Jian Lu',
+      nameZh: '',
+      titleEn: '',
+      titleZh: '',
+      organizationEn: 'Zhongda Hospital, Southeast University, China',
+      organizationZh: '',
+      avatarUrl: '',
+    );
+    final scheduleCtrl = Get.put(ScheduleController());
+    await scheduleCtrl.refreshSessions();
+
+    final personalTasks = scheduleCtrl.personalTaskSessions;
+    expect(personalTasks, isNotEmpty);
+    expect(
+      personalTasks.any((session) => session.speakerName == 'Jian Lu'),
+      isTrue,
+    );
+    expect(
+      personalTasks.any((session) => session.speakerName == 'Qing-Sheng Lu'),
+      isFalse,
+    );
+    expect(
+      personalTasks.any((session) => session.speakerName == 'Ai-Ming Lu'),
+      isFalse,
+    );
+  });
+
+  test('APSCVIR personal tasks ignore incomplete latin name tokens', () async {
+    SharedPreferences.setMockInitialValues({});
+    Get.testMode = true;
+    Get.reset();
+    addTearDown(Get.reset);
+
+    final storage = await StorageService().init();
+    Get.put(storage);
+    final auth = Get.put(AuthController());
+    auth.currentUser.value = const UserModel(
+      id: 'lu-only',
+      email: 'lu@example.com',
+      nameEn: 'Lu',
+      nameZh: '',
+      titleEn: '',
+      titleZh: '',
+      organizationEn: '',
+      organizationZh: '',
+      avatarUrl: '',
+    );
+    final scheduleCtrl = Get.put(ScheduleController());
+    await scheduleCtrl.refreshSessions();
+
+    expect(scheduleCtrl.personalTaskSessions, isEmpty);
+  });
+
+  test(
+    'APSCVIR personal tasks can infer full name from email prefix',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      Get.testMode = true;
+      Get.reset();
+      addTearDown(Get.reset);
+
+      final storage = await StorageService().init();
+      Get.put(storage);
+      final auth = Get.put(AuthController());
+      auth.currentUser.value = const UserModel(
+        id: 'jian-lu-email',
+        email: 'jian.lu@example.com',
+        nameEn: '',
+        nameZh: '',
+        titleEn: '',
+        titleZh: '',
+        organizationEn: '',
+        organizationZh: '',
+        avatarUrl: '',
+      );
+      final scheduleCtrl = Get.put(ScheduleController());
+      await scheduleCtrl.refreshSessions();
+
+      final personalTasks = scheduleCtrl.personalTaskSessions;
+      expect(personalTasks, isNotEmpty);
+      expect(
+        personalTasks.any((session) => session.speakerName == 'Jian Lu'),
+        isTrue,
+      );
+      expect(
+        personalTasks.any((session) => session.speakerName == 'Qing-Sheng Lu'),
+        isFalse,
+      );
+    },
+  );
 }
