@@ -107,7 +107,46 @@ describe('NotificationDispatcherService', () => {
     });
   });
 
-  it('broadcasts to all active users and sends one JPush broadcast', async () => {
+  it('broadcasts to event subscribers without tag-only push', async () => {
+    const qb = {
+      innerJoin: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]),
+    };
+    userRepo.createQueryBuilder.mockReturnValue(qb);
+    const dispatchSpy = jest
+      .spyOn(service, 'dispatch')
+      .mockResolvedValue({ id: 'n1' } as any);
+
+    const result = await service.broadcastToEvent({
+      eventId: 'e1',
+      titleEn: 'Event',
+      titleZh: '会议',
+      bodyEn: 'Updated',
+      bodyZh: '已更新',
+      type: NotificationType.EVENT_UPDATE,
+      sendPush: true,
+      sendEmail: false,
+    });
+
+    expect(qb.innerJoin).toHaveBeenCalledWith(
+      'u.subscribedEvents',
+      'e',
+      'e.id = :eventId',
+      { eventId: 'e1' },
+    );
+    expect(dispatchSpy).toHaveBeenCalledTimes(2);
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        eventId: 'e1',
+        sendPush: true,
+      }),
+    );
+    expect(pushService.sendToTag).not.toHaveBeenCalled();
+    expect(result).toEqual({ sent: 2, eventId: 'e1' });
+  });
+
+  it('broadcasts to all active users through per-user dispatch', async () => {
     userRepo.find.mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]);
     const dispatchSpy = jest
       .spyOn(service, 'dispatch')
@@ -126,15 +165,12 @@ describe('NotificationDispatcherService', () => {
     expect(userRepo.find).toHaveBeenCalledWith({ where: { isActive: true } });
     expect(dispatchSpy).toHaveBeenCalledTimes(2);
     expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 'u1', sendPush: false }),
+      expect.objectContaining({ userId: 'u1', sendPush: true }),
     );
-    expect(pushService.sendToAll).toHaveBeenCalledWith('测试', '内容', {
-      type: NotificationType.SYSTEM,
-      eventId: '',
-    });
+    expect(pushService.sendToAll).not.toHaveBeenCalled();
     expect(result).toEqual({
       sent: 2,
-      push: { success: true, msgId: 'm1' },
+      push: { mode: 'per_user', recipients: 2 },
     });
   });
 });

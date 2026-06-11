@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
@@ -28,6 +30,7 @@ class ScheduleController extends GetxController {
 
   Future<void> _initializeSchedule() async {
     final initialEventIds = _storage.subscribedEventIds.toList();
+    unawaited(_syncSubscribedEventsToServer(initialEventIds));
     await refreshSessions();
     await syncJoinedEventSchedules(eventIds: initialEventIds);
   }
@@ -85,6 +88,10 @@ class ScheduleController extends GetxController {
       await _storage.saveSession(sessionId);
       savedSessionIds.add(sessionId);
       if (session != null) {
+        if (!_storage.subscribedEventIds.contains(session.eventId)) {
+          await _storage.subscribeEvent(session.eventId);
+          unawaited(_subscribeEventOnServer(session.eventId));
+        }
         await _scheduleReminder(session);
       }
     }
@@ -97,6 +104,7 @@ class ScheduleController extends GetxController {
 
     if (!_storage.subscribedEventIds.contains(session.eventId)) {
       await _storage.subscribeEvent(session.eventId);
+      unawaited(_subscribeEventOnServer(session.eventId));
     }
 
     await toggleSession(session.id);
@@ -180,6 +188,7 @@ class ScheduleController extends GetxController {
 
     if (!_storage.subscribedEventIds.contains(eventId)) {
       await _storage.subscribeEvent(eventId);
+      unawaited(_subscribeEventOnServer(eventId));
     }
 
     final updatedIds = savedSessionIds.toList();
@@ -521,6 +530,20 @@ class ScheduleController extends GetxController {
         roomZh: session.roomZh,
         startTime: session.startTime,
       );
+    } catch (_) {}
+  }
+
+  Future<void> _syncSubscribedEventsToServer(Iterable<String> eventIds) async {
+    for (final eventId in eventIds) {
+      await _subscribeEventOnServer(eventId);
+    }
+  }
+
+  Future<void> _subscribeEventOnServer(String eventId) async {
+    if (eventId.isEmpty) return;
+    try {
+      final api = Get.find<ApiService>();
+      await api.subscribeEvent(eventId);
     } catch (_) {}
   }
 

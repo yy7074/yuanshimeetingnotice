@@ -86,12 +86,19 @@ class EventController extends GetxController {
         final apiEventIds = (res.body as List)
             .map((e) => e['id'] as String)
             .toList();
-        final localEventIds = _storage.subscribedEventIds.where(
-          _supportsOfflineEvent,
-        );
+        final localEventIds = _storage.subscribedEventIds
+            .where(_supportsOfflineEvent)
+            .toList();
         final eventIds = {...apiEventIds, ...localEventIds}.toList();
         subscribedEventIds.value = eventIds;
         await _storage.setSubscribedEventIds(eventIds);
+        unawaited(
+          _syncLocalSubscriptionsToServer(
+            api,
+            localEventIds: localEventIds,
+            apiEventIds: apiEventIds,
+          ),
+        );
         if (Get.isRegistered<ScheduleController>()) {
           final scheduleCtrl = Get.find<ScheduleController>();
           await scheduleCtrl.refreshSessions();
@@ -269,6 +276,20 @@ class EventController extends GetxController {
     try {
       await scheduleCtrl?.refreshSessions();
     } catch (_) {}
+  }
+
+  Future<void> _syncLocalSubscriptionsToServer(
+    ApiService api, {
+    required Iterable<String> localEventIds,
+    required Iterable<String> apiEventIds,
+  }) async {
+    final remoteIds = apiEventIds.toSet();
+    for (final eventId in localEventIds) {
+      if (eventId.isEmpty || remoteIds.contains(eventId)) continue;
+      try {
+        await api.subscribeEvent(eventId);
+      } catch (_) {}
+    }
   }
 
   Future<void> selectEvent(String eventId) async {

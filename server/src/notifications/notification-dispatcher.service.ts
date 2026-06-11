@@ -114,13 +114,6 @@ export class NotificationDispatcherService {
       count++;
     }
 
-    // Also push to FCM topic
-    if (sendPush) {
-      const title = notifData.titleEn;
-      const body = notifData.bodyEn;
-      await this.pushService.sendToTag(`event_${eventId}`, title, body);
-    }
-
     return { sent: count, eventId };
   }
 
@@ -202,24 +195,16 @@ export class NotificationDispatcherService {
       await this.dispatch({
         ...notifData,
         userId: user.id,
-        sendPush: false,
+        sendPush,
         sendEmail,
       });
       count++;
     }
 
-    const push = sendPush
-      ? await this.pushService.sendToAll(
-          notifData.titleZh || notifData.titleEn,
-          notifData.bodyZh || notifData.bodyEn,
-          {
-            type: notifData.type,
-            eventId: '',
-          },
-        )
-      : null;
-
-    return { sent: count, push };
+    return {
+      sent: count,
+      push: sendPush ? { mode: 'per_user', recipients: count } : null,
+    };
   }
 
   /**
