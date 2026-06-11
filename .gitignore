@@ -63,3 +63,4 @@ Thumbs.db
 *.certSigningRequest
 *.mobileprovision
 /server/node_modules
+landing/downloads/apscvir-conference-latest.apk

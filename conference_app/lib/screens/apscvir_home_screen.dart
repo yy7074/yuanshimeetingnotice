@@ -16,10 +16,21 @@ import 'apscvir_maps_screen.dart' deferred as apscvir_maps_screen;
 import 'event_portal_screen.dart' deferred as event_portal_screen;
 import 'speakers_screen.dart' deferred as speakers_screen;
 
+const _photoLiveUrl = 'https://live.pailixiang.com/album/main/g118333928';
+
 final SiteMenuItem _ismioHomeMenuItem = SiteMenuItem(
   id: '__ismio_external__',
   title: 'ISMIO',
   url: apscvirIsmioExternalUrl,
+  iconClass: '',
+  color: AppColors.primary,
+  children: const [],
+);
+
+final SiteMenuItem _photoLiveHomeMenuItem = SiteMenuItem(
+  id: '__photo_live_external__',
+  title: 'Photo Live',
+  url: _photoLiveUrl,
   iconClass: '',
   color: AppColors.primary,
   children: const [],
@@ -150,6 +161,9 @@ class _HeroBannerState extends State<_HeroBanner> {
   int _currentIndex = 0;
   Timer? _timer;
 
+  List<_HomeBannerSlideData> get _slides =>
+      _buildHomeBannerSlides(widget.manifest, _banners);
+
   @override
   void initState() {
     super.initState();
@@ -179,18 +193,21 @@ class _HeroBannerState extends State<_HeroBanner> {
                 .toList()
               ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
         if (!mounted) return;
-        setState(() => _banners = banners);
-        _startAutoPlay();
+        setState(() {
+          _banners = banners;
+          _currentIndex = 0;
+        });
       }
     } catch (_) {}
+    if (mounted) _startAutoPlay();
   }
 
   void _startAutoPlay() {
     _timer?.cancel();
-    if (_banners.length < 2) return;
+    if (_slides.length < 2) return;
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || !_pageController.hasClients) return;
-      final next = (_currentIndex + 1) % _banners.length;
+      final next = (_currentIndex + 1) % _slides.length;
       _pageController.animateToPage(
         next,
         duration: const Duration(milliseconds: 420),
@@ -201,57 +218,8 @@ class _HeroBannerState extends State<_HeroBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (_banners.isNotEmpty) {
-      return ColoredBox(
-        color: AppColors.primaryDark,
-        child: AspectRatio(
-          aspectRatio: 3600 / 1998,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              PageView.builder(
-                controller: _pageController,
-                itemCount: _banners.length,
-                onPageChanged: (index) => setState(() => _currentIndex = index),
-                itemBuilder: (context, index) {
-                  final banner = _banners[index];
-                  return _NetworkBannerSlide(banner: banner);
-                },
-              ),
-              if (_banners.length > 1)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 10,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_banners.length, (index) {
-                      final selected = index == _currentIndex;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        width: selected ? 18 : 7,
-                        height: 7,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? Colors.white
-                              : Colors.white.withAlpha(150),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final image = widget.manifest.homeImages.isNotEmpty
-        ? widget.manifest.homeImages.first.asset
-        : '';
-    if (image.isEmpty) {
+    final slides = _slides;
+    if (slides.isEmpty) {
       return SizedBox(
         height: 132,
         child: ColoredBox(
@@ -264,39 +232,123 @@ class _HeroBannerState extends State<_HeroBanner> {
       color: AppColors.primaryDark,
       child: AspectRatio(
         aspectRatio: 3600 / 1998,
-        child: ApscvirAssetImage(
-          assetPath: image,
-          width: double.infinity,
-          fit: BoxFit.contain,
-          alignment: Alignment.center,
-          errorBuilder: (context, error, stackTrace) =>
-              _BannerFallback(manifest: widget.manifest),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: slides.length,
+              onPageChanged: (index) => setState(() => _currentIndex = index),
+              itemBuilder: (context, index) {
+                return _HomeBannerSlideView(
+                  slide: slides[index],
+                  manifest: widget.manifest,
+                );
+              },
+            ),
+            if (slides.length > 1)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 10,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(slides.length, (index) {
+                    final selected = index == _currentIndex;
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: selected ? 18 : 7,
+                      height: 7,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? Colors.white
+                            : Colors.white.withAlpha(150),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _NetworkBannerSlide extends StatelessWidget {
-  final HomeBannerModel banner;
+class _HomeBannerSlideData {
+  final String assetPath;
+  final String imageUrl;
+  final String title;
+  final String subtitle;
+  final String linkUrl;
 
-  const _NetworkBannerSlide({required this.banner});
+  const _HomeBannerSlideData({
+    this.assetPath = '',
+    this.imageUrl = '',
+    this.title = '',
+    this.subtitle = '',
+    this.linkUrl = '',
+  });
+
+  bool get isAsset => assetPath.isNotEmpty;
+}
+
+List<_HomeBannerSlideData> _buildHomeBannerSlides(
+  SiteManifest manifest,
+  List<HomeBannerModel> banners,
+) {
+  if (banners.isNotEmpty) {
+    return [
+      for (final banner in banners)
+        _HomeBannerSlideData(
+          imageUrl: banner.imageUrl,
+          title: banner.title,
+          subtitle: banner.subtitle,
+          linkUrl: banner.linkUrl,
+        ),
+    ];
+  }
+
+  final firstManifestImage = manifest.homeImages.isNotEmpty
+      ? manifest.homeImages.first.asset
+      : '';
+  return [
+    if (firstManifestImage.isNotEmpty)
+      _HomeBannerSlideData(assetPath: firstManifestImage),
+  ];
+}
+
+class _HomeBannerSlideView extends StatelessWidget {
+  final _HomeBannerSlideData slide;
+  final SiteManifest manifest;
+
+  const _HomeBannerSlideView({required this.slide, required this.manifest});
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = _absoluteImageUrl(banner.imageUrl);
-    final title = banner.title.trim();
-    final subtitle = banner.subtitle.trim();
-    final slide = Stack(
+    final title = slide.title.trim();
+    final subtitle = slide.subtitle.trim();
+    final content = Stack(
       fit: StackFit.expand,
       children: [
-        Image.network(
-          imageUrl,
-          fit: BoxFit.cover,
-          alignment: Alignment.center,
-          errorBuilder: (context, error, stackTrace) =>
-              const ColoredBox(color: AppColors.primaryDark),
-        ),
+        if (slide.isAsset)
+          ApscvirAssetImage(
+            assetPath: slide.assetPath,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (context, error, stackTrace) =>
+                _BannerFallback(manifest: manifest),
+          )
+        else
+          Image.network(
+            _absoluteImageUrl(slide.imageUrl),
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (context, error, stackTrace) =>
+                const ColoredBox(color: AppColors.primaryDark),
+          ),
         if (title.isNotEmpty || subtitle.isNotEmpty)
           Positioned(
             left: 18,
@@ -339,8 +391,11 @@ class _NetworkBannerSlide extends StatelessWidget {
       ],
     );
 
-    if (banner.linkUrl.trim().isEmpty) return slide;
-    return InkWell(onTap: () => _openBannerLink(banner.linkUrl), child: slide);
+    if (slide.linkUrl.trim().isEmpty) return content;
+    return InkWell(
+      onTap: () => _openExternalUrl(slide.linkUrl),
+      child: content,
+    );
   }
 }
 
@@ -354,10 +409,31 @@ String _absoluteImageUrl(String url) {
   return '$base$trimmed';
 }
 
-Future<void> _openBannerLink(String url) async {
+Future<void> _openExternalUrl(String url) async {
   final uri = Uri.tryParse(url.trim());
   if (uri == null || !uri.hasScheme) return;
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (await _tryLaunchUrl(uri, LaunchMode.externalApplication)) return;
+  if (await _tryLaunchUrl(uri, LaunchMode.platformDefault)) return;
+  if ((uri.scheme == 'http' || uri.scheme == 'https') &&
+      await _tryLaunchUrl(uri, LaunchMode.inAppBrowserView)) {
+    return;
+  }
+  Get.snackbar(
+    'Unable to Open Link',
+    uri.toString(),
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: Colors.orange.shade700,
+    colorText: Colors.white,
+    margin: const EdgeInsets.all(16),
+  );
+}
+
+Future<bool> _tryLaunchUrl(Uri uri, LaunchMode mode) async {
+  try {
+    return await launchUrl(uri, mode: mode);
+  } catch (_) {
+    return false;
+  }
 }
 
 class _BannerFallback extends StatelessWidget {
@@ -774,6 +850,10 @@ Future<void> _openMenuItem(SiteMenuItem item, SiteManifest manifest) async {
     unawaited(openApscvirIsmioWebsite());
     return;
   }
+  if (_isPhotoLiveMenuItem(item)) {
+    await _openExternalUrl(_photoLiveUrl);
+    return;
+  }
   if (_isLoginMenuItem(item)) {
     final isLoggedIn =
         Get.isRegistered<AuthController>() &&
@@ -790,6 +870,10 @@ Future<void> _openMenuItem(SiteMenuItem item, SiteManifest manifest) async {
   final page = manifest.pageById[item.id];
   if (page != null) {
     await _openSitePage(page, manifest);
+    return;
+  }
+  if (item.url.trim().isNotEmpty) {
+    await _openExternalUrl(item.url);
   }
 }
 
@@ -819,6 +903,9 @@ List<SiteMenuItem> _visibleMenuItems(SiteManifest manifest, bool isLoggedIn) {
       .where((item) => !_isLowPriorityHomeItem(item))
       .where((item) => !isLoggedIn || !_isLoginMenuItem(item))
       .toList();
+  if (!menu.any(_isPhotoLiveMenuItem)) {
+    menu.add(_photoLiveHomeMenuItem);
+  }
   if (!menu.any(_isIsmioMenuItem)) {
     menu.add(_ismioHomeMenuItem);
   }
@@ -828,6 +915,14 @@ List<SiteMenuItem> _visibleMenuItems(SiteManifest manifest, bool isLoggedIn) {
 bool _isIsmioMenuItem(SiteMenuItem item) {
   return item.id == _ismioHomeMenuItem.id ||
       item.title.trim().toLowerCase() == 'ismio';
+}
+
+bool _isPhotoLiveMenuItem(SiteMenuItem item) {
+  final title = item.title.trim().toLowerCase();
+  return item.id == _photoLiveHomeMenuItem.id ||
+      item.url.trim() == _photoLiveUrl ||
+      title == 'photo live' ||
+      title == 'live photos';
 }
 
 bool _isLoginMenuItem(SiteMenuItem item) {
@@ -967,6 +1062,7 @@ double _measureMenuTextLine({
 IconData _iconForTitle(String title) {
   final lower = title.toLowerCase();
   if (lower.contains('ismio')) return Icons.public_outlined;
+  if (lower.contains('photo')) return Icons.photo_library_outlined;
   if (lower.contains('program')) return Icons.event_note_outlined;
   if (lower.contains('faculty') || lower.contains('committee')) {
     return Icons.groups_outlined;

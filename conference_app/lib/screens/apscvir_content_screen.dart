@@ -52,14 +52,16 @@ class ApscvirContentScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
         children: [
           _PageHeader(page: page, primary: primary),
-          if (_canAddPageToSchedule(page) && page.id != '1814796') ...[
+          if (_canAddPageToSchedule(page) &&
+              page.id != '1814796' &&
+              page.id != '1814797') ...[
             const SizedBox(height: 12),
             _AddProgramToScheduleCard(primary: primary),
           ],
           const SizedBox(height: 16),
           if (page.id == '1411159')
             _OrganizingCommitteeContent(primary: primary)
-          else if (page.id == '1814796')
+          else if (page.id == '1814796' || page.id == '1814797')
             _ProgramAtGlanceContent(primary: primary)
           else if (page.id == '1411179')
             _FacultyContent(page: page, primary: primary)
@@ -91,6 +93,10 @@ bool _canAddPageToSchedule(SitePage page) {
 }
 
 List<SiteBlock> _contentBlocksFor(SitePage page) {
+  if (page.id == '1528024') {
+    return page.blocks.where((block) => block.type != 'image').toList();
+  }
+
   final blockImageAssets = {
     for (final block in page.blocks)
       if (block.type == 'image' && block.asset.isNotEmpty) block.asset,

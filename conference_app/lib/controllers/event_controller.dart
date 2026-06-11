@@ -258,7 +258,7 @@ class EventController extends GetxController {
     String eventId,
   ) async {
     try {
-      await scheduleCtrl?.addAllSessionsFromEvent(eventId);
+      await scheduleCtrl?.refreshSessions();
     } catch (_) {}
   }
 
@@ -267,7 +267,7 @@ class EventController extends GetxController {
     String eventId,
   ) async {
     try {
-      await scheduleCtrl?.removeSessionsFromEvent(eventId);
+      await scheduleCtrl?.refreshSessions();
     } catch (_) {}
   }
 
