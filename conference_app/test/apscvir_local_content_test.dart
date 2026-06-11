@@ -173,6 +173,12 @@ void main() {
       ),
       isTrue,
     );
+    final allLikeTasks = tasks.where(
+      (session) =>
+          _isAllLikeProgramPerson(session.speakerName) ||
+          _isAllLikeProgramPerson(session.taskPersonName),
+    );
+    expect(allLikeTasks, isEmpty);
 
     await scheduleCtrl.toggleSessionModel(sessions.first);
     expect(
@@ -291,4 +297,12 @@ void main() {
       );
     },
   );
+}
+
+bool _isAllLikeProgramPerson(String value) {
+  final normalized = value
+      .toLowerCase()
+      .replaceAll(RegExp(r'[àáâãäåāăą]'), 'a')
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '');
+  return normalized == 'all';
 }

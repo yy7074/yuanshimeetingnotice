@@ -559,12 +559,14 @@ class DataService {
   }
 
   static bool _isProgramPersonName(String value) {
-    final normalized = value.toLowerCase().replaceAll(
-      RegExp(r'[^a-z0-9\u4e00-\u9fa5]+'),
-      '',
-    );
+    final normalized = _normalizeProgramPersonMarker(value);
     if (normalized.isEmpty) return false;
     return normalized != 'all';
+  }
+
+  static String _normalizeProgramPersonMarker(String value) {
+    final folded = value.toLowerCase().replaceAll(RegExp(r'[àáâãäåāăą]'), 'a');
+    return folded.replaceAll(RegExp(r'[^a-z0-9\u4e00-\u9fa5]+'), '');
   }
 
   static SessionModel _session({
