@@ -27,6 +27,12 @@ async function bootstrap() {
 
   const allowAnyOrigin = !isProduction && wildcardRequested;
 
+  // CORS
+  app.enableCors({
+    origin: allowAnyOrigin ? true : originList,
+    credentials: !allowAnyOrigin,
+  });
+
   // Block direct access to the protected materials subdirectory. Materials
   // must be fetched via the authenticated endpoint (materials/:id/file).
   app.use('/uploads/materials', (_req, res) => {
@@ -38,12 +44,7 @@ async function bootstrap() {
     });
   });
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads/' });
-
-  // CORS
-  app.enableCors({
-    origin: allowAnyOrigin ? true : originList,
-    credentials: !allowAnyOrigin,
-  });
+  app.useStaticAssets(join(process.cwd(), 'assets'), { prefix: '/assets/' });
 
   // Global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
