@@ -36,7 +36,28 @@ class _StartupScreenState extends State<StartupScreen> {
       Get.offAllNamed('/change_password');
       return;
     }
-    Get.offAllNamed('/main');
+    Get.offAllNamed(_initialHashRoute() ?? '/main');
+  }
+
+  String? _initialHashRoute() {
+    final fragment = Uri.base.fragment.trim();
+    if (fragment.isEmpty) return null;
+
+    final normalized = fragment.startsWith('/') ? fragment : '/$fragment';
+    final uri = Uri.tryParse(normalized);
+    final path = uri?.path ?? normalized.split('?').first;
+    const allowedRoutes = {
+      '/event_portal',
+      '/event_agenda',
+      '/my_schedule',
+      '/digital_check_in',
+      '/notifications',
+      '/profile_edit',
+      '/speakers',
+      '/login',
+      '/register',
+    };
+    return allowedRoutes.contains(path) ? path : null;
   }
 
   @override

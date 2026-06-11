@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -46,6 +46,8 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
   }
 
   void _initializeNotifications() async {
+    if (kIsWeb) return;
+
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings initializationSettingsDarwin =
@@ -1096,7 +1098,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
   }
 
   Future<bool> _ensureCalendarAccess({required bool showMessage}) async {
-    if (!Platform.isIOS) return true;
+    if (defaultTargetPlatform != TargetPlatform.iOS) return true;
     try {
       final granted = await _calendarPermissionChannel.invokeMethod<bool>(
         'requestCalendarAccess',
