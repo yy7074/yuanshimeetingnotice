@@ -176,7 +176,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     Color primaryColor,
   ) {
     final query = scheduleCtrl.taskSearchQuery.value.trim();
-    final hasSavedSchedule = scheduleCtrl.allSavedSessions.isNotEmpty;
+    final hasSavedSchedule = scheduleCtrl.savedTaskSessions.isNotEmpty;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -198,7 +198,7 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
               query.isEmpty
                   ? (hasSavedSchedule
                         ? 'No sessions are available for the selected day.'
-                        : 'No followed schedule or saved sessions yet.')
+                        : 'No personal tasks or saved sessions yet.')
                   : 'Try another topic, speaker, room, or time.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
@@ -229,18 +229,24 @@ class _MyScheduleScreenState extends State<MyScheduleScreen> {
     ScheduleController scheduleCtrl,
     Color primaryColor,
   ) {
-    final hasSavedSchedule = scheduleCtrl.allSavedSessions.isNotEmpty;
-    final lastName = scheduleCtrl.currentUserLastNameDisplay;
-    if (!hasSavedSchedule && lastName.isEmpty) return const SizedBox.shrink();
-    final taskCount = scheduleCtrl.displayedTaskSessions.length;
-    final title = hasSavedSchedule
-        ? 'Followed Schedule'
-        : 'Personal Tasks · matched by last name "$lastName"';
-    final summary = hasSavedSchedule
-        ? '$taskCount saved session${taskCount == 1 ? '' : 's'} from your followed schedule.'
-        : taskCount == 0
-        ? 'No tasks matched in the APSCVIR 2026 program yet.'
-        : '$taskCount assigned task${taskCount == 1 ? '' : 's'} found across the program.';
+    final savedCount = scheduleCtrl.savedTaskSessions.length;
+    final personalCount = scheduleCtrl.personalTaskSessions.length;
+    final displayName = scheduleCtrl.currentUserNameDisplay;
+    if (savedCount == 0 && personalCount == 0 && displayName.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final title = savedCount > 0 && personalCount > 0
+        ? 'My Schedule'
+        : personalCount > 0 || displayName.isNotEmpty
+        ? 'Personal Tasks · matched by full name "$displayName"'
+        : 'Saved Schedule';
+    final summary = savedCount > 0 && personalCount > 0
+        ? '$personalCount personal task${personalCount == 1 ? '' : 's'} and $savedCount saved session${savedCount == 1 ? '' : 's'}.'
+        : personalCount > 0
+        ? '$personalCount assigned task${personalCount == 1 ? '' : 's'} found across the program.'
+        : savedCount > 0
+        ? '$savedCount saved session${savedCount == 1 ? '' : 's'} from your manual selections.'
+        : 'No tasks matched in the APSCVIR 2026 program yet.';
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
