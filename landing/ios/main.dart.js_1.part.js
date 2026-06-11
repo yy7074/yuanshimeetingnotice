@@ -118,7 +118,7 @@ x=1
 break}if(s.as>=5){s.O(new C.aE7(s))
 x=1
 break}r=B.c.aA(s.d.a.a)
-if(J.bB(r)!==0){o=A.ar('^(([^<>()[\\]\\\\.,;:\\s@\\"]+(\\.[^<>()[\\]\\\\.,;:\\s@\\"]+)*)|(\\".+\\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$',!0,!1)
+if(J.bB(r)!==0){o=A.aq('^(([^<>()[\\]\\\\.,;:\\s@\\"]+(\\.[^<>()[\\]\\\\.,;:\\s@\\"]+)*)|(\\".+\\"))@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\])|(([a-zA-Z\\-0-9]+\\.)+[a-zA-Z]{2,}))$',!0,!1)
 o=o.b.test(r)
 o=!o}else o=!0
 if(o){s.O(new C.aE8(s))
@@ -446,4 +446,4 @@ D.a1R=new A.c6(20,20,A1.l5,null)
 D.a4R=new A.n(!0,B.b3,null,null,null,null,14,B.Y,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 D.EA=new A.n(!0,B.b3,null,null,null,null,null,B.Y,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 D.a7u=new A.n(!0,null,null,null,null,null,20,B.x,null,0,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)})()};
-(a=>{a["woUikTSoe1A3DUVCwLJ2YQqUGeY="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["MXkyhBV4msP/0ydzF0CiDgmoFnQ="]=a.current})($__dart_deferred_initializers__);

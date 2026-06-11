@@ -47,18 +47,18 @@ e=A.A(e,e)
 for(x=a0.length,w=0;w<a0.length;a0.length===x||(0,A.x)(a0),++w){v=a0[w]
 e.p(0,B.c.aA(C.aOE(v.b)),v.a)}u=new A.a9(a0,new C.aPI(),A.a2(a0).i("a9<1,k>")).m7(0,new C.aPJ(),new C.aPK())
 t=A.b([],y.J)
-for(x=A.ar("<li\\b(?=[^>]*mui-indexed-list-item)([\\s\\S]*?)</li>",!0,!1).fd(0,d),x=new A.mv(x.a,x.b,x.c),s=y.a0;x.u();){r=x.d
+for(x=A.aq("<li\\b(?=[^>]*mui-indexed-list-item)([\\s\\S]*?)</li>",!0,!1).fd(0,d),x=new A.mv(x.a,x.b,x.c),s=y.a0;x.u();){r=x.d
 q=(r==null?s.a(r):r).b[0]
 if(q==null)q=""
-p=A.ar("<li\\b([^>]*)>",!0,!1).da(q)
+p=A.aq("<li\\b([^>]*)>",!0,!1).da(q)
 o=p==null?null:p.b[1]
 if(o==null)o=""
 n=C.Ob(o,"data-user_id")
 m=C.Ob(o,"data-value").toUpperCase()
-p=A.ar("<h2\\b[^>]*talker-name[^>]*>([\\s\\S]*?)</h2>",!0,!1).da(q)
+p=A.aq("<h2\\b[^>]*talker-name[^>]*>([\\s\\S]*?)</h2>",!0,!1).da(q)
 p=p==null?null:p.b[1]
 l=C.mF(p==null?"":p)
-p=A.ar("<p\\b[^>]*talker-unit[^>]*>([\\s\\S]*?)</p\\s*>",!0,!1).da(q)
+p=A.aq("<p\\b[^>]*talker-unit[^>]*>([\\s\\S]*?)</p\\s*>",!0,!1).da(q)
 p=p==null?null:p.b[1]
 k=C.mF(p==null?"":p)
 if(l.length===0)continue
@@ -70,7 +70,7 @@ else{p=B.c.aA(l)
 p=(p.length===0?B.bG:new A.e1(p)).a
 g=p.length
 p=g===0?A.T(A.aB("No element")):B.c.R(p,0,new A.kK(p,g,0,240).jE())
-h=p.toUpperCase()}p=A.ar("^[A-Z]$",!0,!1)
+h=p.toUpperCase()}p=A.aq("^[A-Z]$",!0,!1)
 t.push(new C.fa(n,l,k,p.b.test(h)?h:"#",i))}B.b.d5(t,new C.aPL())
 return t},
 bhb(d){var x,w,v,u=A.A(y.N,y.r)
@@ -83,7 +83,7 @@ B.b.J(u,J.ea(v.b,C.biH(),w))}return u},
 bgO(d){var x=J.ea(d,new C.aOO(),y.N).hs(0),w=A.U(x,A.v(x).c)
 B.b.h5(w)
 return w},
-Ob(d,e){var x=A.ar(A.a7L(e)+"=[\"']([^\"']*)[\"']",!0,!1).da(d),w=x==null?null:x.b[1]
+Ob(d,e){var x=A.aq(A.a7L(e)+"=[\"']([^\"']*)[\"']",!0,!1).da(d),w=x==null?null:x.b[1]
 return C.aOE(w==null?"":w)},
 aOE(d){var x=A.aG(d,"&nbsp;"," ")
 x=A.aG(x,"&amp;","&")
@@ -95,7 +95,7 @@ x=A.aG(x,"&apos;","'")
 x=A.aG(x,"&rsquo;","'")
 x=A.aG(x,"&lsquo;","'")
 x=A.aG(x,"&ldquo;",'"')
-return A.a7N(A.a7N(A.aG(x,"&rdquo;",'"'),A.ar("&#(\\d+);",!0,!1),new C.aOF(),null),A.ar("&#x([0-9a-fA-F]+);",!0,!1),new C.aOG(),null)},
+return A.a7N(A.a7N(A.aG(x,"&rdquo;",'"'),A.aq("&#(\\d+);",!0,!1),new C.aOF(),null),A.aq("&#x([0-9a-fA-F]+);",!0,!1),new C.aOG(),null)},
 aPo(d){return C.bhP(d)},
 bhP(d){var x=0,w=A.t(y.U),v,u=2,t=[],s,r,q,p
 var $async$aPo=A.u(function(e,f){if(e===1){t.push(f)
@@ -122,7 +122,7 @@ break
 case 6:case 1:return A.q(v,w)
 case 2:return A.p(t.at(-1),w)}})
 return A.r($async$aPo,w)},
-bi7(a0){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d=A.ar('<div class="hotel-card">',!0,!1).fd(0,a0)
+bi7(a0){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d=A.aq('<div class="hotel-card">',!0,!1).fd(0,a0)
 d=A.fO(d,new C.aPM(),A.v(d).i("w.E"),y.q)
 x=A.U(d,A.v(d).i("w.E"))
 if(x.length===0)return D.mZ
@@ -134,7 +134,7 @@ else r=w>s?w:d
 v.push(B.c.R(a0,s,r))}q=A.b([],y.X)
 for(d=v.length,p=0;p<v.length;v.length===d||(0,A.x)(v),++p){o=v[p]
 n=C.aUo(o,"hotel-name")
-t=A.ar("<a\\b(?=[^>]*book-button)[^>]*>",!0,!1).da(o)
+t=A.aq("<a\\b(?=[^>]*book-button)[^>]*>",!0,!1).da(o)
 t=t==null?null:t.b[0]
 m=C.bi_(C.Ob(t==null?"":t,"href"))
 if(n.length===0||m.length===0)continue
@@ -153,19 +153,19 @@ k=new A.hH(i,2,null,k)
 k.th(i,2,null,h)
 e=k.kB(0,2).e9(0)
 q.push(new C.qW(n,C.aUo(o,"hotel-brand"),C.aUo(o,"hotel-stars"),t.b,m,f,e,j))}return q},
-aUo(d,e){var x=A.ar('<div\\b[^>]*class="'+e+'"[^>]*>([\\s\\S]*?)</div>',!0,!1).da(d),w=x==null?null:x.b[1]
+aUo(d,e){var x=A.aq('<div\\b[^>]*class="'+e+'"[^>]*>([\\s\\S]*?)</div>',!0,!1).da(d),w=x==null?null:x.b[1]
 return C.mF(w==null?"":w)},
-bhe(d){var x,w=A.ar('<div class="price-item">\\s*<span>([\\s\\S]*?)</span>\\s*<span class="price-value">([\\s\\S]*?)</span>',!0,!1).fd(0,d)
+bhe(d){var x,w=A.aq('<div class="price-item">\\s*<span>([\\s\\S]*?)</span>\\s*<span class="price-value">([\\s\\S]*?)</span>',!0,!1).fd(0,d)
 w=A.fO(w,new C.aOZ(),A.v(w).i("w.E"),y.o)
 x=A.v(w).i("ah<w.E>")
 w=A.U(new A.ah(w,new C.aP_(),x),x.i("w.E"))
 return w},
-bhd(d){var x,w=A.ar('<div class="info-item">\\s*<span class="info-label">([\\s\\S]*?)</span>\\s*<span\\b[^>]*>([\\s\\S]*?)</span>',!0,!1).fd(0,d)
+bhd(d){var x,w=A.aq('<div class="info-item">\\s*<span class="info-label">([\\s\\S]*?)</span>\\s*<span\\b[^>]*>([\\s\\S]*?)</span>',!0,!1).fd(0,d)
 w=A.fO(w,new C.aOX(),A.v(w).i("w.E"),y.o)
 x=A.v(w).i("ah<w.E>")
 w=A.U(new A.ah(w,new C.aOY(),x),x.i("w.E"))
 return w},
-b1k(d){var x=C.mF(d),w=A.ar("\\s+",!0,!1)
+b1k(d){var x=C.mF(d),w=A.aq("\\s+",!0,!1)
 x=A.aG(x,w," ")
 return B.c.aA(A.aG(x,":",""))},
 bi_(d){var x,w=B.c.aA(C.aOE(d)),v=A.jA(w)
@@ -199,7 +199,7 @@ return"https://www.apscvir2026.com/en/minisite/program-detail/29839?program_id="
 bi3(d){var x,w=d.a
 if(!B.c.b1(w,"apscvir-2026-"))return""
 x=B.c.bF(w,13)
-w=A.ar("^\\d+$",!0,!1)
+w=A.aq("^\\d+$",!0,!1)
 return w.b.test(x)?x:""},
 aPv(d){return C.bhQ(d)},
 bhQ(d){var x=0,w=A.t(y.cc),v,u=2,t=[],s,r,q,p
@@ -229,23 +229,23 @@ case 2:return A.p(t.at(-1),w)}})
 return A.r($async$aPv,w)},
 bi8(d,e){var x,w,v,u,t,s,r,q,p,o,n,m=null,l=C.bgQ(d,e),k=l.length
 if(k===0)return D.jg
-x=A.ar('<div class="program-style-content-wrapper">',!0,!1).fd(0,l)
+x=A.aq('<div class="program-style-content-wrapper">',!0,!1).fd(0,l)
 x=A.fO(x,new C.aPQ(),A.v(x).i("w.E"),y.q)
 w=A.U(x,A.v(x).i("w.E"))
 if(w.length===0)return D.jg
 v=A.b([],y.n)
 for(u=0;x=w.length,u<x;){t=w[u];++u
 s=B.c.R(l,t,u<x?w[u]:k)
-r=A.ar('<div class="time common">([\\s\\S]*?)</div>',!0,!1).da(s)
+r=A.aq('<div class="time common">([\\s\\S]*?)</div>',!0,!1).da(s)
 x=r==null?m:r.b[1]
 q=C.mF(x==null?"":x)
-x=A.ar('<div class="type">[\\s\\S]*?<p>([\\s\\S]*?)</p>',!0,!1).da(s)
+x=A.aq('<div class="type">[\\s\\S]*?<p>([\\s\\S]*?)</p>',!0,!1).da(s)
 x=x==null?m:x.b[1]
 p=C.mF(x==null?"":x)
-x=A.ar("<a\\b[^>]*>([\\s\\S]*?)</a>",!0,!1).da(s)
+x=A.aq("<a\\b[^>]*>([\\s\\S]*?)</a>",!0,!1).da(s)
 x=x==null?m:x.b[1]
 o=C.mF(x==null?"":x)
-x=A.ar('<span class="td-org">([\\s\\S]*?)</span>',!0,!1).da(s)
+x=A.aq('<span class="td-org">([\\s\\S]*?)</span>',!0,!1).da(s)
 x=x==null?m:x.b[1]
 n=C.mF(x==null?"":x)
 if(q.length===0&&p.length===0&&o.length===0)continue
@@ -258,19 +258,19 @@ if(q<0){t=r+w
 continue}p=q+1
 o=B.c.R(d,q,C.bhY(A.b([B.c.fw(k,l,p),B.c.fw(k,'<div class="program-style-place"',p),B.c.fw(k,'<div class="program-style-time"',p)],v),u))
 p=C.mF(o)
-n=A.ar("\\s+",!0,!1)
+n=A.aq("\\s+",!0,!1)
 m=A.aG(p.toLowerCase(),n,"")
-p=A.ar("\\s+",!0,!1)
+p=A.aq("\\s+",!0,!1)
 if(B.c.q(m,A.aG(j.toLowerCase(),p,""))){p=e.glt()
-n=A.ar("\\s+",!0,!1)
+n=A.aq("\\s+",!0,!1)
 if(B.c.q(m,A.aG(p.toLowerCase(),n,"")))return o
 s=o}t=r+w}return s},
 bhY(d,e){var x=A.a2(d).i("ah<1>"),w=A.U(new A.ah(d,new C.aPy(),x),x.i("w.E"))
 B.b.h5(w)
 return w.length===0?e:B.b.gY(w)},
-mF(d){var x,w=A.ar("<!--[\\s\\S]*?-->",!0,!1)
+mF(d){var x,w=A.aq("<!--[\\s\\S]*?-->",!0,!1)
 w=A.aG(d,w," ")
-x=A.ar("<[^>]+>",!0,!1)
+x=A.aq("<[^>]+>",!0,!1)
 w=A.aG(w,x," ")
 w=A.aG(w,"&nbsp;"," ")
 w=A.aG(w,"&amp;","&")
@@ -282,7 +282,7 @@ w=A.aG(w,"&rsquo;","'")
 w=A.aG(w,"&lsquo;","'")
 w=A.aG(w,"&ldquo;",'"')
 w=A.aG(w,"&rdquo;",'"')
-x=A.ar("\\s+",!0,!1)
+x=A.aq("\\s+",!0,!1)
 return B.c.aA(A.aG(w,x," "))},
 rr(d,e){return C.bij(d,e)},
 bij(d,e){var x=0,w=A.t(y.H),v,u=2,t=[],s,r,q,p,o,n,m,l
@@ -323,7 +323,7 @@ break
 case 6:case 1:return A.q(v,w)
 case 2:return A.p(t.at(-1),w)}})
 return A.r($async$rr,w)},
-bid(d){var x=B.c.aA(B.b.gaf(d.split("/"))),w=A.ar("[^A-Za-z0-9._-]",!0,!1),v=A.aG(x,w,"_")
+bid(d){var x=B.c.aA(B.b.gaf(d.split("/"))),w=A.aq("[^A-Za-z0-9._-]",!0,!1),v=A.aG(x,w,"_")
 return v.length===0?"apscvir-download":v},
 bhj(d){var x=d.toLowerCase()
 if(B.c.q(x,"schedule")||B.c.q(x,"program"))return B.j5
@@ -1236,10 +1236,10 @@ t=A.aC(E.mM,k,o,o)
 s=A.y(u.c,o,o,o,o,B.hN,o,o)
 r=u.a
 if(A.a8S(r)==null){q=B.c.aA(B.b.gaf(r.split("/")))
-r=A.ar(n,!0,!1)
+r=A.aq(n,!0,!1)
 p=A.aG(q,r,"_")
 r="Saved locally - "+(p.length===0?m:p)}else{q=B.c.aA(B.b.gaf(r.split("/")))
-r=A.ar(n,!0,!1)
+r=A.aq(n,!0,!1)
 p=A.aG(q,r,"_")
 r="Available online - "+(p.length===0?m:p)}i.push(A.ya(B.V,!0,t,o,new C.aBU(u),o,A.y(r,1,B.a_,o,o,o,o,o),o,s,o))}return A.a6(o,A.an(i,B.u,B.h,B.j),B.i,o,o,new A.ac(B.e,o,j,l,o,o,B.o),o,o,o,o,B.E,o,o,o)}}
 C.IZ.prototype={
@@ -2506,4 +2506,4 @@ D.a8I=new A.cn("Open Official Visa Policy",null,null,null,null,null,null,null,nu
 D.abe=new C.kn("Address","")
 D.abV=new C.a1a(null)})();(function lazyInitializers(){var x=a.lazyFinal
 x($,"blr","b3b",()=>A.bdM())})()};
-(a=>{a["x5jr5xfENkPFHcyJFm8y5FsD5fE="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["H0jkJilhV/f5Qupb96/lRJ8NiyM="]=a.current})($__dart_deferred_initializers__);
